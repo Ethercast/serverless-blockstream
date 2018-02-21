@@ -24,9 +24,9 @@ export default class EthWSClient {
   eth_getBlockByNumber = this.createMethod<Block, [string | BigNumber | 'earliest' | 'latest' | 'pending', boolean]>(Method.eth_getBlockByNumber);
   eth_blockNumber = this.createMethod<string>(Method.eth_blockNumber);
 
-  private createMethod<TResponse, TParams extends [void] = [void]>(method: Method): (params: TParams) => Promise<TResponse> {
+  private createMethod<TResponse, TParams extends [void] = [void], TCmdResponse = TResponse>(method: Method, transform: (cmdResponse: TCmdResponse) => TResponse = (i) => i): (params: TParams) => Promise<TResponse> {
     return function (params: TParams) {
-      return this.cmd<TResponse>(method, params);
+      return transform(this.cmd<TResponse>(method, params));
     };
   }
 
@@ -48,29 +48,37 @@ export default class EthWSClient {
               ws.removeEventListener('message', listener);
             }
           } catch (error) {
-            reject(`failed to parse message response`);
+            reject(`failed to parse message response: ${event.data}`);
           }
         }
       };
 
       ws.addEventListener('message', listener);
 
-      ws.send(
-        JSON.stringify(
-          {
-            jsonrpc: '2.0',
-            id: requestId,
-            method,
-            params: params.map(
-              p => (
-                p instanceof BigNumber ?
-                  p.toString(16) :
-                  String(p)
-              )
-            )
+      const request = {
+        jsonrpc: '2.0',
+        id: requestId,
+        method,
+        params: params.map(
+          p => {
+            switch (typeof p) {
+              case 'object':
+                if (p instanceof BigNumber) {
+                  return p.toString(16);
+                }
+                throw new Error('unknown parameter type');
+              case 'string':
+                return p;
+              case 'number':
+                return p;
+              case 'boolean':
+                return p;
+            }
           }
         )
-      );
+      };
+
+      ws.send(JSON.stringify(request));
 
       setTimeout(() => {
         if (!resolved) {
