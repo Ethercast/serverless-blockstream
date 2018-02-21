@@ -1,0 +1,21 @@
+{
+  "name": "web3-ws-client-ts",
+  "version": "1.0.0",
+  "description": "a web3 ws client for ts",
+  "main": "index.js",
+  "dependencies": {
+    "@types/underscore": "^1.8.7",
+    "@types/uuid": "^3.4.3",
+    "@types/ws": "^4.0.1",
+    "bignumber.js": "^6.0.0",
+    "underscore": "^1.8.3",
+    "uuid": "^3.2.1",
+    "ws": "^4.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "Moody Salem",
+  "license": "ISC"
+}
