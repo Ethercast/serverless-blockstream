@@ -1,19 +1,37 @@
 import WebSocket = require('ws');
-import uuid = require('uuid');
+import { Block } from './Block';
+import BigNumber from 'bignumber.js';
 
 export enum Method {
-  web3_clientVersion = 'web3_clientVersion'
+  web3_clientVersion = 'web3_clientVersion',
+  eth_getBlockByHash = 'eth_getBlockByHash',
+  eth_blockNumber = 'eth_blockNumber',
+  eth_getBlockByNumber = 'eth_getBlockByNumber',
 }
+
+type MethodParameter = boolean | string | number | BigNumber;
 
 export default class EthWSClient {
   ws: WebSocket;
+  nextRequestId: number = 1;
 
   constructor({ ws }: { ws: WebSocket }) {
     this.ws = ws;
   }
 
-  async cmd<T>(method: Method, params: (string | number | BigNumber)[] = []): Promise<T> {
-    let requestId = (new Date()).getTime();
+  web3_clientVersion = this.createMethod<string>(Method.web3_clientVersion);
+  eth_getBlockByHash = this.createMethod<Block, [string | BigNumber, boolean]>(Method.eth_getBlockByHash);
+  eth_getBlockByNumber = this.createMethod<Block, [string | BigNumber | 'earliest' | 'latest' | 'pending', boolean]>(Method.eth_getBlockByNumber);
+  eth_blockNumber = this.createMethod<string>(Method.eth_blockNumber);
+
+  private createMethod<TResponse, TParams extends [void] = [void]>(method: Method): (params: TParams) => Promise<TResponse> {
+    return function (params: TParams) {
+      return this.cmd<TResponse>(method, params);
+    };
+  }
+
+  private async cmd<TResponse>(method: Method, params: MethodParameter[] = []): Promise<TResponse> {
+    let requestId = this.nextRequestId++;
     const { ws } = this;
 
     return new Promise((resolve, reject) => {
@@ -30,7 +48,7 @@ export default class EthWSClient {
               ws.removeEventListener('message', listener);
             }
           } catch (error) {
-            console.error('unknown websocket message format', error, event.data);
+            reject(`failed to parse message response`);
           }
         }
       };
@@ -44,7 +62,11 @@ export default class EthWSClient {
             id: requestId,
             method,
             params: params.map(
-              p => String(p)
+              p => (
+                p instanceof BigNumber ?
+                  p.toString(16) :
+                  String(p)
+              )
             )
           }
         )

@@ -1,12 +1,9 @@
 import WebSocket = require('ws');
-import * as _ from 'underscore';
-import Client, { Method } from './client';
+import Client from './client';
 
-const INFURA_API_KEY = '0eep3H3CSiqitPXv0aOy';
+const { NODE_URL } = process.env;
 
-const NODE_URL = 'wss://mainnet.infura.io/ws';
-
-const ws = new WebSocket(NODE_URL);
+const ws = new WebSocket(NODE_URL || 'wss://mainnet.infura.io/ws');
 
 const START_TIME = (new Date()).getTime();
 
@@ -16,22 +13,26 @@ function runtime() {
 
 const client = new Client({ ws });
 
-const listenerLoop = _.throttle(
-  function () {
-    console.log(`looping for ${runtime()}ms`);
+ws.on('open', async () => {
+  const clientVersion = await client.web3_clientVersion([]);
+  console.log('client version', clientVersion);
 
-    client.cmd(Method.web3_clientVersion)
-      .then(
-        version => console.log(`client version: ${version}`)
-      );
+  async function loop() {
+    const blockNumber = await client.eth_blockNumber([]);
+    console.log(`latest block number: ${blockNumber}`);
 
-    listenerLoop();
-  },
-  1000
-);
+    const block = await client.eth_getBlockByNumber([blockNumber, false]);
+    console.log(`fetched block`, block);
+  }
 
-ws.on('open', () => {
-  listenerLoop();
+  setInterval(() => {
+    loop().catch(
+      error => {
+        console.error(`error encountered in loop after ${runtime()}ms:`, error);
+      }
+    );
+  }, 1000);
+
 
   // close the socket on exit
   process.on('exit', () => {
