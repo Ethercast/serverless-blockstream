@@ -4,6 +4,7 @@
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": false,
     "sourceMap": true,
+    "target": "es3",
     "lib": [
       "es5",
       "es2015.promise"
