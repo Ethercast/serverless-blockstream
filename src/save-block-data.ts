@@ -22,16 +22,16 @@ export default async function saveBlockData(block: BlockWithFullTransactions) {
   logger.info(metadata, 'beginning save operation');
 
   try {
-    await documentClient.put({
+    const { ConsumedCapacity } = await documentClient.put({
       TableName: BLOCKS_TABLE,
       Item: block
     }).promise();
+
+    logger.info({ metadata, ConsumedCapacity }, 'completed save operation');
   } catch (err) {
     logger.error({ err, metadata }, 'failed to save block');
     throw err;
   }
-
-  logger.info(metadata, 'completed save operation');
 }
 
 
