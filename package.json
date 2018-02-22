@@ -6,7 +6,7 @@
   "devDependencies": {
     "@types/aws-lambda": "0.0.32",
     "@types/bunyan": "^1.8.4",
-    "@types/node": "^9.4.6",
+    "@types/node": "^6.0.101",
     "@types/underscore": "^1.8.7",
     "@types/ws": "^4.0.1",
     "aws-sdk": "^2.200.0",
