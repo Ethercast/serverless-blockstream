@@ -23,13 +23,11 @@ export default async function saveBlockData(block: BlockWithTransactionHashes,
 
   const max = Math.max(transactions.length, logs.length);
   const numPuts = Math.max(1, Math.ceil(max / MAX_ITEMS_PER_PUT));
-
-  const txChunks = _.chunk(transactions, numPuts) as Transaction[][];
-  const logChunks = _.chunk(logs, numPuts) as Log[][];
+  const chunkSize = Math.ceil(max / numPuts);
 
   for (let i = 0; i < numPuts; i++) {
     logger.debug({ metadata, putIx: i }, 'putting chunk');
-    await putAll(metadata, block, txChunks[i], logChunks[i]);
+    await putAll(metadata, block, transactions.slice(i * chunkSize, chunkSize), logs.slice(i * chunkSize, chunkSize));
   }
 
   logger.info(metadata, 'completed save operation');
