@@ -22,6 +22,7 @@ module.exports = {
     module: {
         loaders: [
             {test: /\.ts(x?)$/, loader: 'ts-loader'}
-        ]
+        ],
+        noParse: [/\/dtrace-provider\.js$/, /\/buffer-util\.js$/, /\/validation\.js$/]
     }
 };
