@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
-import EthWsClient from './eth-ws-client';
-import logger from './logger';
-import updateBlocks from './update-blocks';
+import EthWsClient from './src/eth-ws-client';
+import logger from './src/logger';
+import updateBlocks from './src/update-blocks';
 
 const { WSS_NODE_URL = 'wss://mainnet.infura.io/ws' } = process.env;
 

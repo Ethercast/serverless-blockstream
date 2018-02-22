@@ -28,11 +28,11 @@ provider:
 
 functions:
   poll-for-blocks:
-    handler: src/poll-blocks.start
+    handler: index.start
     events:
       - schedule:
           rate: rate(2 minutes)
-          enabled: true
+          enabled: false
 
 resources:
   Resources:
