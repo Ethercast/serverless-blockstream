@@ -83,7 +83,7 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
           err => {
             parentLogger.error({ err }, 'unexpected error encountered');
 
-            locked = false;
+            context.done();
           }
         );
     }, 1000);
