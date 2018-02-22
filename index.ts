@@ -5,11 +5,14 @@ import updateBlocks from './src/update-blocks';
 import { Callback, Context, Handler } from 'aws-lambda';
 
 const {
-  RUN_TIME_LENGTH,
+  RUN_TIME_LENGTH_SECONDS,
   WSS_NODE_URL = 'wss://mainnet.infura.io/ws'
 } = process.env;
 
-const msRuntime: number = (parseInt(RUN_TIME_LENGTH) || 120) * 1000;
+let msRuntime: number = (parseInt(RUN_TIME_LENGTH_SECONDS) || 120) * 1000;
+if (isNaN(msRuntime)) {
+  msRuntime = 120000;
+}
 
 export const start: Handler = (event: any, context: Context, cb: Callback) => {
   const ws = new WebSocket(WSS_NODE_URL);
@@ -26,7 +29,7 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
     let locked = false;
 
     const interval = setInterval(() => {
-      if (runtime() >= RUN_TIME_LENGTH) {
+      if (runtime() >= RUN_TIME_LENGTH_SECONDS) {
         context.done();
         clearInterval(interval);
         return;
