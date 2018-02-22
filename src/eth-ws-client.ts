@@ -49,7 +49,7 @@ export default class EthWSClient {
     this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, [hash, includeFullTransactions]);
 
   eth_getBlockByNumber = (block: string | BigNumber | 'earliest' | 'latest' | 'pending', includeFullTransactions: boolean = false) =>
-    this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
+    this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
 
   eth_blockNumber = () => this.cmd<string>(Method.eth_blockNumber).then(s => new BigNumber(s));
 

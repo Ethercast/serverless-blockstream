@@ -54,8 +54,8 @@ export interface BlockWithFullTransactions extends Block {
 }
 
 export interface LogFilter {
-  topics: (string | string[])[];
+  topics?: (string | string[])[];
   fromBlock: string | BigNumber | number | 'latest' | 'earliest' | 'pending';
   toBlock: string | BigNumber | number | 'latest' | 'earliest' | 'pending';
-  address: string;
+  address?: string;
 }
