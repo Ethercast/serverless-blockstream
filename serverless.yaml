@@ -12,10 +12,9 @@ provider:
   memorySize: 512 # optional, in MB, default is 1024
   environment: # service wide environment variables
     BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks
-    TRANSACTIONS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-txs
     LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs
     WSS_NODE_URL: "wss://mainnet.infura.io/ws"
-    RUN_TIME_LENGTH_SECONDS: "120"
+    RUN_TIME_LENGTH_SECONDS: "10"
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow
       Action: # Gives permission to DynamoDB tables in a specific region
@@ -25,13 +24,12 @@ provider:
         - dynamodb:BatchWriteItem
       Resource:
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.BLOCKS_TABLE}"
-        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.TRANSACTIONS_TABLE}"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.LOGS_TABLE}"
 
 functions:
   poll-for-blocks:
     handler: index.start
-    timeout: 60
+    timeout: 15
     events:
       - schedule:
           rate: rate(2 minutes)
@@ -52,24 +50,6 @@ resources:
           - AttributeName: hash
             KeyType: HASH
           - AttributeName: number
-            KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-
-    TransactionsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.environment.TRANSACTIONS_TABLE}
-        AttributeDefinitions:
-          - AttributeName: hash
-            AttributeType: S
-          - AttributeName: blockHash
-            AttributeType: S
-        KeySchema:
-          - AttributeName: hash
-            KeyType: HASH
-          - AttributeName: blockHash
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
@@ -97,15 +77,6 @@ custom:
   webpackIncludeModules: true # enable auto-packing of external modules
   capacities:
     - table: BlocksTable  # DynamoDB Resource
-      read:
-        minimum: 1        # Minimum read capacity
-        maximum: 200      # Maximum read capacity
-        usage: 0.75       # Targeted usage percentage
-      write:
-        minimum: 1        # Minimum write capacity
-        maximum: 200      # Maximum write capacity
-        usage: 0.85       # Targeted usage percentage
-    - table: TransactionsTable  # DynamoDB Resource
       read:
         minimum: 1        # Minimum read capacity
         maximum: 200      # Maximum read capacity

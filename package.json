@@ -1,11 +1,13 @@
 {
-  "name": "web3-ws-client-ts",
+  "name": "serverless-blockstream",
   "version": "1.0.0",
   "description": "a web3 ws client for ts",
   "main": "index.js",
   "dependencies": {
+    "@types/isomorphic-fetch": "0.0.34",
     "bignumber.js": "^6.0.0",
     "bunyan": "^1.8.12",
+    "isomorphic-fetch": "^2.2.1",
     "ts-loader": "^3.5.0",
     "typescript": "^2.7.2",
     "underscore": "^1.8.3",

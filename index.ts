@@ -1,5 +1,6 @@
 import * as WebSocket from 'ws';
-import EthWsClient from './src/eth-ws-client';
+import EthWsClient from './src/client/eth-ws-client';
+import EthHttpsClient from './src/client/eth-https-client';
 import parentLogger from './src/logger';
 import updateBlocks from './src/update-blocks';
 import { Callback, Context, Handler } from 'aws-lambda';

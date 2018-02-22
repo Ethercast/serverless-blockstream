@@ -1,16 +1,16 @@
-import EthWSClient from './eth-ws-client';
 import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import saveBlockData from './save-block-data';
 import { Transaction } from './model';
+import EthClient from './client/eth-client';
 
 // the number of blocks to look back
 const { STARTING_BLOCK = 0, MAX_NUM_BLOCKS = 5 } = process.env;
 
 let lastReconciledBlockNumber: BigNumber = new BigNumber(STARTING_BLOCK || 0);
 
-export default async function updateBlocks(client: EthWSClient) {
+export default async function updateBlocks(client: EthClient) {
   const latestBlockNumber = await client.eth_blockNumber();
   logger.debug({ latestBlockNumber, lastReconciledBlockNumber }, 'retrieved latest block number');
 
