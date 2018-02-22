@@ -91,6 +91,7 @@ resources:
           WriteCapacityUnits: 1
 
 custom:
+  webpackIncludeModules: true # enable auto-packing of external modules
   capacities:
     - table: BlocksTable  # DynamoDB Resource
       read:

@@ -23,6 +23,10 @@ module.exports = {
         loaders: [
             {test: /\.ts(x?)$/, loader: 'ts-loader'}
         ]
-        // noParse: [/\/dtrace-provider\.js$/, /\/buffer-util\.js$/, /\/validation\.js$/]
-    }
+    },
+    externals: [
+        'ws',
+        'bunyan',
+        'aws-sdk'
+    ]
 };

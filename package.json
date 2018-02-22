@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "a web3 ws client for ts",
   "main": "index.js",
-  "devDependencies": {
+  "dependencies": {
     "@types/aws-lambda": "0.0.32",
     "@types/bunyan": "^1.8.4",
     "@types/node": "^6.0.101",
