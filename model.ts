@@ -13,22 +13,38 @@ export interface Transaction {
 }
 
 export interface Block {
-  number: string;
-  hash: string;
-  parentHash: string;
-  nonce: string;
-  sha3Uncles: string;
-  logsBloom: string;
-  transactionsRoot: string;
-  stateRoot: string;
-  miner: string;
   difficulty: string;
-  totalDifficulty: string;
   extraData: string;
-  size: string;
   gasLimit: string;
   gasUsed: string;
+  hash: string;
+  logsBloom: string;
+  miner: string;
+  mixHash: string;
+  nonce: string;
+  number: string;
+  parentHash: string;
+  receiptsRoot: string;
+  sha3Uncles: string;
+  size: string;
+  stateRoot: string;
   timestamp: string;
-  transactions: Transaction[];
+  totalDifficulty: string;
+  transactionsRoot: string;
   uncles: string[];
+}
+
+export interface BlockWithTransactionHashes extends Block {
+  transactions: string[];
+}
+
+export interface BlockWithFullTransactions extends Block {
+  transactions: Transaction[];
+}
+
+export interface LogFilter {
+  topics: (string | string[])[];
+  fromBlock: string | BigNumber | number | 'latest' | 'earliest' | 'pending';
+  toBlock: string | BigNumber | number | 'latest' | 'earliest' | 'pending';
+  address: string;
 }

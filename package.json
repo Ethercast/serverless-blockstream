@@ -18,7 +18,8 @@
   },
   "scripts": {
     "test": "npm test",
-    "start": "ts-node index.ts"
+    "start": "ts-node index.ts",
+    "debug": "LOG_LEVEL=debug npm start"
   },
   "author": "Moody Salem",
   "license": "ISC"
