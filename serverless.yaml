@@ -34,7 +34,7 @@ functions:
     events:
       - schedule:
           rate: rate(2 minutes)
-          enabled: true
+          enabled: false
 
 resources:
   Resources:
