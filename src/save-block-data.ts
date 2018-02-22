@@ -7,6 +7,8 @@ const { BLOCKS_TABLE, TRANSACTIONS_TABLE, LOGS_TABLE } = process.env;
 
 const documentClient = new DynamoDB.DocumentClient();
 
+const MAX_ITEMS_PER_PUT = 25;
+
 export default async function saveBlockData(block: BlockWithTransactionHashes,
                                             transactions: Transaction[],
                                             logs: Log[]) {
@@ -16,11 +18,28 @@ export default async function saveBlockData(block: BlockWithTransactionHashes,
 
   const metadata = {
     blockHash: block.hash,
-    blockNumber: block.number,
-    numTransactions: transactions.length,
-    numLogs: logs.length
+    blockNumber: block.number
   };
 
+  const max = Math.max(transactions.length, logs.length);
+  const numPuts = Math.max(1, Math.ceil(max / MAX_ITEMS_PER_PUT));
+
+  const txChunks = _.chunk(transactions, numPuts) as Transaction[][];
+  const logChunks = _.chunk(logs, numPuts) as Log[][];
+
+  for (let i = 0; i < numPuts; i++) {
+    logger.debug({ metadata, putIx: i }, 'putting chunk');
+    await putAll(metadata, block, txChunks[i], logChunks[i]);
+  }
+
+  logger.info(metadata, 'completed save operation');
+}
+
+
+async function putAll(metadata: { blockHash: string; blockNumber: string; },
+                      block: BlockWithTransactionHashes,
+                      transactions: Transaction[],
+                      logs: Log[]) {
   logger.info(metadata, 'beginning save operation');
 
   let putItems: DynamoDB.DocumentClient.BatchWriteItemRequestMap | undefined = {
@@ -45,7 +64,7 @@ export default async function saveBlockData(block: BlockWithTransactionHashes,
   while (putItems && _.any(putItems, (value) => value.length > 0)) {
     const RequestItems: any = _.omit(putItems, (value: DynamoDB.DocumentClient.WriteRequests) => value.length === 0);
 
-    logger.debug({ metadata, RequestItems }, 'processing items');
+    logger.debug({ metadata }, 'processing items');
 
     // process them
     const { UnprocessedItems, ConsumedCapacity } = await documentClient.batchWrite({
@@ -57,5 +76,5 @@ export default async function saveBlockData(block: BlockWithTransactionHashes,
     logger.debug({ metadata, ConsumedCapacity }, 'Consumed capacity');
   }
 
-  logger.info(metadata, 'completed save operation');
+  logger.info(metadata, 'completed put items');
 }

@@ -64,6 +64,7 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
 
     ws.on('close', (code: number, reason: string) => {
       parentLogger.info({ code, reason }, 'websocket closed');
+      context.done();
     });
 
     process.on('SIGINT', function () {
