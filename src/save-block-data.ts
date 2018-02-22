@@ -19,10 +19,12 @@ export default async function saveBlockData(block: BlockWithFullTransactions) {
     blockNumber: block.number
   };
 
+  logger.info(metadata, 'beginning save operation');
+
   await documentClient.put({
     TableName: BLOCKS_TABLE,
     Item: block
-  });
+  }).promise();
 
   logger.info(metadata, 'completed save operation');
 }
