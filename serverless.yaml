@@ -83,7 +83,7 @@ resources:
           - AttributeName: transactionHash
             KeyType: HASH
           - AttributeName: logIndex
-            KeyType: HASH
+            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
