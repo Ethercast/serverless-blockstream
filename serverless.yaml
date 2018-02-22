@@ -46,6 +46,8 @@ resources:
         KeySchema:
           - AttributeName: hash
             KeyType: HASH
+          - AttributeName: number
+            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
