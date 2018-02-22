@@ -84,7 +84,7 @@ custom:
       write:
         minimum: 1        # Minimum write capacity
         maximum: 200      # Maximum write capacity
-        usage: 0.85       # Targeted usage percentage
+        usage: 0.75       # Targeted usage percentage
     - table: LogsTable    # DynamoDB Resource
       read:
         minimum: 1        # Minimum read capacity
@@ -93,4 +93,4 @@ custom:
       write:
         minimum: 1        # Minimum write capacity
         maximum: 200      # Maximum write capacity
-        usage: 0.85       # Targeted usage percentage
+        usage: 0.75       # Targeted usage percentage
