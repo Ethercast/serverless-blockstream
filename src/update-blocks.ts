@@ -33,29 +33,25 @@ export default async function updateBlocks(client: EthClient) {
       break;
     }
 
-    const { transactions } = block;
-
-    if (transactions.length === 0 || typeof transactions[0] === 'string') {
-      logger.error({ transactions: block.transactions }, 'invalid transactions: expected objects');
-      throw new Error('invaild transactions: expected object but found string');
-    }
-
-    const txs = transactions as Transaction[];
-
-    logger.info({ blockHash: block.hash, number: block.number }, 'fetched missing block');
-
-    const logs = await client.eth_getLogs({
-      fromBlock: block.number,
-      toBlock: block.number
-    });
+    // const { transactions } = block;
+    //
+    // if (transactions.length === 0 || typeof transactions[0] === 'string') {
+    //   logger.error({ transactions: block.transactions }, 'invalid transactions: expected objects');
+    //   throw new Error('invaild transactions: expected object but found string');
+    // }
+    //
+    // const txs = transactions as Transaction[];
+    //
+    // logger.info({ blockHash: block.hash, number: block.number }, 'fetched missing block');
+    //
+    // const logs = await client.eth_getLogs({
+    //   fromBlock: block.number,
+    //   toBlock: block.number
+    // });
 
     logger.debug({}, `fetched logs for ${block.number}`);
 
-    await saveBlockData(
-      _.omit(block, 'transactions'),
-      txs,
-      logs
-    );
+    await saveBlockData(block);
 
     lastReconciledBlockNumber = missingBlockNumbers[i];
   }

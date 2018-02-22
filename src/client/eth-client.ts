@@ -12,7 +12,7 @@ export enum Method {
 
 type MethodParameter = boolean | string | number | BigNumber | object;
 
-function serializeParameter(p: any): any {
+function serializeToMethodParameter(p: any): MethodParameter {
   switch (typeof p) {
     case 'object':
       if (p instanceof BigNumber) {
@@ -20,16 +20,19 @@ function serializeParameter(p: any): any {
       }
 
       if (Array.isArray(p)) {
-        return _.map(p, serializeParameter);
+        return _.map(p, serializeToMethodParameter);
       }
 
-      return _.mapObject(p, serializeParameter);
+      return _.mapObject(p, serializeToMethodParameter);
     case 'string':
       return p;
     case 'number':
       return `0x${new BigNumber(p).toString(16)}`;
     case 'boolean':
       return p;
+
+    default:
+      throw new Error('unhandled type');
   }
 }
 
@@ -38,9 +41,13 @@ export type BlockParameter = string | BigNumber | 'earliest' | 'latest' | 'pendi
 export default interface EthClient {
   web3_clientVersion(): Promise<string>;
 
-  eth_getBlockByHash(hash: string, includeFullTransactions: boolean): Promise<BlockWithFullTransactions | BlockWithTransactionHashes | null>;
+  eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
 
-  eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: boolean): Promise<BlockWithFullTransactions | BlockWithTransactionHashes | null>;
+  eth_getBlockByHash(hash: string, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
+
+  eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+
+  eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
 
   eth_blockNumber(): Promise<BigNumber>;
 

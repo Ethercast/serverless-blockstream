@@ -1,4 +1,4 @@
-import EthClient, { Method } from './eth-client';
+import EthClient, { BlockParameter, Method } from './eth-client';
 import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter } from '../model';
 import { MethodParameter, serializeParameter } from './util';
 import BigNumber from 'bignumber.js';
@@ -6,6 +6,18 @@ import logger from '../logger';
 import * as fetch from 'isomorphic-fetch';
 
 export default class EthHttpsClient implements EthClient {
+  public eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+  public eth_getBlockByHash(hash: string, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
+  public eth_getBlockByHash(hash: string, includeFullTransactions: boolean): any {
+    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, [hash, includeFullTransactions]);
+  }
+
+  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
+  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: boolean): any {
+    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
+  }
+
   nextRequestId: number = 0;
   endpointUrl: string;
 
@@ -14,12 +26,6 @@ export default class EthHttpsClient implements EthClient {
   }
 
   web3_clientVersion = () => this.cmd<string>(Method.web3_clientVersion);
-
-  eth_getBlockByHash = (hash: string, includeFullTransactions: boolean = false) =>
-    this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, [hash, includeFullTransactions]);
-
-  eth_getBlockByNumber = (block: string | BigNumber | 'earliest' | 'latest' | 'pending', includeFullTransactions: boolean = false) =>
-    this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
 
   eth_blockNumber = () => this.cmd<string>(Method.eth_blockNumber).then(s => new BigNumber(s));
 
