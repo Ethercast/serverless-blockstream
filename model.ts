@@ -1,5 +1,12 @@
 export interface Log {
-
+  logIndex: string;
+  blockNumber: string;
+  blockHash: string;
+  transactionHash: string;
+  transactionIndex: string;
+  address: string;
+  data: string;
+  topics: string[];
 }
 
 export interface Transaction {

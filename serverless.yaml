@@ -73,12 +73,14 @@ resources:
       Properties:
         TableName: ${self:provider.environment.LOGS_TABLE}
         AttributeDefinitions:
-          - AttributeName: txHash
+          - AttributeName: transactionHash
             AttributeType: S
           - AttributeName: logIndex
             AttributeType: S
         KeySchema:
-          - AttributeName: txHash
+          - AttributeName: transactionHash
+            KeyType: HASH
+          - AttributeName: logIndex
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
