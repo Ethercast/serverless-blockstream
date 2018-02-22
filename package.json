@@ -3,23 +3,23 @@
   "version": "1.0.0",
   "description": "a web3 ws client for ts",
   "main": "index.js",
-  "dependencies": {
+  "devDependencies": {
+    "@types/aws-lambda": "0.0.32",
     "@types/bunyan": "^1.8.4",
     "@types/underscore": "^1.8.7",
     "@types/ws": "^4.0.1",
     "bignumber.js": "^6.0.0",
     "bunyan": "^1.8.12",
+    "serverless-dynamodb-autoscaling": "^0.6.2",
+    "serverless-webpack": "^4.3.0",
+    "ts-loader": "^3.5.0",
     "ts-node": "^5.0.0",
+    "typescript": "^2.7.2",
     "underscore": "^1.8.3",
     "ws": "^4.0.0"
   },
-  "devDependencies": {
-    "typescript": "^2.7.2"
-  },
   "scripts": {
-    "test": "npm test",
-    "start": "ts-node index.ts",
-    "debug": "LOG_LEVEL=debug npm start"
+    "test": "npm test"
   },
   "author": "Moody Salem",
   "license": "ISC"

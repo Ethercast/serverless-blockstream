@@ -1,3 +1,7 @@
+export interface Log {
+
+}
+
 export interface Transaction {
   hash: string;
   nonce: string;
@@ -13,11 +17,11 @@ export interface Transaction {
 }
 
 export interface Block {
+  hash: string;
   difficulty: string;
   extraData: string;
   gasLimit: string;
   gasUsed: string;
-  hash: string;
   logsBloom: string;
   miner: string;
   mixHash: string;

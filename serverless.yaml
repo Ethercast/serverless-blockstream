@@ -1,0 +1,115 @@
+service:
+  name: serverless-blockstream
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+  - serverless-dynamodb-autoscaling
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  environment: # service wide environment variables
+    BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks
+    TRANSACTIONS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-txs
+    LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs
+    WSS_NODE_URL: "wss://mainnet.infura.io/ws"
+  iamRoleStatements: # permissions for all of your functions can be set here
+    - Effect: Allow
+      Action: # Gives permission to DynamoDB tables in a specific region
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource:
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.BLOCKS_TABLE}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.TRANSACTIONS_TABLE}"
+
+functions:
+  poll-for-blocks:
+    handler: index.start
+    events:
+      - schedule:
+          rate: rate(1 minutes)
+          enabled: false
+
+resources:
+  Resources:
+    BlocksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.BLOCKS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: hash
+            AttributeType: S
+          - AttributeName: number
+            AttributeType: N
+        KeySchema:
+          - AttributeName: hash
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+    TransactionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TRANSACTIONS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: hash
+            AttributeType: S
+          - AttributeName: blockHash
+            AttributeType: S
+        KeySchema:
+          - AttributeName: hash
+            KeyType: HASH
+          - AttributeName: blockHash
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+    LogsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.LOGS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: txHash
+            AttributeType: S
+          - AttributeName: logIndex
+            AttributeType: S
+        KeySchema:
+          - AttributeName: txHash
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+custom:
+  capacities:
+    - table: BlocksTable  # DynamoDB Resource
+      read:
+        minimum: 1        # Minimum read capacity
+        maximum: 200      # Maximum read capacity
+        usage: 0.75       # Targeted usage percentage
+      write:
+        minimum: 1        # Minimum write capacity
+        maximum: 200      # Maximum write capacity
+        usage: 0.85       # Targeted usage percentage
+    - table: TransactionsTable  # DynamoDB Resource
+      read:
+        minimum: 1        # Minimum read capacity
+        maximum: 200      # Maximum read capacity
+        usage: 0.75       # Targeted usage percentage
+      write:
+        minimum: 1        # Minimum write capacity
+        maximum: 200      # Maximum write capacity
+        usage: 0.85       # Targeted usage percentage
+    - table: LogsTable    # DynamoDB Resource
+      read:
+        minimum: 1        # Minimum read capacity
+        maximum: 200      # Maximum read capacity
+        usage: 0.75       # Targeted usage percentage
+      write:
+        minimum: 1        # Minimum write capacity
+        maximum: 200      # Maximum write capacity
+        usage: 0.85       # Targeted usage percentage
