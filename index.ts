@@ -1,5 +1,6 @@
 import WebSocket = require('ws');
 import Client from './client';
+import logger from './logger';
 
 const { NODE_URL } = process.env;
 
@@ -15,20 +16,20 @@ const client = new Client({ ws });
 
 ws.on('open', async () => {
   const clientVersion = await client.web3_clientVersion([]);
-  console.log('client version', clientVersion);
+  logger.info('client version', clientVersion);
 
   async function loop() {
     const blockNumber = await client.eth_blockNumber([]);
-    console.log(`latest block number: ${blockNumber}`);
+    logger.info(`retrieved latest block number: ${blockNumber}`);
 
     const block = await client.eth_getBlockByNumber([blockNumber, false]);
-    console.log(`fetched block`, block);
+    logger.debug(`fetched block`, block);
   }
 
   setInterval(() => {
     loop().catch(
-      error => {
-        console.error(`error encountered in loop after ${runtime()}ms:`, error);
+      err => {
+        logger.error({ msg: `error encountered in loop after ${runtime()}ms`, err });
       }
     );
   }, 1000);

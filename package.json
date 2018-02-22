@@ -4,15 +4,21 @@
   "description": "a web3 ws client for ts",
   "main": "index.js",
   "dependencies": {
+    "@types/bunyan": "^1.8.4",
     "@types/underscore": "^1.8.7",
     "@types/ws": "^4.0.1",
     "bignumber.js": "^6.0.0",
+    "bunyan": "^1.8.12",
+    "ts-node": "^5.0.0",
     "underscore": "^1.8.3",
     "ws": "^4.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^2.7.2"
+  },
   "scripts": {
-    "test": "npm test"
+    "test": "npm test",
+    "start": "ts-node index.ts"
   },
   "author": "Moody Salem",
   "license": "ISC"

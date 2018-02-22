@@ -1,5 +1,5 @@
 import WebSocket = require('ws');
-import { Block } from './Block';
+import { Block } from './model';
 import BigNumber from 'bignumber.js';
 
 export enum Method {
@@ -24,7 +24,10 @@ export default class EthWSClient {
   eth_getBlockByNumber = this.createMethod<Block, [string | BigNumber | 'earliest' | 'latest' | 'pending', boolean]>(Method.eth_getBlockByNumber);
   eth_blockNumber = this.createMethod<string>(Method.eth_blockNumber);
 
-  private createMethod<TResponse, TParams extends [void] = [void], TCmdResponse = TResponse>(method: Method, transform: (cmdResponse: TCmdResponse) => TResponse = (i) => i): (params: TParams) => Promise<TResponse> {
+  private createMethod<TResponse,
+    TParams extends [void] = [void],
+    TCmdResponse = TResponse>(method: Method,
+                              transform: (cmdResponse: TCmdResponse) => TResponse = (i) => i): (params: TParams) => Promise<TResponse> {
     return function (params: TParams) {
       return transform(this.cmd<TResponse>(method, params));
     };
