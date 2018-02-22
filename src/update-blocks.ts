@@ -32,6 +32,10 @@ export default async function updateBlocks(client: EthClient) {
       break;
     }
 
+    // TODO: get the logs for the transactions in the block and put those in the logs table
+    // before putting the block in the table
+    // DO this so that we have all the logs in dynamo before an event is triggered for an added block
+
     // const { transactions } = block;
     //
     // if (transactions.length === 0 || typeof transactions[0] === 'string') {
