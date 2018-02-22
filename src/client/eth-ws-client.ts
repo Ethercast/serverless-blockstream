@@ -2,7 +2,7 @@ import * as WebSocket from 'ws';
 import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter } from '../model';
 import BigNumber from 'bignumber.js';
 import logger from '../logger';
-import { MethodParameter, serializeParameter } from './util';
+import { MethodParameter, serializeToMethodParameter } from './util';
 import EthClient, { BlockParameter, Method } from './eth-client';
 
 export default class EthWSClient implements EthClient {
@@ -68,7 +68,7 @@ export default class EthWSClient implements EthClient {
         jsonrpc: '2.0',
         id: requestId,
         method,
-        params: serializeParameter(params)
+        params: serializeToMethodParameter(params)
       };
 
       logger.debug({ method, request }, 'sending request');

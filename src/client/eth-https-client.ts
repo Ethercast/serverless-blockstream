@@ -1,6 +1,6 @@
 import EthClient, { BlockParameter, Method } from './eth-client';
 import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter } from '../model';
-import { MethodParameter, serializeParameter } from './util';
+import { MethodParameter, serializeToMethodParameter } from './util';
 import BigNumber from 'bignumber.js';
 import logger from '../logger';
 import * as fetch from 'isomorphic-fetch';
@@ -40,7 +40,7 @@ export default class EthHttpsClient implements EthClient {
       jsonrpc: '2.0',
       id: requestId,
       method,
-      params: serializeParameter(params)
+      params: serializeToMethodParameter(params)
     };
 
     logger.debug({ method, request }, 'sending request');

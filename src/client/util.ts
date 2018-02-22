@@ -3,8 +3,7 @@ import * as _ from 'underscore';
 
 export type MethodParameter = boolean | string | number | BigNumber | object;
 
-
-export function serializeParameter(p: any): any {
+export function serializeToMethodParameter(p: any): MethodParameter {
   switch (typeof p) {
     case 'object':
       if (p instanceof BigNumber) {
@@ -12,15 +11,18 @@ export function serializeParameter(p: any): any {
       }
 
       if (Array.isArray(p)) {
-        return _.map(p, serializeParameter);
+        return _.map(p, serializeToMethodParameter);
       }
 
-      return _.mapObject(p, serializeParameter);
+      return _.mapObject(p, serializeToMethodParameter);
     case 'string':
       return p;
     case 'number':
       return `0x${new BigNumber(p).toString(16)}`;
     case 'boolean':
       return p;
+
+    default:
+      throw new Error('unhandled type');
   }
 }
