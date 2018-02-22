@@ -1,4 +1,4 @@
-import WebSocket = require('ws');
+import * as WebSocket from 'ws';
 import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter } from './model';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';

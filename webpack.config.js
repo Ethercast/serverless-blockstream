@@ -1,5 +1,6 @@
 const path = require('path');
 const slsw = require('serverless-webpack');
+var nodeExternals = require('webpack-node-externals')
 
 module.exports = {
     entry: slsw.lib.entries,
@@ -24,9 +25,5 @@ module.exports = {
             {test: /\.ts(x?)$/, loader: 'ts-loader'}
         ]
     },
-    externals: [
-        'ws',
-        'bunyan',
-        'aws-sdk'
-    ]
+    externals: [nodeExternals()]
 };

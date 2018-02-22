@@ -1,4 +1,4 @@
-import WebSocket = require('ws');
+import * as WebSocket from 'ws';
 import EthWsClient from './eth-ws-client';
 import logger from './logger';
 import updateBlocks from './update-blocks';
@@ -39,12 +39,12 @@ export function start() {
     }, 1000);
 
 
-    ws.on('error', (err) => {
+    ws.on('error', (err: Error) => {
       logger.fatal({ err }, 'websocket error');
       process.exit(1);
     });
 
-    ws.on('close', (code, reason) => {
+    ws.on('close', (code: number, reason: string) => {
       logger.info({ code, reason }, 'websocket closed');
     });
 
