@@ -87,7 +87,7 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
           err => {
             logger.error({ err }, 'unexpected error encountered');
 
-            context.done();
+            context.done(err);
           }
         );
     }, 1000);
