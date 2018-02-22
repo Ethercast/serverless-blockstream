@@ -21,39 +21,36 @@ export default async function saveBlockData(block: BlockWithTransactionHashes,
     blockNumber: block.number
   };
 
-  const max = Math.max(transactions.length, logs.length);
-  const numPuts = Math.max(1, Math.ceil(max / MAX_ITEMS_PER_PUT));
-  const chunkSize = Math.ceil(max / numPuts);
-
-  for (let i = 0; i < numPuts; i++) {
-    logger.debug({ metadata, putIx: i }, 'putting chunk');
-    await putAll(metadata, block, transactions.slice(i * chunkSize, chunkSize), logs.slice(i * chunkSize, chunkSize));
-  }
+  await chunkedPut(metadata, BLOCKS_TABLE, [block]);
+  await chunkedPut(metadata, TRANSACTIONS_TABLE, transactions);
+  await chunkedPut(metadata, LOGS_TABLE, logs);
 
   logger.info(metadata, 'completed save operation');
 }
 
 
+async function chunkedPut(metadata: { blockHash: string; blockNumber: string },
+                          tableName: string,
+                          items: any[]) {
+
+  const numPuts = Math.max(1, Math.ceil(items.length / MAX_ITEMS_PER_PUT));
+  const chunkSize = Math.ceil(items.length / numPuts);
+
+  for (let putIx = 0; putIx < numPuts; putIx++) {
+    logger.debug({ metadata, tableName, putIx });
+    await putAll(metadata, tableName, items.slice(putIx * chunkSize, putIx * chunkSize + numPuts));
+  }
+}
+
 async function putAll(metadata: { blockHash: string; blockNumber: string; },
-                      block: BlockWithTransactionHashes,
-                      transactions: Transaction[],
-                      logs: Log[]) {
+                      tableName: string,
+                      items: any[]) {
   logger.info(metadata, 'beginning save operation');
 
   let putItems: DynamoDB.DocumentClient.BatchWriteItemRequestMap | undefined = {
-    [BLOCKS_TABLE]: [
-      {
-        PutRequest: { Item: block }
-      }
-    ],
-    [TRANSACTIONS_TABLE]: transactions.map(
-      transaction => ({
-        PutRequest: { Item: transaction }
-      })
-    ),
-    [LOGS_TABLE]: logs.map(
-      log => ({
-        PutRequest: { Item: log }
+    [tableName]: items.map(
+      (Item: any) => ({
+        PutRequest: { Item }
       })
     )
   };
