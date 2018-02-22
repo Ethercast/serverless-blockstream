@@ -2,13 +2,22 @@ import * as WebSocket from 'ws';
 import EthWsClient from './src/eth-ws-client';
 import logger from './src/logger';
 import updateBlocks from './src/update-blocks';
+import { Callback, Context, Handler } from 'aws-lambda';
 
-const { WSS_NODE_URL = 'wss://mainnet.infura.io/ws' } = process.env;
+const {
+  RUN_TIME_LENGTH,
+  WSS_NODE_URL = 'wss://mainnet.infura.io/ws'
+} = process.env;
 
-export function start() {
+const msRuntime: number = (parseInt(RUN_TIME_LENGTH) || 120) * 1000;
+
+export const start: Handler = (event: any, context: Context, cb: Callback) => {
   const ws = new WebSocket(WSS_NODE_URL);
 
   const client = new EthWsClient({ ws });
+
+  const START_TIME = new Date().getTime();
+  const runtime = () => (new Date().getTime()) - START_TIME;
 
   ws.on('open', async () => {
     const clientVersion = await client.web3_clientVersion();
@@ -17,6 +26,12 @@ export function start() {
     let locked = false;
 
     const interval = setInterval(() => {
+      if (runtime() >= RUN_TIME_LENGTH) {
+        context.done();
+        clearInterval(interval);
+        return;
+      }
+
       if (locked) {
         return;
       }
@@ -62,4 +77,4 @@ export function start() {
       clearInterval(interval);
     });
   });
-}
+};
