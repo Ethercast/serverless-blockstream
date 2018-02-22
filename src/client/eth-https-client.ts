@@ -48,6 +48,7 @@ export default class EthHttpsClient implements EthClient {
     const response = await fetch(
       endpointUrl,
       {
+        method: 'POST',
         body: JSON.stringify(request),
         headers: {
           Accept: 'application/json',
@@ -64,21 +65,22 @@ export default class EthHttpsClient implements EthClient {
       throw err;
     }
 
+    if (response.status !== 200) {
+      logger.error({
+        request,
+        responseStatus: response.status,
+        responseBody: bodyText
+      }, 'not 200 response from json rpc');
+
+      throw new Error('failed to fetch: ' + response.status);
+    }
+
     let json: any;
     try {
       json = JSON.parse(bodyText);
     } catch (err) {
       logger.error({ err, bodyText }, 'body was not valid json');
       throw err;
-    }
-
-    if (response.status !== 200) {
-      logger.error({
-        responseStatus: response.status,
-        responseBody: json
-      }, 'not 200 response from json rpc');
-
-      throw new Error('failed to fetch: ' + response.status);
     }
 
     if (typeof json.result === 'undefined') {
