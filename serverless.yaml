@@ -29,7 +29,7 @@ functions:
     handler: index.start
     events:
       - schedule:
-          rate: rate(1 minutes)
+          rate: rate(1 minute)
           enabled: false
 
 resources:
