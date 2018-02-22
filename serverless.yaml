@@ -11,8 +11,8 @@ provider:
   runtime: nodejs6.10
   memorySize: 512 # optional, in MB, default is 1024
   environment: # service wide environment variables
-    BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks
-    LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs
+    BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v2
+    LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v2
     NODE_URL: "https://miserably-romantic-sailfish.quiknode.io/7acf0cf7-3b69-40a3-a522-c8598862fdfc/0-nmpE8km7NIBebNx68caQ==/"
     RUN_TIME_LENGTH_SECONDS: "10"
   iamRoleStatements: # permissions for all of your functions can be set here
