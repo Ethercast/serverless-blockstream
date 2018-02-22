@@ -1,13 +1,11 @@
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
+import { DynamoDB } from 'aws-sdk';
 import { BlockWithTransactionHashes, Log, Transaction } from './model';
 import logger from './logger';
 import * as _ from 'underscore';
-import BatchWriteItemRequestMap = DocumentClient.BatchWriteItemRequestMap;
-import WriteRequests = DocumentClient.WriteRequests;
 
 const { BLOCKS_TABLE, TRANSACTIONS_TABLE, LOGS_TABLE } = process.env;
 
-const documentClient = new DocumentClient();
+const documentClient = new DynamoDB.DocumentClient();
 
 export default async function saveBlockData(block: BlockWithTransactionHashes,
                                             transactions: Transaction[],
@@ -25,7 +23,7 @@ export default async function saveBlockData(block: BlockWithTransactionHashes,
 
   logger.info(metadata, 'beginning save operation');
 
-  let putItems: BatchWriteItemRequestMap | undefined = {
+  let putItems: DynamoDB.DocumentClient.BatchWriteItemRequestMap | undefined = {
     [BLOCKS_TABLE]: [
       {
         PutRequest: { Item: block }
@@ -45,7 +43,7 @@ export default async function saveBlockData(block: BlockWithTransactionHashes,
 
   // while there are still unprocessed items
   while (putItems && _.any(putItems, (value) => value.length > 0)) {
-    const RequestItems: any = _.omit(putItems, (value: WriteRequests) => value.length === 0);
+    const RequestItems: any = _.omit(putItems, (value: DynamoDB.DocumentClient.WriteRequests) => value.length === 0);
 
     logger.debug({ metadata, RequestItems }, 'processing items');
 
