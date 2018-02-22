@@ -56,13 +56,27 @@ export default class EthHttpsClient implements EthClient {
       }
     );
 
-    const json = await response.json();
+    let bodyText: string;
+    try {
+      bodyText = await response.text();
+    } catch (err) {
+      logger.error({ err }, 'body text couldnt be extracted');
+      throw err;
+    }
+
+    let json: any;
+    try {
+      json = await response.json();
+    } catch (err) {
+      logger.error({ err, bodyText }, 'body was not valid json');
+      throw err;
+    }
 
     if (response.status !== 200) {
       logger.error({
         responseStatus: response.status,
         responseBody: json
-      }, 'not 200 repsonse from json rpc');
+      }, 'not 200 response from json rpc');
 
       throw new Error('failed to fetch: ' + response.status);
     }
