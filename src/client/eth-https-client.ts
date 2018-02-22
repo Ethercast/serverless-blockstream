@@ -66,7 +66,7 @@ export default class EthHttpsClient implements EthClient {
 
     let json: any;
     try {
-      json = await response.json();
+      json = JSON.parse(bodyText);
     } catch (err) {
       logger.error({ err, bodyText }, 'body was not valid json');
       throw err;
