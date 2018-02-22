@@ -1,6 +1,6 @@
 import * as WebSocket from 'ws';
 import EthWsClient from './src/eth-ws-client';
-import logger from './src/logger';
+import parentLogger from './src/logger';
 import updateBlocks from './src/update-blocks';
 import { Callback, Context, Handler } from 'aws-lambda';
 
@@ -24,12 +24,12 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
 
   ws.on('open', async () => {
     const clientVersion = await client.web3_clientVersion();
-    logger.info('client version', clientVersion);
+    parentLogger.info('client version', clientVersion);
 
     let locked = false;
 
     const interval = setInterval(() => {
-      if (runtime() >= RUN_TIME_LENGTH_SECONDS) {
+      if (runtime() >= msRuntime) {
         context.done();
         clearInterval(interval);
         return;
@@ -49,7 +49,7 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
         )
         .catch(
           err => {
-            logger.error({ err }, 'unexpected error encountered');
+            parentLogger.error({ err }, 'unexpected error encountered');
 
             locked = false;
           }
@@ -58,12 +58,12 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
 
 
     ws.on('error', (err: Error) => {
-      logger.fatal({ err }, 'websocket error');
+      parentLogger.fatal({ err }, 'websocket error');
       process.exit(1);
     });
 
     ws.on('close', (code: number, reason: string) => {
-      logger.info({ code, reason }, 'websocket closed');
+      parentLogger.info({ code, reason }, 'websocket closed');
     });
 
     process.on('SIGINT', function () {
@@ -71,7 +71,7 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
     });
 
     process.on('exit', function () {
-      logger.info('cleaning up resources');
+      parentLogger.info('cleaning up resources');
 
       if (ws.readyState === WebSocket.OPEN) {
         ws.close(1000, 'terminated by process');
