@@ -14,7 +14,7 @@ enum Method {
 
 type MethodParameter = boolean | string | number | BigNumber | object;
 
-function serializeParameter(p: any) {
+function serializeParameter(p: any): any {
   switch (typeof p) {
     case 'object':
       if (p instanceof BigNumber) {
@@ -59,7 +59,7 @@ export default class EthWSClient {
     let requestId = this.nextRequestId++;
     const { ws } = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise<any>((resolve, reject) => {
       let resolved = false;
 
       const listener = function (event: { data: any; type: string; target: WebSocket }): void {
