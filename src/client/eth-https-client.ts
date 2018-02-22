@@ -84,9 +84,7 @@ export default class EthHttpsClient implements EthClient {
     }
 
     if (typeof json.result === 'undefined') {
-      logger.error({
-        responseBody: json
-      }, 'no `result` key in the body');
+      logger.error({ request, responseBody: json }, 'no `result` key in the body');
       throw new Error(`failed to fetch: no result in the body`);
     }
 

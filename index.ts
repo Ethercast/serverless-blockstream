@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
 import EthWsClient from './src/client/eth-ws-client';
 import EthHttpsClient from './src/client/eth-https-client';
-import parentLogger from './src/logger';
+import logger from './src/logger';
 import updateBlocks from './src/update-blocks';
 import { Callback, Context, Handler } from 'aws-lambda';
 import EthClient from './src/client/eth-client';
@@ -55,8 +55,12 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
   (async () => {
     const client = await getClient();
 
-    const clientVersion = await client.web3_clientVersion();
-    parentLogger.info('client version', clientVersion);
+    try {
+      const clientVersion = await client.web3_clientVersion();
+      logger.info({ clientVersion }, 'client version');
+    } catch (err) {
+      logger.error({ err }, 'client version not supported');
+    }
 
     let locked = false;
 
@@ -81,7 +85,7 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
         )
         .catch(
           err => {
-            parentLogger.error({ err }, 'unexpected error encountered');
+            logger.error({ err }, 'unexpected error encountered');
 
             context.done();
           }
