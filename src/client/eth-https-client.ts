@@ -6,6 +6,14 @@ import logger from '../logger';
 import * as fetch from 'isomorphic-fetch';
 
 export default class EthHttpsClient implements EthClient {
+  nextRequestId: number = 0;
+
+  endpointUrl: string;
+
+  constructor({ endpointUrl }: { endpointUrl: string }) {
+    this.endpointUrl = endpointUrl;
+  }
+
   public eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
   public eth_getBlockByHash(hash: string, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
   public eth_getBlockByHash(hash: string, includeFullTransactions: boolean): any {
@@ -18,18 +26,11 @@ export default class EthHttpsClient implements EthClient {
     return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
   }
 
-  nextRequestId: number = 0;
-  endpointUrl: string;
+  public web3_clientVersion = () => this.cmd<string>(Method.web3_clientVersion);
 
-  constructor({ endpointUrl }: { endpointUrl: string }) {
-    this.endpointUrl = endpointUrl;
-  }
+  public eth_blockNumber = () => this.cmd<string>(Method.eth_blockNumber).then(s => new BigNumber(s));
 
-  web3_clientVersion = () => this.cmd<string>(Method.web3_clientVersion);
-
-  eth_blockNumber = () => this.cmd<string>(Method.eth_blockNumber).then(s => new BigNumber(s));
-
-  eth_getLogs = (filter: LogFilter) => this.cmd<any>(Method.eth_getLogs, [filter]);
+  public eth_getLogs = (filter: LogFilter) => this.cmd<any>(Method.eth_getLogs, [filter]);
 
   private async cmd<TResponse>(method: Method, params: MethodParameter[] = []): Promise<TResponse> {
     const requestId = this.nextRequestId++;

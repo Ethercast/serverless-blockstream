@@ -4,10 +4,11 @@ import EthHttpsClient from './src/client/eth-https-client';
 import parentLogger from './src/logger';
 import updateBlocks from './src/update-blocks';
 import { Callback, Context, Handler } from 'aws-lambda';
+import EthClient from './src/client/eth-client';
 
 const {
   RUN_TIME_LENGTH_SECONDS,
-  WSS_NODE_URL = 'wss://mainnet.infura.io/ws'
+  NODE_URL
 } = process.env;
 
 let msRuntime: number = (parseInt(RUN_TIME_LENGTH_SECONDS) || 120) * 1000;
@@ -15,15 +16,29 @@ if (isNaN(msRuntime)) {
   msRuntime = 120000;
 }
 
-export const start: Handler = (event: any, context: Context, cb: Callback) => {
-  const ws = new WebSocket(WSS_NODE_URL);
+function getClient(): EthClient {
+  if (!NODE_URL) {
+    throw new Error('missing node url');
+  }
 
-  const client = new EthWsClient({ ws });
+  if (NODE_URL.toLowerCase().startsWith('https:/')) {
+    return new EthHttpsClient({ endpointUrl: NODE_URL });
+  } else if (NODE_URL.toLowerCase().startsWith('wss:/')) {
+    const ws = new WebSocket(NODE_URL);
+
+    return new EthWsClient({ ws });
+  } else {
+    throw new Error('unknown url protocol')
+  }
+}
+
+export const start: Handler = (event: any, context: Context, cb: Callback) => {
+  const client = getClient();
 
   const START_TIME = new Date().getTime();
   const runtime = () => (new Date().getTime()) - START_TIME;
 
-  ws.on('open', async () => {
+  (async () => {
     const clientVersion = await client.web3_clientVersion();
     parentLogger.info('client version', clientVersion);
 
@@ -57,29 +72,5 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
         );
     }, 1000);
 
-
-    ws.on('error', (err: Error) => {
-      parentLogger.fatal({ err }, 'websocket error');
-      process.exit(1);
-    });
-
-    ws.on('close', (code: number, reason: string) => {
-      parentLogger.info({ code, reason }, 'websocket closed');
-      context.done();
-    });
-
-    process.on('SIGINT', function () {
-      process.exit(0);
-    });
-
-    process.on('exit', function () {
-      parentLogger.info('cleaning up resources');
-
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close(1000, 'terminated by process');
-      }
-
-      clearInterval(interval);
-    });
-  });
+  })();
 };

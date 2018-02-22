@@ -2,7 +2,6 @@ import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import saveBlockData from './save-block-data';
-import { Transaction } from './model';
 import EthClient from './client/eth-client';
 
 // the number of blocks to look back

@@ -3,10 +3,11 @@ import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter } from
 import BigNumber from 'bignumber.js';
 import logger from '../logger';
 import { MethodParameter, serializeParameter } from './util';
-import EthClient, { Method } from './eth-client';
+import EthClient, { BlockParameter, Method } from './eth-client';
 
 export default class EthWSClient implements EthClient {
   ws: WebSocket;
+
   nextRequestId: number = 1;
 
   constructor({ ws }: { ws: WebSocket }) {
@@ -15,19 +16,30 @@ export default class EthWSClient implements EthClient {
 
   web3_clientVersion = () => this.cmd<string>(Method.web3_clientVersion);
 
-  eth_getBlockByHash = (hash: string, includeFullTransactions: boolean = false) =>
-    this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, [hash, includeFullTransactions]);
+  public eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+  public eth_getBlockByHash(hash: string, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
+  public eth_getBlockByHash(hash: string, includeFullTransactions: boolean): any {
+    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, [hash, includeFullTransactions]);
+  }
 
-  eth_getBlockByNumber = (block: string | BigNumber | 'earliest' | 'latest' | 'pending', includeFullTransactions: boolean = false) =>
-    this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
+  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
+  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: boolean): any {
+    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
+  }
 
-  eth_blockNumber = () => this.cmd<string>(Method.eth_blockNumber).then(s => new BigNumber(s));
+  public eth_blockNumber = () => this.cmd<string>(Method.eth_blockNumber).then(s => new BigNumber(s));
 
-  eth_getLogs = (filter: LogFilter) => this.cmd<any>(Method.eth_getLogs, [filter]);
+  public eth_getLogs = (filter: LogFilter) => this.cmd<any>(Method.eth_getLogs, [filter]);
 
   private async cmd<TResponse>(method: Method, params: MethodParameter[] = []): Promise<TResponse> {
-    const requestId = this.nextRequestId++;
     const { ws } = this;
+
+    if (ws.readyState !== ws.OPEN) {
+      throw new Error('websocket is not open!');
+    }
+
+    const requestId = this.nextRequestId++;
 
     return new Promise<any>((resolve, reject) => {
       let resolved = false;
