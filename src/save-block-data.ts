@@ -21,10 +21,15 @@ export default async function saveBlockData(block: BlockWithFullTransactions) {
 
   logger.info(metadata, 'beginning save operation');
 
-  await documentClient.put({
-    TableName: BLOCKS_TABLE,
-    Item: block
-  }).promise();
+  try {
+    await documentClient.put({
+      TableName: BLOCKS_TABLE,
+      Item: block
+    }).promise();
+  } catch (err) {
+    logger.error({ err, metadata }, 'failed to save block');
+    throw err;
+  }
 
   logger.info(metadata, 'completed save operation');
 }

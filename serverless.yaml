@@ -45,7 +45,7 @@ resources:
           - AttributeName: hash
             AttributeType: S
           - AttributeName: number
-            AttributeType: N
+            AttributeType: S
         KeySchema:
           - AttributeName: hash
             KeyType: HASH
