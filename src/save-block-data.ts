@@ -24,7 +24,9 @@ export default async function saveBlockData(block: BlockWithFullTransactions) {
   try {
     const { ConsumedCapacity } = await documentClient.put({
       TableName: BLOCKS_TABLE,
-      Item: block
+      Item: block,
+      ReturnConsumedCapacity: 'TOTAL',
+      ConditionExpression: 'attribute_not_exists(hash)'
     }).promise();
 
     logger.info({ metadata, ConsumedCapacity }, 'completed save operation');
