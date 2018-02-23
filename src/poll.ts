@@ -3,6 +3,7 @@ import updateBlocks from './util/update-blocks';
 import { Callback, Context, Handler } from 'aws-lambda';
 import { NETWORK_ID, SRC_NODE_URL } from './util/env';
 import getClient from './client/get-client';
+import * as _ from 'underscore';
 
 export const start: Handler = async (event: any, context: Context, cb: Callback) => {
   const client = await getClient(SRC_NODE_URL);
@@ -23,33 +24,38 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
 
   let locked = false;
 
-  const interval = setInterval(() => {
-    // only one iteration running at a time
-    if (locked) {
-      return;
-    }
+  const loop = _.throttle(
+    () => {
+      // only one iteration running at a time
+      if (locked) {
+        return;
+      }
 
-    // assume we cannot process a block in less than 5 seconds
-    if (context.getRemainingTimeInMillis() < 5000) {
-      clearInterval(interval);
-      context.done();
-      return;
-    }
+      // assume we cannot process a block in less than 3 seconds
+      if (context.getRemainingTimeInMillis() < 3000) {
+        context.done();
+        return;
+      }
 
-    locked = true;
+      locked = true;
 
-    updateBlocks(client)
-      .then(
-        () => {
-          locked = false;
-        }
-      )
-      .catch(
-        err => {
-          logger.error({ err }, 'unexpected error encountered');
+      updateBlocks(client)
+        .then(
+          () => {
+            locked = false;
+            setTimeout(loop, 0);
+          }
+        )
+        .catch(
+          err => {
+            logger.error({ err }, 'unexpected error encountered');
 
-          context.done(err);
-        }
-      );
-  }, 100);
+            context.done(err);
+          }
+        );
+    },
+    250
+  );
+
+  loop();
 };
