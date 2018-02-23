@@ -11,8 +11,8 @@ provider:
   runtime: nodejs6.10
   memorySize: 512 # optional, in MB, default is 1024
   environment: # service wide environment variables
-    BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v2
-    LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v2
+    BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v3
+    LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v3
     NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
     RUN_TIME_LENGTH_SECONDS: "10"
   iamRoleStatements: # permissions for all of your functions can be set here
@@ -54,6 +54,9 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
 
     LogsTable:
       Type: AWS::DynamoDB::Table
@@ -72,6 +75,9 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
 
 custom:
   webpackIncludeModules: true # enable auto-packing of external modules
@@ -79,18 +85,18 @@ custom:
     - table: BlocksTable  # DynamoDB Resource
       read:
         minimum: 1        # Minimum read capacity
-        maximum: 200      # Maximum read capacity
+        maximum: 5      # Maximum read capacity
         usage: 0.75       # Targeted usage percentage
       write:
         minimum: 1        # Minimum write capacity
-        maximum: 200      # Maximum write capacity
+        maximum: 5      # Maximum write capacity
         usage: 0.75       # Targeted usage percentage
     - table: LogsTable    # DynamoDB Resource
       read:
         minimum: 1        # Minimum read capacity
-        maximum: 200      # Maximum read capacity
+        maximum: 5      # Maximum read capacity
         usage: 0.75       # Targeted usage percentage
       write:
         minimum: 1        # Minimum write capacity
-        maximum: 200      # Maximum write capacity
+        maximum: 5      # Maximum write capacity
         usage: 0.75       # Targeted usage percentage

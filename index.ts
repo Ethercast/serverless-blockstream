@@ -65,13 +65,14 @@ export const start: Handler = (event: any, context: Context, cb: Callback) => {
     let locked = false;
 
     const interval = setInterval(() => {
-      if (runtime() >= msRuntime) {
-        context.done();
-        clearInterval(interval);
+      // don't interrupt it in the middle of something
+      if (locked) {
         return;
       }
 
-      if (locked) {
+      if (runtime() >= msRuntime) {
+        context.done();
+        clearInterval(interval);
         return;
       }
 

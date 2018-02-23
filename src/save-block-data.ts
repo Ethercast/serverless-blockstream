@@ -9,6 +9,11 @@ const documentClient = new DynamoDB.DocumentClient();
 
 const MAX_ITEMS_PER_PUT = 25;
 
+const ONE_DAY = 1000 * 60 * 60 * 24;
+const BLOCK_DATA_TTL = ONE_DAY;
+
+const getItemTtl = () => (new Date()).getTime() + BLOCK_DATA_TTL;
+
 export default async function saveBlockData(block: BlockWithFullTransactions, logs: Log[]) {
   if (!BLOCKS_TABLE || !LOGS_TABLE) {
     throw new Error('missing table environment variables');
@@ -27,7 +32,7 @@ export default async function saveBlockData(block: BlockWithFullTransactions, lo
 
     const { ConsumedCapacity } = await documentClient.put({
       TableName: BLOCKS_TABLE,
-      Item: block,
+      Item: { ...block, ttl: getItemTtl() },
       ReturnConsumedCapacity: 'TOTAL',
       ConditionExpression: 'attribute_not_exists(#hash)',
       ExpressionAttributeNames: {
@@ -67,7 +72,7 @@ async function putAll(metadata: { blockHash: string; blockNumber: string; },
   let putItems: DynamoDB.DocumentClient.BatchWriteItemRequestMap | undefined = {
     [tableName]: items.map(
       (Item: any) => ({
-        PutRequest: { Item }
+        PutRequest: { Item: { ...Item, ttl: getItemTtl() } }
       })
     )
   };

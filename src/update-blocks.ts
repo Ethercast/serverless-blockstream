@@ -45,7 +45,7 @@ export default async function updateBlocks(client: EthClient) {
       throw new Error('inconsistent logs: not all logs matched the block');
     }
 
-    await saveBlockData(block);
+    await saveBlockData(block, logs);
 
     lastReconciledBlockNumber = missingBlockNumbers[i];
   }
