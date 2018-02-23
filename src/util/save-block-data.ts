@@ -138,11 +138,7 @@ export default async function saveBlockData(block: BlockWithTransactionHashes, l
           ttl,
           payload
         },
-        ReturnConsumedCapacity: 'TOTAL',
-        ConditionExpression: 'attribute_not_exists(#hash)',
-        ExpressionAttributeNames: {
-          '#hash': 'hash'
-        }
+        ReturnConsumedCapacity: 'TOTAL'
       }
     ).promise();
 
