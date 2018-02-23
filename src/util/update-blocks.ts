@@ -124,12 +124,11 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   }
 
   // LAST step: save the blockstream state
-  state = await saveBlockStreamState({
+  await saveBlockStreamState({
     lastReconciledBlock: {
       hash: block.hash,
       number: block.number
     },
     network_id: NETWORK_ID
   });
-
 }

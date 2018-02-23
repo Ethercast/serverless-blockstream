@@ -31,7 +31,7 @@ export async function getBlockStreamState(): Promise<BlockStreamState | null> {
   }
 }
 
-export async function saveBlockStreamState(state: BlockStreamState): Promise<BlockStreamState> {
+export async function saveBlockStreamState(state: BlockStreamState): Promise<void> {
   try {
     await ddbClient.put({
       TableName: BLOCKSTREAM_STATE_TABLE,
@@ -41,14 +41,6 @@ export async function saveBlockStreamState(state: BlockStreamState): Promise<Blo
     logger.error({ err }, 'failed to save blockstream state');
     throw err;
   }
-
-  const newState = await getBlockStreamState();
-  if (newState === null) {
-    logger.error({ state, newState }, 'state was immediately null after a put');
-    throw new Error('save blockstream state failed');
-  }
-
-  return newState;
 }
 
 
