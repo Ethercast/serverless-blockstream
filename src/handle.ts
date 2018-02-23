@@ -13,7 +13,7 @@ export const start: DynamoDBStreamHandler = (event, context, cb) => {
       record.dynamodb &&
       record.dynamodb.Keys ?
         DynamoDB.Converter.unmarshall(
-          record.dynamodb.NewImage
+          record.dynamodb.Keys
         ) : null
   ).filter(e => e !== null) as any;
 

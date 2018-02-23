@@ -4,7 +4,7 @@ import { LogLevel } from 'bunyan';
 export const SRC_NODE_URL: string = env.get('SRC_NODE_URL').required().asUrlString();
 export const NETWORK_ID: number = env.get('NETWORK_ID').required().asIntPositive();
 
-export const LOG_LEVEL: LogLevel = env.get('LOG_LEVEL', 'info') as LogLevel;
+export const LOG_LEVEL: LogLevel = env.get('LOG_LEVEL', 'info').asString() as LogLevel;
 
 export const STARTING_BLOCK: number = env.get('STARTING_BLOCK', '5139910').asIntPositive();
 export const NUM_BLOCKS_PER_LOOP: number = env.get('NUM_BLOCKS_PER_LOOP', '3').asIntPositive();

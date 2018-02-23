@@ -8,9 +8,9 @@ export default async function getClient(nodeUrl: string): Promise<EthClient> {
     throw new Error('missing node url');
   }
 
-  if (nodeUrl.toLowerCase().startsWith('https:/')) {
+  if (nodeUrl.toLowerCase().indexOf('https:/') === 0) {
     return new EthHttpsClient({ endpointUrl: nodeUrl });
-  } else if (nodeUrl.toLowerCase().startsWith('wss:/')) {
+  } else if (nodeUrl.toLowerCase().indexOf('wss:/') === 0) {
     const ws = new WebSocket(nodeUrl);
 
     return new Promise<EthWsClient>((resolve, reject) => {
