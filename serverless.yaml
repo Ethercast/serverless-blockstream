@@ -44,7 +44,7 @@ functions:
   poll-for-blocks:
     handler: src/poll.start
     memorySize: 256 # optional, in MB, default is 1024
-    timeout: 180
+    timeout: 130
     events:
       - schedule:
           rate: rate(2 minutes)
