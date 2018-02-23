@@ -43,7 +43,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
-  logger.info({ currentBlockNo, nextFetchBlock }, 'fetching block');
+  logger.debug({ currentBlockNo, nextFetchBlock }, 'fetching block');
 
   // get the block info and all the logs for the block
   const [block, logs]: [BlockWithTransactionHashes | null, Log[]] = await Promise.all([

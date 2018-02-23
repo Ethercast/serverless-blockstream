@@ -55,7 +55,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
           }
         );
     },
-    250
+    1000
   );
 
   loop();
