@@ -131,6 +131,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
       }
     );
   } catch (err) {
+    // TODO: if this fails, should we retract the message we sent on the queue?
     logger.error({ err, metadata }, 'failed to update blockstream state');
     return;
   }
