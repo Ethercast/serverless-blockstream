@@ -56,6 +56,7 @@ export default async function saveBlockData(block: BlockWithTransactionHashes, l
       try {
         // put all the logs in for the block first
         await chunkedPut(metadata, LOGS_TABLE, logs.map(log => ({ ...log, ttl })));
+        logger.info(metadata, 'saved logs for block');
       } catch (err) {
         logger.error({ err, metadata }, 'failed to save logs');
         throw err;
@@ -67,13 +68,10 @@ export default async function saveBlockData(block: BlockWithTransactionHashes, l
           {
             TableName: BLOCKS_TABLE,
             Item: { ...block, ttl },
-            ReturnConsumedCapacity: 'TOTAL',
-            ConditionExpression: 'attribute_not_exists(#hash)',
-            ExpressionAttributeNames: {
-              '#hash': 'hash'
-            }
+            ReturnConsumedCapacity: 'TOTAL'
           }
         ).promise();
+
         logger.info({ metadata, ConsumedCapacity }, 'completed block save operation');
       } catch (err) {
         logger.error({ err, block, metadata }, 'failed to save block');

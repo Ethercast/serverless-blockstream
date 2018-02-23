@@ -3,7 +3,10 @@ import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import saveBlockData, { getBlockStreamState, saveBlockStreamState } from './save-block-data';
 import EthClient from '../client/eth-client';
-import { NETWORK_ID, NUM_BLOCKS_PER_LOOP, STARTING_BLOCK } from './env';
+import { NETWORK_ID, NUM_BLOCKS_PER_LOOP, SQS_BLOCK_RECEIVED_QUEUE_URL, STARTING_BLOCK } from './env';
+import { SQS } from 'aws-sdk';
+
+const sqs = new SQS();
 
 async function getStartingBlock(): Promise<BigNumber> {
   const state = await getBlockStreamState();
@@ -56,7 +59,7 @@ export default async function updateBlocks(client: EthClient) {
 
     // missing block, try again later
     if (block === null) {
-      logger.debug({ blockNumber: blockNumber }, 'block came back as null');
+      logger.debug({ blockNumber }, 'block came back as null');
       break;
     }
 
@@ -71,7 +74,20 @@ export default async function updateBlocks(client: EthClient) {
 
     await saveBlockData(block, logs);
 
-    // save the blockstream state
+    try {
+      const { MessageId } = await sqs.sendMessage({
+        QueueUrl: SQS_BLOCK_RECEIVED_QUEUE_URL,
+        MessageGroupId: '1',
+        MessageDeduplicationId: block.hash,
+        MessageBody: JSON.stringify({ hash: block.hash, number: block.number })
+      }).promise();
+      logger.debug({ MessageId });
+    } catch (err) {
+      logger.error({err}, 'failed to deliver block notification message to queue');
+      break;
+    }
+
+    // LAST step: save the blockstream state
     await saveBlockStreamState({
       lastReconciledBlock: {
         hash: block.hash,

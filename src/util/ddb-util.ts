@@ -25,7 +25,7 @@ export async function chunkedPut(metadata: { blockHash: string; blockNumber: str
 async function putAll(metadata: { blockHash: string; blockNumber: string; },
                       tableName: string,
                       items: any[]) {
-  logger.info({ metadata, tableName }, 'beginning putAll operation');
+  logger.debug({ metadata, tableName }, 'beginning putAll operation');
 
   let putItems: DynamoDB.DocumentClient.BatchWriteItemRequestMap | undefined = {
     [tableName]: items.map(
@@ -39,13 +39,13 @@ async function putAll(metadata: { blockHash: string; blockNumber: string; },
   while (putItems && _.any(putItems, (value) => value.length > 0)) {
     const RequestItems: any = _.omit(putItems, (value: DynamoDB.DocumentClient.WriteRequests) => value.length === 0);
 
-    logger.debug({ metadata }, 'processing items');
+    logger.debug({ metadata, tableName }, 'processing items');
 
     try {
       // process them
       const { UnprocessedItems, ConsumedCapacity } = await ddbClient.batchWrite({ RequestItems }).promise();
 
-      logger.debug({ metadata, ConsumedCapacity }, 'Consumed capacity');
+      logger.debug({ metadata, ConsumedCapacity, tableName }, 'Consumed capacity during putAll');
 
       putItems = UnprocessedItems;
     } catch (err) {
@@ -53,6 +53,4 @@ async function putAll(metadata: { blockHash: string; blockNumber: string; },
       throw err;
     }
   }
-
-  logger.info(metadata, 'completed putAll');
 }
