@@ -9,34 +9,19 @@ import saveBlockData, {
 import EthClient from '../client/eth-client';
 import { NETWORK_ID, SQS_BLOCK_RECEIVED_QUEUE_URL, STARTING_BLOCK } from './env';
 import { SQS } from 'aws-sdk';
-import { BlockStreamState, BlockWithTransactionHashes, Log } from './model';
+import { BlockWithTransactionHashes, Log } from './model';
 import toHex from './to-hex';
+import getNextFetchBlock from './get-next-fetch-block';
 
 const sqs = new SQS();
 
-/**
- * Get the number of the next block to fetch
- */
-export function getNextFetchBlock(state: BlockStreamState | null): BigNumber {
-  if (!state) {
-    return new BigNumber(STARTING_BLOCK);
-  }
-
-  const lastBlockNo = new BigNumber(state.lastReconciledBlock.number);
-
-  if (lastBlockNo.gte(STARTING_BLOCK)) {
-    return lastBlockNo.plus(1);
-  }
-
-  return new BigNumber(STARTING_BLOCK);
-}
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
  */
 export default async function reconcileBlocks(client: EthClient): Promise<void> {
   let state = await getBlockStreamState();
-  const nextFetchBlock = await getNextFetchBlock(state);
+  const nextFetchBlock = await getNextFetchBlock(state, STARTING_BLOCK);
   const currentBlockNo = await client.eth_blockNumber();
 
   if (currentBlockNo.lt(nextFetchBlock)) {
