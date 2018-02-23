@@ -1,3 +1,11 @@
+export interface BlockStreamState {
+  lastReconciledBlock: {
+    hash: string;
+    number: string;
+  };
+  network_id: number;
+}
+
 export interface Log {
   logIndex: string;
   blockNumber: string;

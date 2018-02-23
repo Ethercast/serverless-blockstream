@@ -10,20 +10,32 @@ provider:
   name: aws
   runtime: nodejs6.10
   environment: # service wide environment variables
+    BLOCKSTREAM_STATE_TABLE: ${self:service}-${opt:stage, self:provider.stage}-bs-state-v3
     BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v3
     LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v3
-    NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
+    SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
+    DESTINATION_QUEUE_NAME: ""
     RUN_TIME_LENGTH_SECONDS: "120"
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow
       Action: # Gives permission to DynamoDB tables in a specific region
+        - dynamodb:Query
         - dynamodb:GetItem
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:BatchWriteItem
       Resource:
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.BLOCKSTREAM_STATE_TABLE}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.BLOCKSTREAM_STATE_TABLE}/*"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.BLOCKS_TABLE}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.BLOCKS_TABLE}/*"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.LOGS_TABLE}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.LOGS_TABLE}/*"
+    - Effect: Allow
+      Action: # Gives permission to push logs to the SQS queue
+        - sqs:SendMessageBatch
+      Resource:
+        - "arn:aws:sqs:*:*:${self:provider.environment.DESTINATION_QUEUE_NAME}"
 
 functions:
   poll-for-blocks:
@@ -49,6 +61,20 @@ functions:
 resources:
   Resources:
     BlocksTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+          TableName: ${self:provider.environment.BLOCKSTREAM_STATE_TABLE}
+          AttributeDefinitions:
+            - AttributeName: network_id
+              AttributeType: N
+          KeySchema:
+            - AttributeName: network_id
+              KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+    BlocksTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.BLOCKS_TABLE}
@@ -66,10 +92,22 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         StreamSpecification:
-          StreamViewType: NEW_IMAGE
+          StreamViewType: KEYS_ONLY
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
+        GlobalSecondaryIndexes:
+          -
+            IndexName: ByBlockNumber
+            KeySchema:
+              - AttributeName: number
+                KeyType: HASH
+            Projection:
+              ProjectionType: KEYS_ONLY
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+
 
     LogsTable:
       Type: AWS::DynamoDB::Table
@@ -80,36 +118,49 @@ resources:
             AttributeType: S
           - AttributeName: logIndex
             AttributeType: S
+          - AttributeName: blockHash
+            AttributeType: S
         KeySchema:
           - AttributeName: transactionHash
             KeyType: HASH
           - AttributeName: logIndex
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
+        GlobalSecondaryIndexes:
+          -
+            IndexName: ByBlockHash
+            KeySchema:
+              - AttributeName: blockHash
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
 
 custom:
   webpackIncludeModules: true # enable auto-packing of external modules
   capacities:
     - table: BlocksTable  # DynamoDB Resource
       read:
-        minimum: 5        # Minimum read capacity
+        minimum: 1        # Minimum read capacity
         maximum: 25      # Maximum read capacity
-        usage: 0.75       # Targeted usage percentage
+        usage: 0.8       # Targeted usage percentage
       write:
-        minimum: 5        # Minimum write capacity
+        minimum: 1        # Minimum write capacity
         maximum: 25      # Maximum write capacity
-        usage: 0.75       # Targeted usage percentage
+        usage: 0.8       # Targeted usage percentage
     - table: LogsTable    # DynamoDB Resource
       read:
         minimum: 1        # Minimum read capacity
         maximum: 25      # Maximum read capacity
-        usage: 0.75       # Targeted usage percentage
+        usage: 0.8       # Targeted usage percentage
       write:
-        minimum: 5        # Minimum write capacity
+        minimum: 1        # Minimum write capacity
         maximum: 25      # Maximum write capacity
-        usage: 0.75       # Targeted usage percentage
+        usage: 0.8       # Targeted usage percentage

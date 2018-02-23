@@ -1,4 +1,4 @@
-import { BlockWithFullTransactions, BlockWithTransactionHashes, Log, LogFilter } from '../model';
+import { BlockWithFullTransactions, BlockWithTransactionHashes, Log, LogFilter } from '../util/model';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 
@@ -8,11 +8,14 @@ export enum Method {
   eth_blockNumber = 'eth_blockNumber',
   eth_getBlockByNumber = 'eth_getBlockByNumber',
   eth_getLogs = 'eth_getLogs',
+  net_version = 'net_version'
 }
 
-export type BlockParameter = string | BigNumber | 'earliest' | 'latest' | 'pending'
+export type BlockParameter = string | number | BigNumber | 'earliest' | 'latest' | 'pending'
 
 export default interface EthClient {
+  net_version(): Promise<number>;
+
   web3_clientVersion(): Promise<string>;
 
   eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;

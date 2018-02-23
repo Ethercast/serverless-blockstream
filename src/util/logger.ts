@@ -1,7 +1,8 @@
 import * as bunyan from 'bunyan';
+import { LOG_LEVEL } from './env';
 
 export default bunyan.createLogger({
-  level: (process.env.LOG_LEVEL as any) || 'info',
+  level: LOG_LEVEL,
   name: 'bunyan',
   serializers: bunyan.stdSerializers
 });

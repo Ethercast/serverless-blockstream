@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
-import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter } from '../model';
+import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter } from '../util/model';
 import BigNumber from 'bignumber.js';
-import logger from '../logger';
+import logger from '../util/logger';
 import { MethodParameter, serializeToMethodParameter } from './util';
 import EthClient, { BlockParameter, Method } from './eth-client';
 
@@ -31,6 +31,10 @@ export default class EthWSClient implements EthClient {
   public eth_blockNumber = () => this.cmd<string>(Method.eth_blockNumber).then(s => new BigNumber(s));
 
   public eth_getLogs = (filter: LogFilter) => this.cmd<any>(Method.eth_getLogs, [filter]);
+
+  public net_version(): Promise<number> {
+    return this.cmd<string>(Method.net_version).then(s => parseInt(s));
+  }
 
   private async cmd<TResponse>(method: Method, params: MethodParameter[] = []): Promise<TResponse> {
     const { ws } = this;
