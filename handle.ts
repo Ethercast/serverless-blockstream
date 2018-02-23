@@ -1,5 +1,11 @@
-import { Callback, Context, Handler } from 'aws-lambda';
+import { DynamoDBStreamHandler } from 'aws-lambda';
+import logger from './src/logger';
+import { DynamoDB } from 'aws-sdk';
 
-export const start: Handler = (event: any, context: Context, cb: Callback) => {
-  console.log(event);
+export const start: DynamoDBStreamHandler = (event, context, cb) => {
+  const blocks = event.Records.map(
+    ({ dynamodb: { NewImage } }) => DynamoDB.Converter.marshall(NewImage)
+  );
+
+  logger.info({ blocks }, 'handling blocks');
 };

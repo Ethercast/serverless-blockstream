@@ -9,7 +9,6 @@ plugins:
 provider:
   name: aws
   runtime: nodejs6.10
-  memorySize: 256 # optional, in MB, default is 1024
   environment: # service wide environment variables
     BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v3
     LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v3
@@ -29,6 +28,7 @@ provider:
 functions:
   poll-for-blocks:
     handler: poll.start
+    memorySize: 256 # optional, in MB, default is 1024
     timeout: 180
     events:
       - schedule:
@@ -37,6 +37,7 @@ functions:
 
   handle-new-blocks:
     handler: handle.start
+    memorySize: 128 # optional, in MB, default is 1024
     events:
       - stream:
           type: dynamodb
@@ -85,8 +86,8 @@ resources:
           - AttributeName: logIndex
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
@@ -96,19 +97,19 @@ custom:
   capacities:
     - table: BlocksTable  # DynamoDB Resource
       read:
-        minimum: 1        # Minimum read capacity
-        maximum: 5      # Maximum read capacity
+        minimum: 5        # Minimum read capacity
+        maximum: 25      # Maximum read capacity
         usage: 0.75       # Targeted usage percentage
       write:
-        minimum: 1        # Minimum write capacity
-        maximum: 5      # Maximum write capacity
+        minimum: 5        # Minimum write capacity
+        maximum: 25      # Maximum write capacity
         usage: 0.75       # Targeted usage percentage
     - table: LogsTable    # DynamoDB Resource
       read:
         minimum: 1        # Minimum read capacity
-        maximum: 5      # Maximum read capacity
+        maximum: 25      # Maximum read capacity
         usage: 0.75       # Targeted usage percentage
       write:
-        minimum: 1        # Minimum write capacity
-        maximum: 5      # Maximum write capacity
+        minimum: 5        # Minimum write capacity
+        maximum: 25      # Maximum write capacity
         usage: 0.75       # Targeted usage percentage

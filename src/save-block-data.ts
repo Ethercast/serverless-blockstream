@@ -2,6 +2,7 @@ import { DynamoDB } from 'aws-sdk';
 import { BlockWithFullTransactions, Log } from './model';
 import logger from './logger';
 import * as _ from 'underscore';
+import timedAction from './time-action';
 
 const { BLOCKS_TABLE, LOGS_TABLE } = process.env;
 
@@ -24,27 +25,28 @@ export default async function saveBlockData(block: BlockWithFullTransactions, lo
     blockNumber: block.number
   };
 
-  logger.info(metadata, 'beginning save operation');
+  await timedAction('save block data', async () => {
+    try {
+      // put all the logs in for the block
+      await chunkedPut(metadata, LOGS_TABLE, logs);
 
-  try {
-    // put all the logs in for the block
-    await chunkedPut(metadata, LOGS_TABLE, logs);
+      const { ConsumedCapacity } = await
+        documentClient.put({
+          TableName: BLOCKS_TABLE,
+          Item: { ...block, ttl: getItemTtl() },
+          ReturnConsumedCapacity: 'TOTAL',
+          ConditionExpression: 'attribute_not_exists(#hash)',
+          ExpressionAttributeNames: {
+            '#hash': 'hash'
+          }
+        }).promise();
 
-    const { ConsumedCapacity } = await documentClient.put({
-      TableName: BLOCKS_TABLE,
-      Item: { ...block, ttl: getItemTtl() },
-      ReturnConsumedCapacity: 'TOTAL',
-      ConditionExpression: 'attribute_not_exists(#hash)',
-      ExpressionAttributeNames: {
-        '#hash': 'hash'
-      }
-    }).promise();
-
-    logger.info({ metadata, ConsumedCapacity }, 'completed save operation');
-  } catch (err) {
-    logger.error({ err, metadata }, 'failed to save block');
-    throw err;
-  }
+      logger.info({ metadata, ConsumedCapacity }, 'completed save operation');
+    } catch (err) {
+      logger.error({ err, metadata }, 'failed to save block');
+      throw err;
+    }
+  });
 }
 
 
