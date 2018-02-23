@@ -15,7 +15,9 @@ provider:
     LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v4
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
     DESTINATION_QUEUE_URL: "https://fake-queue-url.sqs.amazon.com/test"
-    LOG_LEVEL: info
+    BLOCK_DATA_TTL_MS: "3600000" # 1 hour
+    NUM_BLOCKS_PER_LOOP: "1"
+    LOG_LEVEL: "info" # info log level
     RUN_TIME_LENGTH_SECONDS: "120"
     NETWORK_ID: "1"
     STARTING_BLOCK: "5140235"
