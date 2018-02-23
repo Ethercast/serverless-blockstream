@@ -9,7 +9,8 @@ plugins:
 custom:
   webpackIncludeModules: true # enable auto-packing of external modules
   region: ${opt:region, self:provider.region}
-  queueName: ${self:service}-${opt:stage, self:provider.stage}-new-blocks.fifo
+  prefix: ${self:service}-${opt:stage, self:provider.stage}
+  queueName: ${self:custom.prefix}-new-blocks.fifo
   capacities:
     - table: BlocksTable  # DynamoDB Resource
       read:
@@ -34,9 +35,9 @@ provider:
   name: aws
   runtime: nodejs6.10
   environment: # service wide environment variables
-    BLOCKSTREAM_STATE_TABLE: ${self:service}-${opt:stage, self:provider.stage}-bs-state-v4
-    BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v4
-    LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v4
+    BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-bs-state-v4
+    BLOCKS_TABLE: ${self:custom.prefix}-blocks-v4
+    LOGS_TABLE: ${self:custom.prefix}-logs-v4
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
     SQS_BLOCK_RECEIVED_QUEUE_URL: "https://sqs.#{AWS::Region}.amazonaws.com/#{AWS::AccountId}/${self:custom.queueName}"
     BLOCK_DATA_TTL_MS: "3600000" # 1 hour
