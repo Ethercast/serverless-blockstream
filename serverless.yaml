@@ -54,6 +54,7 @@ provider:
         - sqs:SendMessage
         - sqs:SendMessageBatch
         - sqs:DeleteMessage
+        - sqs:GetQueueUrl
       Resource:
         - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.queueName}"
 
