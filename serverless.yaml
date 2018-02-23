@@ -178,7 +178,7 @@ resources:
     NewBlockQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${self:provider.environment.SQS_BLOCK_RECEIVED_QUEUE}
+        QueueName: ${self:custom.queueName}
         FifoQueue: true
         MessageRetentionPeriod: 1209600
         VisibilityTimeout: 60
