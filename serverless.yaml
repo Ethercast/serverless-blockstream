@@ -6,6 +6,30 @@ plugins:
   - serverless-dynamodb-autoscaling
   - serverless-webpack
 
+custom:
+  webpackIncludeModules: true # enable auto-packing of external modules
+  region: ${opt:region, self:provider.region}
+  queueName: ${self:service}-${opt:stage, self:provider.stage}-new-blocks.fifo
+  capacities:
+    - table: BlocksTable  # DynamoDB Resource
+      read:
+        minimum: 5        # Minimum read capacity
+        maximum: 100      # Maximum read capacity
+        usage: 0.7        # Targeted usage percentage
+      write:
+        minimum: 5        # Minimum write capacity
+        maximum: 100      # Maximum write capacity
+        usage: 0.7        # Targeted usage percentage
+    - table: LogsTable    # DynamoDB Resource
+      read:
+        minimum: 5        # Minimum read capacity
+        maximum: 100      # Maximum read capacity
+        usage: 0.7        # Targeted usage percentage
+      write:
+        minimum: 5        # Minimum write capacity
+        maximum: 100      # Maximum write capacity
+        usage: 0.7        # Targeted usage percentage
+
 provider:
   name: aws
   runtime: nodejs6.10
@@ -37,36 +61,11 @@ provider:
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.LOGS_TABLE}/*"
     - Effect: Allow
       Action: # Gives permission to push logs to the SQS queue
-        - sqs:SendMessageBatch
+        - sqs:SendMessage
         - sqs:SendMessageBatch
         - sqs:DeleteMessage
       Resource:
         - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.queueName}"
-
-custom:
-  webpackIncludeModules: true # enable auto-packing of external modules
-  region: ${opt:region, self:provider.region}
-  queueName: ${self:service}-${opt:stage, self:provider.stage}-new-blocks.fifo
-  capacities:
-    - table: BlocksTable  # DynamoDB Resource
-      read:
-        minimum: 1        # Minimum read capacity
-        maximum: 25      # Maximum read capacity
-        usage: 0.8       # Targeted usage percentage
-      write:
-        minimum: 1        # Minimum write capacity
-        maximum: 25      # Maximum write capacity
-        usage: 0.8       # Targeted usage percentage
-    - table: LogsTable    # DynamoDB Resource
-      read:
-        minimum: 10        # Minimum read capacity
-        maximum: 25      # Maximum read capacity
-        usage: 0.8       # Targeted usage percentage
-      write:
-        minimum: 10        # Minimum write capacity
-        maximum: 25      # Maximum write capacity
-        usage: 0.8       # Targeted usage percentage
-
 
 functions:
   poll-for-blocks:
@@ -158,8 +157,8 @@ resources:
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
-              ReadCapacityUnits: 10
-              WriteCapacityUnits: 10
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
 
     NewBlockQueue:
       Type: AWS::SQS::Queue
