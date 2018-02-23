@@ -28,6 +28,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
     () => {
       // only one iteration running at a time
       if (locked) {
+        _.defer(loop);
         return;
       }
 
@@ -43,7 +44,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
         .then(
           () => {
             locked = false;
-            setTimeout(loop, 0);
+            _.defer(loop);
           }
         )
         .catch(
