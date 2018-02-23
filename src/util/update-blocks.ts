@@ -6,6 +6,7 @@ import EthClient, { BlockParameter } from '../client/eth-client';
 import { NETWORK_ID, SQS_BLOCK_RECEIVED_QUEUE_URL, STARTING_BLOCK } from './env';
 import { SQS } from 'aws-sdk';
 import { BlockStreamState, BlockWithTransactionHashes, Log } from './model';
+import toHex from './to-hex';
 
 const sqs = new SQS();
 
@@ -24,20 +25,6 @@ async function getNextFetchBlock(state: BlockStreamState | null): Promise<BigNum
   }
 
   return new BigNumber(STARTING_BLOCK);
-}
-
-function toHex(number: BlockParameter): string {
-  if (typeof number === 'string' && number.indexOf('0x') === 0) {
-    return number;
-  } else if (typeof number === 'number') {
-    return `0x${number.toString(16)}`;
-  } else if (typeof number === 'string' && /^[0-9]+$/.test(number)) {
-    return `0x${parseInt(number).toString(16)}`;
-  } else if (number instanceof BigNumber) {
-    return `0x${number.toString(16)}`;
-  } else {
-    throw new Error(`did not understand number type: ${number}`);
-  }
 }
 
 /**
