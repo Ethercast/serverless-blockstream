@@ -11,7 +11,7 @@ custom:
   region: ${opt:region, self:provider.region}
   prefix: ${self:service}-${opt:stage, self:provider.stage}
   queueName: ${self:custom.prefix}-new-blocks.fifo
-  baseCapacity: 5
+  baseCapacity: 3
   capacities:
     - table: BlocksTable  # DynamoDB Resource
       index:              # List or single index name
