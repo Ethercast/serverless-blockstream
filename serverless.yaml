@@ -11,16 +11,17 @@ custom:
   region: ${opt:region, self:provider.region}
   prefix: ${self:service}-${opt:stage, self:provider.stage}
   queueName: ${self:custom.prefix}-new-blocks.fifo
+  baseCapacity: 5
   capacities:
     - table: BlocksTable  # DynamoDB Resource
       index:              # List or single index name
         - ByBlockNumber
       read:
-        minimum: 5        # Minimum read capacity
+        minimum: ${self:custom.baseCapacity}        # Minimum read capacity
         maximum: 100      # Maximum read capacity
         usage: 0.7        # Targeted usage percentage
       write:
-        minimum: 5        # Minimum write capacity
+        minimum: ${self:custom.baseCapacity}        # Minimum write capacity
         maximum: 100      # Maximum write capacity
         usage: 0.7        # Targeted usage percentage
 
@@ -33,7 +34,6 @@ provider:
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
     SQS_BLOCK_RECEIVED_QUEUE_URL: "https://sqs.#{AWS::Region}.amazonaws.com/#{AWS::AccountId}/${self:custom.queueName}"
     BLOCK_DATA_TTL_MS: "3600000" # 1 hour
-    NUM_BLOCKS_PER_LOOP: "1"
     LOG_LEVEL: "info" # info log level
     RUN_TIME_LENGTH_SECONDS: "90"
     NETWORK_ID: "1"
@@ -81,8 +81,8 @@ resources:
             - AttributeName: network_id
               KeyType: HASH
           ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
+            ReadCapacityUnits: ${self:custom.baseCapacity}
+            WriteCapacityUnits: ${self:custom.baseCapacity}
 
     BlocksTable:
       Type: AWS::DynamoDB::Table
@@ -99,8 +99,8 @@ resources:
           - AttributeName: number
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+          ReadCapacityUnits: ${self:custom.baseCapacity}
+          WriteCapacityUnits: ${self:custom.baseCapacity}
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
@@ -113,8 +113,8 @@ resources:
             Projection:
               ProjectionType: KEYS_ONLY
             ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
+              ReadCapacityUnits: ${self:custom.baseCapacity}
+              WriteCapacityUnits: ${self:custom.baseCapacity}
 
     NewBlockQueue:
       Type: AWS::SQS::Queue

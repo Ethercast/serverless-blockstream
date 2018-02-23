@@ -7,7 +7,6 @@ export const NETWORK_ID: number = env.get('NETWORK_ID').required().asIntPositive
 export const LOG_LEVEL: LogLevel = env.get('LOG_LEVEL').required().asString() as LogLevel;
 
 export const STARTING_BLOCK: number = env.get('STARTING_BLOCK').required().asIntPositive();
-export const NUM_BLOCKS_PER_LOOP: number = env.get('NUM_BLOCKS_PER_LOOP').required().asIntPositive();
 
 export const RUN_TIME_LENGTH_SECONDS: number = env.get('RUN_TIME_LENGTH_SECONDS').required().asIntPositive();
 
