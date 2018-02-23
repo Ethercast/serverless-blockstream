@@ -42,9 +42,7 @@ async function putAll(metadata: { blockHash: string; blockNumber: string; },
     logger.debug({ metadata }, 'processing items');
 
     // process them
-    const { UnprocessedItems, ConsumedCapacity } = await ddbClient.batchWrite({
-      RequestItems
-    }).promise();
+    const { UnprocessedItems, ConsumedCapacity } = await ddbClient.batchWrite({ RequestItems }).promise();
 
     putItems = UnprocessedItems;
 

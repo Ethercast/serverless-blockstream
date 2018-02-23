@@ -2,7 +2,7 @@ import { DynamoDBStreamHandler } from 'aws-lambda';
 import logger from './util/logger';
 import { DynamoDB } from 'aws-sdk';
 import { BlockWithTransactionHashes } from './util/model';
-import { DESTINATION_QUEUE_NAME } from './util/env';
+import { DESTINATION_QUEUE_URL } from './util/env';
 
 export const start: DynamoDBStreamHandler = (event, context, cb) => {
   // pull out the block keys
@@ -17,5 +17,5 @@ export const start: DynamoDBStreamHandler = (event, context, cb) => {
         ) : null
   ).filter(e => e !== null) as any;
 
-  logger.info({ blocks, DESTINATION_QUEUE_NAME }, 'received notification of block insertions');
+  logger.info({ blocks, destinationQueue: DESTINATION_QUEUE_URL }, 'received notification of block insertion');
 };
