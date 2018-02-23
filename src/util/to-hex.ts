@@ -1,5 +1,7 @@
 import BigNumber from 'bignumber.js';
 
+export type BlockNumber = string | number | BigNumber;
+
 export default function toHex(number: string | number | BigNumber): string {
   if (typeof number === 'string' && number.indexOf('0x') === 0) {
     return number;

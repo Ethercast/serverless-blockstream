@@ -3,8 +3,9 @@ import logger from './logger';
 import { BLOCK_DATA_TTL_MS, BLOCKS_TABLE, BLOCKSTREAM_STATE_TABLE, NETWORK_ID } from './env';
 import * as zlib from 'zlib';
 import { DynamoDB } from 'aws-sdk';
-import toHex from './to-hex';
+import toHex, { BlockNumber } from './to-hex';
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
+import BigNumber from 'bignumber.js';
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -82,17 +83,17 @@ async function compressBlock(block: BlockWithTransactionHashes, logs: Log[]): Pr
   });
 }
 
-export async function blockExists(hash: string, number: string): Promise<boolean> {
+export async function blockExists(hash: string, number: BlockNumber): Promise<boolean> {
   const { Item } = await ddbClient.get({
     TableName: BLOCKS_TABLE,
     Key: {
       hash,
-      number
+      number: toHex(number)
     },
     AttributesToGet: ['hash', 'number']
   }).promise();
 
-  return !!(Item && Item.hash === hash && Item.number === number);
+  return !!(Item && Item.hash === hash && Item.number === toHex(number));
 }
 
 export default async function saveBlockData(block: BlockWithTransactionHashes, logs: Log[], checkParentExists: boolean): Promise<void> {
@@ -109,7 +110,7 @@ export default async function saveBlockData(block: BlockWithTransactionHashes, l
 
     const parentExists = await blockExists(
       block.parentHash,
-      toHex(new BigNumber(block.number).minus(1).toNumber())
+      new BigNumber(block.number).minus(1)
     );
 
     if (!parentExists) {
