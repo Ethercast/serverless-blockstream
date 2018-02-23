@@ -70,9 +70,9 @@ resources:
           KeySchema:
             - AttributeName: network_id
               KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
 
     BlocksTable:
       Type: AWS::DynamoDB::Table
