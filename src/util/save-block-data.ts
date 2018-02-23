@@ -3,6 +3,8 @@ import logger from './logger';
 import { BLOCK_DATA_TTL_MS, BLOCKS_TABLE, BLOCKSTREAM_STATE_TABLE, NETWORK_ID } from './env';
 import * as zlib from 'zlib';
 import { DynamoDB } from 'aws-sdk';
+import toHex from './to-hex';
+import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -31,14 +33,38 @@ export async function getBlockStreamState(): Promise<BlockStreamState | null> {
   }
 }
 
-export async function saveBlockStreamState(state: BlockStreamState): Promise<void> {
+export async function saveBlockStreamState(prevState: BlockStreamState | null, nextState: BlockStreamState): Promise<void> {
+  // build the input parameters
+  let input: DocumentClient.PutItemInput = {
+    TableName: BLOCKSTREAM_STATE_TABLE,
+    Item: nextState
+  };
+
+  // add conditions to the expression if there's a previous state
+  if (prevState !== null) {
+    input = {
+      ...input,
+      ConditionExpression: '#network_id = :network_id AND #lastReconciledBlock.#hash = :hash AND #lastReconciledBlock.#number = :number',
+      ExpressionAttributeNames: {
+        '#network_id': 'network_id',
+        '#lastReconciledBlock': 'lastReconciledBlock',
+        '#hash': 'hash',
+        '#number': 'number',
+      },
+      ExpressionAttributeValues: {
+        ':network_id': prevState.network_id,
+        ':hash': prevState.lastReconciledBlock.hash,
+        ':number': prevState.lastReconciledBlock.number
+      }
+    };
+  }
+
   try {
-    await ddbClient.put({
-      TableName: BLOCKSTREAM_STATE_TABLE,
-      Item: state
-    }).promise();
+    logger.debug({ input }, 'saving blockstream state');
+
+    await ddbClient.put(input).promise();
   } catch (err) {
-    logger.error({ err }, 'failed to save blockstream state');
+    logger.error({ err, input }, 'failed to save blockstream state');
     throw err;
   }
 }
@@ -80,8 +106,13 @@ export default async function saveBlockData(block: BlockWithTransactionHashes, l
 
   if (checkParentExists) {
     logger.info({ metadata }, 'checking for existence of parent hash');
-    const exists = await blockExists(block.hash, block.number);
-    if (!exists) {
+
+    const parentExists = await blockExists(
+      block.parentHash,
+      toHex(new BigNumber(block.number).minus(1).toNumber())
+    );
+
+    if (!parentExists) {
       logger.error({ metadata }, 'parent hash did not exist');
       throw new Error('parent block check failed');
     }

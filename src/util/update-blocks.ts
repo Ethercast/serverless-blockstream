@@ -46,19 +46,20 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
-  logger.info({
+  const metadata = {
     blockHash: block.hash,
-    number: block.number,
-    logCount: logs.length
-  }, 'fetched block');
+    blockNumber: block.number,
+    logCount: logs.length,
+    transactionCount: block.transactions.length,
+    parentHash: block.parentHash
+  };
+
+  logger.info({ metadata }, 'fetched block data');
 
   // if any logs are not for this block, we encountered a race condition, try again later. log everything
   // since this rarely happens
   if (_.any(logs, ({ blockHash }) => blockHash !== block.hash)) {
-    logger.warn({
-      blockHash: block.hash,
-      logCount: logs.length
-    }, 'inconsistent logs: not all logs matched the block');
+    logger.warn({ metadata }, 'inconsistent logs: not all logs matched the block');
     logger.debug({ block, logs }, 'inconsistent logs');
     return;
   }
@@ -71,9 +72,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
     if (!parentExists) {
       logger.warn({
-        blockHash: block.hash,
-        blockNumber: block.number,
-        parentHash: block.parentHash,
+        metadata,
         parentBlockNumber
       }, 'parent does not exist! do not know how to rewind blocks yet');
 
@@ -84,7 +83,11 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   }
 
   // TODO: should this thing also check parent exists?
-  await saveBlockData(block, logs, state !== null);
+  try {
+    await saveBlockData(block, logs, state !== null);
+  } catch (err) {
+    logger.error({ err, metadata }, 'failed to save block data');
+  }
 
   try {
     const queueMessage = { hash: block.hash, number: block.number };
@@ -98,16 +101,24 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
     logger.info({ queueMessage, MessageId }, 'placed message in queue');
   } catch (err) {
-    logger.error({ err }, 'failed to deliver block notification message to queue');
+    logger.error({ err, metadata }, 'failed to deliver block notification message to queue');
     return;
   }
 
-  // LAST step: save the blockstream state
-  await saveBlockStreamState({
-    lastReconciledBlock: {
-      hash: block.hash,
-      number: block.number
-    },
-    network_id: NETWORK_ID
-  });
+  try {
+    // LAST step: save the blockstream state
+    await saveBlockStreamState(
+      state,
+      {
+        lastReconciledBlock: {
+          hash: block.hash,
+          number: block.number
+        },
+        network_id: NETWORK_ID
+      }
+    );
+  } catch (err) {
+    logger.error({ err, metadata }, 'failed to update blockstream state');
+    return;
+  }
 }
