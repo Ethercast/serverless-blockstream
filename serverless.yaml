@@ -14,7 +14,7 @@ provider:
     BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v4
     LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v4
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
-    SQS_BLOCK_RECEIVED_QUEUE_URL: https://sqs.#{AWS::Region}.amazonaws.com/#{AWS::AccountId}/${self:custom.queueName}
+    SQS_BLOCK_RECEIVED_QUEUE_URL: "https://sqs.#{AWS::Region}.amazonaws.com/#{AWS::AccountId}/${self:custom.queueName}"
     BLOCK_DATA_TTL_MS: "3600000" # 1 hour
     NUM_BLOCKS_PER_LOOP: "1"
     LOG_LEVEL: "info" # info log level
@@ -31,7 +31,6 @@ provider:
         - dynamodb:BatchWriteItem
       Resource:
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKSTREAM_STATE_TABLE}"
-        - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKSTREAM_STATE_TABLE}/*"
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKS_TABLE}"
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKS_TABLE}/*"
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.LOGS_TABLE}"
