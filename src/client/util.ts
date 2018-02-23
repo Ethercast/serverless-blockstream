@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
+import toHex from '../util/to-hex';
 
 export type MethodParameter = boolean | string | number | BigNumber | object;
 
@@ -7,7 +8,7 @@ export function serializeToMethodParameter(p: any): MethodParameter {
   switch (typeof p) {
     case 'object':
       if (p instanceof BigNumber) {
-        return `0x${p.toString(16)}`;
+        return toHex(p);
       }
 
       if (Array.isArray(p)) {
@@ -18,7 +19,7 @@ export function serializeToMethodParameter(p: any): MethodParameter {
     case 'string':
       return p;
     case 'number':
-      return `0x${new BigNumber(p).toString(16)}`;
+      return toHex(p);
     case 'boolean':
       return p;
 
