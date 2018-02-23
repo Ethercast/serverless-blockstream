@@ -15,7 +15,6 @@ import getNextFetchBlock from './get-next-fetch-block';
 
 const sqs = new SQS();
 
-
 /**
  * This function is executed on a loop and reconciles one block worth of data
  */
