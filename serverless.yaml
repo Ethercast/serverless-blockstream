@@ -129,8 +129,8 @@ resources:
           - AttributeName: logIndex
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 10
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
@@ -143,8 +143,8 @@ resources:
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
+              ReadCapacityUnits: 10
+              WriteCapacityUnits: 10
 
 custom:
   webpackIncludeModules: true # enable auto-packing of external modules
@@ -160,10 +160,10 @@ custom:
         usage: 0.8       # Targeted usage percentage
     - table: LogsTable    # DynamoDB Resource
       read:
-        minimum: 1        # Minimum read capacity
+        minimum: 10        # Minimum read capacity
         maximum: 25      # Maximum read capacity
         usage: 0.8       # Targeted usage percentage
       write:
-        minimum: 1        # Minimum write capacity
+        minimum: 10        # Minimum write capacity
         maximum: 25      # Maximum write capacity
         usage: 0.8       # Targeted usage percentage

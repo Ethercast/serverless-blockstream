@@ -5,45 +5,58 @@ import saveBlockData, { getBlockStreamState, saveBlockStreamState } from './save
 import EthClient from '../client/eth-client';
 import { NETWORK_ID, NUM_BLOCKS_PER_LOOP, STARTING_BLOCK } from './env';
 
+async function getStartingBlock(): Promise<BigNumber> {
+  const state = await getBlockStreamState();
+  if (!state) {
+    return new BigNumber(STARTING_BLOCK);
+  }
+
+  const lastBlockNo = new BigNumber(state.lastReconciledBlock.number);
+
+  if (lastBlockNo.gt(STARTING_BLOCK)) {
+    return lastBlockNo.plus(1);
+  }
+
+  return new BigNumber(STARTING_BLOCK);
+}
+
 /**
  * This function is executed on a loop and fetches the blocks since the last known block number and shoves them into dynamo
  */
 export default async function updateBlocks(client: EthClient) {
-  let blockStreamState = await getBlockStreamState();
+  const startingBlockNo = await getStartingBlock();
+  const currentBlockNo = await client.eth_blockNumber();
 
-  let lastReconciledBlockNumber: BigNumber;
-  if (!blockStreamState) {
-    lastReconciledBlockNumber = new BigNumber(STARTING_BLOCK);
-  } else {
-    lastReconciledBlockNumber = new BigNumber(blockStreamState.lastReconciledBlock.number);
+  if (currentBlockNo.lt(startingBlockNo)) {
+    logger.info({
+      currentBlockNo,
+      startingBlockNo
+    }, 'starting block is greater than current block, skipping iteration');
+    return;
   }
 
-  const latestBlockNumber = await client.eth_blockNumber();
-  logger.debug({ latestBlockNumber, lastReconciledBlockNumber }, 'retrieved latest block number');
+  logger.info({ currentBlockNo, startingBlockNo }, `starting with block ${startingBlockNo.valueOf()}`);
 
-  let numBlocksToGet = latestBlockNumber.minus(lastReconciledBlockNumber);
-  if (numBlocksToGet.gt(NUM_BLOCKS_PER_LOOP)) {
-    numBlocksToGet = new BigNumber(NUM_BLOCKS_PER_LOOP);
+  let endingBlockNo = startingBlockNo.plus(NUM_BLOCKS_PER_LOOP);
+  if (endingBlockNo.gt(currentBlockNo)) {
+    endingBlockNo = currentBlockNo;
   }
 
-  const missingBlockNumbers = _.range(
-    lastReconciledBlockNumber.toNumber(),
-    lastReconciledBlockNumber.plus(numBlocksToGet).toNumber()
-  );
+  logger.debug({ startingBlockNo }, 'starting fetching blocks...');
 
-  logger.debug({ numMissingBlocks: numBlocksToGet, missingBlockNumbers }, 'fetching missing missingBlockNumbers');
+  let blockNumber = startingBlockNo;
 
   // fetch the blocks
-  for (let i = 0; i < missingBlockNumbers.length; i++) {
+  while (blockNumber.lte(endingBlockNo)) {
     // get the block info and all the logs for the block
     const [block, logs] = await Promise.all([
-      client.eth_getBlockByNumber(missingBlockNumbers[i], false),
-      client.eth_getLogs({ fromBlock: missingBlockNumbers[i], toBlock: missingBlockNumbers[i] })
+      client.eth_getBlockByNumber(blockNumber, false),
+      client.eth_getLogs({ fromBlock: blockNumber, toBlock: blockNumber })
     ]);
 
     // missing block, try again later
     if (block === null) {
-      logger.debug({ blockNumber: missingBlockNumbers[i] }, 'block came back as null');
+      logger.debug({ blockNumber: blockNumber }, 'block came back as null');
       break;
     }
 
@@ -66,5 +79,7 @@ export default async function updateBlocks(client: EthClient) {
       },
       network_id: NETWORK_ID
     });
+
+    blockNumber = new BigNumber(block.number).plus(1);
   }
 }
