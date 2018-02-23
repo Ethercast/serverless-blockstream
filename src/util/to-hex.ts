@@ -1,5 +1,4 @@
 import BigNumber from 'bignumber.js';
-import { BlockParameter } from '../client/eth-client';
 
 export default function toHex(number: string | number | BigNumber): string {
   if (typeof number === 'string' && number.indexOf('0x') === 0) {
