@@ -44,7 +44,7 @@ functions:
     timeout: 180
     events:
       - schedule:
-          rate: rate(1 minute)
+          rate: rate(2 minutes)
           enabled: false
 
   handle-new-blocks:
