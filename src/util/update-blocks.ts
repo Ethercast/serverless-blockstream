@@ -39,7 +39,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     logger.debug({
       currentBlockNo,
       nextFetchBlock
-    }, 'starting block is greater than current block, skipping iteration');
+    }, 'next fetch block is not yet available');
     return;
   }
 
