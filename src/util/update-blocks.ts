@@ -86,11 +86,11 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
 
   //  check if the parent exists and rewind blocks if it does
-  {
+  if (state) {
     const parentBlockNumber = toHex(new BigNumber(block.number).minus(1));
     const parentExists = await blockExists(block.parentHash, parentBlockNumber);
 
-    if (!parentExists && state) {
+    if (!parentExists) {
       logger.warn({
         blockHash: block.hash,
         blockNumber: block.number,
