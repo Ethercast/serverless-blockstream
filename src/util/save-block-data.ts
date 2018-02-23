@@ -16,7 +16,7 @@ export async function getBlockStreamState(): Promise<BlockStreamState | null> {
         network_id: NETWORK_ID
       },
       ConsistentRead: true
-    });
+    }).promise();
 
     if (!Item || Item.network_id !== NETWORK_ID) {
       return null;
@@ -34,7 +34,7 @@ export async function saveBlockStreamState(state: BlockStreamState): Promise<voi
     await ddbClient.put({
       TableName: BLOCKSTREAM_STATE_TABLE,
       Item: state
-    });
+    }).promise();
   } catch (err) {
     logger.error({ err }, 'failed to save blockstream state');
     throw err;
