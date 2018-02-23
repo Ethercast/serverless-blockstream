@@ -38,19 +38,17 @@ export default async function updateBlocks(client: EthClient) {
     return;
   }
 
-  logger.info({ currentBlockNo, startingBlockNo }, `starting with block ${startingBlockNo.valueOf()}`);
-
   let endingBlockNo = startingBlockNo.plus(NUM_BLOCKS_PER_LOOP);
   if (endingBlockNo.gt(currentBlockNo)) {
     endingBlockNo = currentBlockNo;
   }
 
-  logger.debug({ startingBlockNo }, 'starting fetching blocks...');
-
   let blockNumber = startingBlockNo;
 
   // fetch the blocks
   while (blockNumber.lte(endingBlockNo)) {
+    logger.info({ blockNumber, endingBlockNo }, 'fetching block');
+
     // get the block info and all the logs for the block
     const [block, logs] = await Promise.all([
       client.eth_getBlockByNumber(blockNumber, false),
@@ -83,7 +81,7 @@ export default async function updateBlocks(client: EthClient) {
       }).promise();
       logger.debug({ MessageId });
     } catch (err) {
-      logger.error({err}, 'failed to deliver block notification message to queue');
+      logger.error({ err }, 'failed to deliver block notification message to queue');
       break;
     }
 

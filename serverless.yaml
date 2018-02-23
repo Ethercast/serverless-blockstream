@@ -21,15 +21,6 @@ custom:
         minimum: 5        # Minimum write capacity
         maximum: 100      # Maximum write capacity
         usage: 0.7        # Targeted usage percentage
-    - table: LogsTable    # DynamoDB Resource
-      read:
-        minimum: 5        # Minimum read capacity
-        maximum: 100      # Maximum read capacity
-        usage: 0.7        # Targeted usage percentage
-      write:
-        minimum: 5        # Minimum write capacity
-        maximum: 100      # Maximum write capacity
-        usage: 0.7        # Targeted usage percentage
 
 provider:
   name: aws
@@ -37,7 +28,6 @@ provider:
   environment: # service wide environment variables
     BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-bs-state-v4
     BLOCKS_TABLE: ${self:custom.prefix}-blocks-v4
-    LOGS_TABLE: ${self:custom.prefix}-logs-v4
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
     SQS_BLOCK_RECEIVED_QUEUE_URL: "https://sqs.#{AWS::Region}.amazonaws.com/#{AWS::AccountId}/${self:custom.queueName}"
     BLOCK_DATA_TTL_MS: "3600000" # 1 hour
@@ -58,8 +48,6 @@ provider:
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKSTREAM_STATE_TABLE}"
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKS_TABLE}"
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKS_TABLE}/*"
-        - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.LOGS_TABLE}"
-        - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.LOGS_TABLE}/*"
     - Effect: Allow
       Action: # Gives permission to push logs to the SQS queue
         - sqs:SendMessage
@@ -91,8 +79,8 @@ resources:
             - AttributeName: network_id
               KeyType: HASH
           ProvisionedThroughput:
-            ReadCapacityUnits: 1
-            WriteCapacityUnits: 1
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
 
     BlocksTable:
       Type: AWS::DynamoDB::Table
@@ -109,8 +97,8 @@ resources:
           - AttributeName: number
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
@@ -122,41 +110,6 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: KEYS_ONLY
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
-
-
-    LogsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.environment.LOGS_TABLE}
-        AttributeDefinitions:
-          - AttributeName: transactionHash
-            AttributeType: S
-          - AttributeName: logIndex
-            AttributeType: S
-          - AttributeName: blockHash
-            AttributeType: S
-        KeySchema:
-          - AttributeName: transactionHash
-            KeyType: HASH
-          - AttributeName: logIndex
-            KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 10
-          WriteCapacityUnits: 10
-        TimeToLiveSpecification:
-          AttributeName: ttl
-          Enabled: true
-        GlobalSecondaryIndexes:
-          -
-            IndexName: ByBlockHash
-            KeySchema:
-              - AttributeName: blockHash
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
             ProvisionedThroughput:
               ReadCapacityUnits: 5
               WriteCapacityUnits: 5

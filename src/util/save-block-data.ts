@@ -1,8 +1,8 @@
 import { BlockStreamState, BlockWithTransactionHashes, Log } from './model';
 import logger from './logger';
-import timedAction from './time-action';
-import { BLOCK_DATA_TTL_MS, BLOCKS_TABLE, BLOCKSTREAM_STATE_TABLE, LOGS_TABLE, NETWORK_ID } from './env';
-import { chunkedPut, ddbClient } from './ddb-util';
+import { BLOCK_DATA_TTL_MS, BLOCKS_TABLE, BLOCKSTREAM_STATE_TABLE, NETWORK_ID } from './env';
+import { ddbClient } from './ddb-util';
+import * as zlib from 'zlib';
 
 export function getItemTtl(): number {
   return (new Date()).getTime() + BLOCK_DATA_TTL_MS;
@@ -41,46 +41,52 @@ export async function saveBlockStreamState(state: BlockStreamState): Promise<voi
   }
 }
 
+
+export async function compressBlock(block: BlockWithTransactionHashes, logs: Log[]): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    zlib.deflate(JSON.stringify({ block, logs }), (err, buffer) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(buffer);
+      }
+    });
+  });
+}
+
 export default async function saveBlockData(block: BlockWithTransactionHashes, logs: Log[]) {
   const metadata = {
     blockHash: block.hash,
     blockNumber: block.number,
-    txCount: block.transactions.length
+    txCount: block.transactions.length,
+    logCount: logs.length
   };
 
-  await timedAction('save block data', async () => {
+  try {
+    // when this data expires
+    const ttl = getItemTtl();
+
     try {
-      // when this data expires
-      const ttl = getItemTtl();
+      const payload = await compressBlock(block, logs);
+      logger.info({ metadata, payloadSize: payload.length }, 'compressed payload length');
 
-      try {
-        // put all the logs in for the block first
-        await chunkedPut(metadata, LOGS_TABLE, logs.map(log => ({ ...log, ttl })));
-        logger.info(metadata, 'saved logs for block');
-      } catch (err) {
-        logger.error({ err, metadata }, 'failed to save logs');
-        throw err;
-      }
+      // save the individual block
+      const { ConsumedCapacity } = await ddbClient.put(
+        {
+          TableName: BLOCKS_TABLE,
+          Item: { hash: block.hash, number: block.number, ttl, payload },
+          ReturnConsumedCapacity: 'TOTAL'
+        }
+      ).promise();
 
-      try {
-        // save the individual block
-        const { ConsumedCapacity } = await ddbClient.put(
-          {
-            TableName: BLOCKS_TABLE,
-            Item: { ...block, ttl },
-            ReturnConsumedCapacity: 'TOTAL'
-          }
-        ).promise();
-
-        logger.info({ metadata, ConsumedCapacity }, 'completed block save operation');
-      } catch (err) {
-        logger.error({ err, block, metadata }, 'failed to save block');
-        throw err;
-      }
-
+      logger.info({ metadata, ConsumedCapacity }, 'completed block save operation');
     } catch (err) {
-      logger.error({ err, metadata }, 'error while saving block data');
+      logger.error({ err, block, metadata }, 'failed to save block');
       throw err;
     }
-  });
+
+  } catch (err) {
+    logger.error({ err, metadata }, 'error while saving block data');
+    throw err;
+  }
 }
