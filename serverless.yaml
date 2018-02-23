@@ -35,7 +35,6 @@ provider:
     SQS_BLOCK_RECEIVED_QUEUE_URL: "https://sqs.#{AWS::Region}.amazonaws.com/#{AWS::AccountId}/${self:custom.queueName}"
     BLOCK_DATA_TTL_MS: "3600000" # 1 hour
     LOG_LEVEL: "info" # info log level
-    RUN_TIME_LENGTH_SECONDS: "90"
     NETWORK_ID: "1"
     STARTING_BLOCK: "5140660"
   iamRoleStatements: # permissions for all of your functions can be set here

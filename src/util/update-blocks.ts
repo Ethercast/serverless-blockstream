@@ -96,8 +96,10 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
         blockNumber: block.number,
         parentHash: block.parentHash,
         parentBlockNumber
-      }, 'parent exists! do not know how to rewind blocks yet');
+      }, 'parent does not exist! do not know how to rewind blocks yet');
+
       // TODO: update the state to point at the last reconciled block that is still on-chain
+
       return;
     }
   }

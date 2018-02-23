@@ -70,10 +70,11 @@ export async function blockExists(hash: string, number: string): Promise<boolean
     Key: {
       hash,
       number
-    }
+    },
+    AttributesToGet: ['hash', 'number']
   }).promise();
 
-  return !!(Item && Item.hash === hash);
+  return !!(Item && Item.hash === hash && Item.number === number);
 }
 
 export default async function saveBlockData(block: BlockWithTransactionHashes, logs: Log[], checkParentExists: boolean): Promise<void> {
@@ -106,7 +107,13 @@ export default async function saveBlockData(block: BlockWithTransactionHashes, l
     const { ConsumedCapacity } = await ddbClient.put(
       {
         TableName: BLOCKS_TABLE,
-        Item: { hash: block.hash, number: block.number, parentHash: block.parentHash, ttl, payload },
+        Item: {
+          hash: block.hash,
+          number: block.number,
+          parentHash: block.parentHash,
+          ttl,
+          payload
+        },
         ReturnConsumedCapacity: 'TOTAL',
         ConditionExpression: 'attribute_not_exists(#hash)',
         ExpressionAttributeNames: {

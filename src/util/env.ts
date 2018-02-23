@@ -8,8 +8,6 @@ export const LOG_LEVEL: LogLevel = env.get('LOG_LEVEL').required().asString() as
 
 export const STARTING_BLOCK: number = env.get('STARTING_BLOCK').required().asIntPositive();
 
-export const RUN_TIME_LENGTH_SECONDS: number = env.get('RUN_TIME_LENGTH_SECONDS').required().asIntPositive();
-
 export const BLOCK_DATA_TTL_MS: number = env.get('BLOCK_DATA_TTL_MS').required().asIntPositive();
 
 // OWNED RESOURCES
