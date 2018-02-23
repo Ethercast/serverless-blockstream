@@ -1,8 +1,12 @@
 import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
-import saveBlockData, { blockExists, getBlockStreamState, saveBlockStreamState } from './save-block-data';
-import EthClient, { BlockParameter } from '../client/eth-client';
+import saveBlockData, {
+  blockExists,
+  getBlockStreamState,
+  saveBlockStreamState
+} from './save-block-data';
+import EthClient from '../client/eth-client';
 import { NETWORK_ID, SQS_BLOCK_RECEIVED_QUEUE_URL, STARTING_BLOCK } from './env';
 import { SQS } from 'aws-sdk';
 import { BlockStreamState, BlockWithTransactionHashes, Log } from './model';
@@ -13,7 +17,7 @@ const sqs = new SQS();
 /**
  * Get the number of the next block to fetch
  */
-async function getNextFetchBlock(state: BlockStreamState | null): Promise<BigNumber> {
+export function getNextFetchBlock(state: BlockStreamState | null): BigNumber {
   if (!state) {
     return new BigNumber(STARTING_BLOCK);
   }
@@ -66,7 +70,10 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   // if any logs are not for this block, we encountered a race condition, try again later. log everything
   // since this rarely happens
   if (_.any(logs, ({ blockHash }) => blockHash !== block.hash)) {
-    logger.warn({ blockHash: block.hash, logCount: logs.length }, 'inconsistent logs: not all logs matched the block');
+    logger.warn({
+      blockHash: block.hash,
+      logCount: logs.length
+    }, 'inconsistent logs: not all logs matched the block');
     logger.debug({ block, logs }, 'inconsistent logs');
     return;
   }
