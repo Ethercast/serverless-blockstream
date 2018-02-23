@@ -1,5 +1,5 @@
 import { DynamoDB } from 'aws-sdk';
-import { BlockWithFullTransactions } from './model';
+import { BlockWithFullTransactions, Log } from './model';
 import logger from './logger';
 import * as _ from 'underscore';
 
@@ -9,7 +9,7 @@ const documentClient = new DynamoDB.DocumentClient();
 
 const MAX_ITEMS_PER_PUT = 25;
 
-export default async function saveBlockData(block: BlockWithFullTransactions) {
+export default async function saveBlockData(block: BlockWithFullTransactions, logs: Log[]) {
   if (!BLOCKS_TABLE || !LOGS_TABLE) {
     throw new Error('missing table environment variables');
   }
@@ -22,6 +22,9 @@ export default async function saveBlockData(block: BlockWithFullTransactions) {
   logger.info(metadata, 'beginning save operation');
 
   try {
+    // put all the logs in for the block
+    await chunkedPut(metadata, LOGS_TABLE, logs);
+
     const { ConsumedCapacity } = await documentClient.put({
       TableName: BLOCKS_TABLE,
       Item: block,
@@ -49,7 +52,10 @@ async function chunkedPut(metadata: { blockHash: string; blockNumber: string },
 
   for (let putIx = 0; putIx < numPuts; putIx++) {
     logger.debug({ metadata, tableName, putIx });
-    await putAll(metadata, tableName, items.slice(putIx * chunkSize, putIx * chunkSize + numPuts));
+    const start = putIx * chunkSize;
+    const end = start + chunkSize;
+
+    await putAll(metadata, tableName, items.slice(start, end));
   }
 }
 

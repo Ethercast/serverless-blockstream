@@ -25,7 +25,10 @@ export default async function updateBlocks(client: EthClient) {
 
   // fetch the blocks
   for (let i = 0; i < missingBlockNumbers.length; i++) {
-    const block = await client.eth_getBlockByNumber(missingBlockNumbers[i], true);
+    const [block, logs] = await Promise.all([
+      client.eth_getBlockByNumber(missingBlockNumbers[i], true),
+      client.eth_getLogs({ fromBlock: missingBlockNumbers[i], toBlock: missingBlockNumbers[i] })
+    ]);
 
     if (block === null) {
       logger.debug({ blockNumber: missingBlockNumbers[i] }, 'block came back as null');
@@ -36,23 +39,11 @@ export default async function updateBlocks(client: EthClient) {
     // before putting the block in the table
     // DO this so that we have all the logs in dynamo before an event is triggered for an added block
 
-    // const { transactions } = block;
-    //
-    // if (transactions.length === 0 || typeof transactions[0] === 'string') {
-    //   logger.error({ transactions: block.transactions }, 'invalid transactions: expected objects');
-    //   throw new Error('invaild transactions: expected object but found string');
-    // }
-    //
-    // const txs = transactions as Transaction[];
-    //
-    // logger.info({ blockHash: block.hash, number: block.number }, 'fetched missing block');
-    //
-    // const logs = await client.eth_getLogs({
-    //   fromBlock: block.number,
-    //   toBlock: block.number
-    // });
+    logger.info({ blockHash: block.hash, number: block.number, logCount: logs.length }, 'fetched missing block');
 
-    logger.debug({}, `fetched logs for ${block.number}`);
+    if (!_.all(logs, ({ blockHash }) => blockHash === block.hash)) {
+      throw new Error('inconsistent logs: not all logs matched the block');
+    }
 
     await saveBlockData(block);
 
