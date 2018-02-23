@@ -53,25 +53,35 @@ export default async function saveBlockData(block: BlockWithTransactionHashes, l
       // when this data expires
       const ttl = getItemTtl();
 
-      // put all the logs in for the block first
-      await chunkedPut(metadata, LOGS_TABLE, logs.map(log => ({ ...log, ttl })));
+      try {
+        // put all the logs in for the block first
+        await chunkedPut(metadata, LOGS_TABLE, logs.map(log => ({ ...log, ttl })));
+      } catch (err) {
+        logger.error({ err, metadata }, 'failed to save logs');
+        throw err;
+      }
 
-      // save the individual block
-      const { ConsumedCapacity } = await ddbClient.put(
-        {
-          TableName: BLOCKS_TABLE,
-          Item: { ...block, ttl },
-          ReturnConsumedCapacity: 'TOTAL',
-          ConditionExpression: 'attribute_not_exists(#hash)',
-          ExpressionAttributeNames: {
-            '#hash': 'hash'
+      try {
+        // save the individual block
+        const { ConsumedCapacity } = await ddbClient.put(
+          {
+            TableName: BLOCKS_TABLE,
+            Item: { ...block, ttl },
+            ReturnConsumedCapacity: 'TOTAL',
+            ConditionExpression: 'attribute_not_exists(#hash)',
+            ExpressionAttributeNames: {
+              '#hash': 'hash'
+            }
           }
-        }
-      ).promise();
+        ).promise();
+        logger.info({ metadata, ConsumedCapacity }, 'completed block save operation');
+      } catch (err) {
+        logger.error({ err, block, metadata }, 'failed to save block');
+        throw err;
+      }
 
-      logger.info({ metadata, ConsumedCapacity }, 'completed block save operation');
     } catch (err) {
-      logger.error({ err, metadata }, 'failed to save block');
+      logger.error({ err, metadata }, 'error while saving block data');
       throw err;
     }
   });
