@@ -4,8 +4,6 @@ import { Callback, Context, Handler } from 'aws-lambda';
 import { NETWORK_ID, SRC_NODE_URL } from './util/env';
 import getClient from './client/get-client';
 
-const BLOCK_TIME_MS = 15000;
-
 export const start: Handler = async (event: any, context: Context, cb: Callback) => {
   const client = await getClient(SRC_NODE_URL);
 
@@ -31,8 +29,8 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
       return;
     }
 
-    // unlikely that running again will make a difference if it's within the block time
-    if (context.getRemainingTimeInMillis() < BLOCK_TIME_MS) {
+    // assume we cannot process a block in less than 5 seconds
+    if (context.getRemainingTimeInMillis() < 5000) {
       clearInterval(interval);
       context.done();
       return;
