@@ -48,7 +48,7 @@ functions:
     events:
       - schedule:
           rate: rate(2 minutes)
-          enabled: false
+          enabled: true
 
   handle-new-blocks:
     handler: src/handle.start
