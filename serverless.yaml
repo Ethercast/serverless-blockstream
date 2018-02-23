@@ -10,9 +10,9 @@ provider:
   name: aws
   runtime: nodejs6.10
   environment: # service wide environment variables
-    BLOCKSTREAM_STATE_TABLE: ${self:service}-${opt:stage, self:provider.stage}-bs-state-v3
-    BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v3
-    LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v3
+    BLOCKSTREAM_STATE_TABLE: ${self:service}-${opt:stage, self:provider.stage}-bs-state-v4
+    BLOCKS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-blocks-v4
+    LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v4
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
     DESTINATION_QUEUE_URL: "https://fake-queue-url.sqs.amazon.com/test"
     LOG_LEVEL: info
