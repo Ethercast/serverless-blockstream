@@ -13,6 +13,8 @@ custom:
   queueName: ${self:custom.prefix}-new-blocks.fifo
   capacities:
     - table: BlocksTable  # DynamoDB Resource
+      index:              # List or single index name
+        - ByBlockNumber
       read:
         minimum: 5        # Minimum read capacity
         maximum: 100      # Maximum read capacity
