@@ -15,6 +15,7 @@ provider:
     LOGS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-logs-v3
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
     DESTINATION_QUEUE_URL: "https://fake-queue-url.sqs.amazon.com/test"
+    LOG_LEVEL: info
     RUN_TIME_LENGTH_SECONDS: "120"
     NETWORK_ID: "1"
   iamRoleStatements: # permissions for all of your functions can be set here
