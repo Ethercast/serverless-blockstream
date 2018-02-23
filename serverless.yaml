@@ -111,8 +111,6 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        StreamSpecification:
-          StreamViewType: KEYS_ONLY
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
