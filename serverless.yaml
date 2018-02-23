@@ -19,11 +19,11 @@ custom:
       read:
         minimum: ${self:custom.baseCapacity}        # Minimum read capacity
         maximum: 100      # Maximum read capacity
-        usage: 0.7        # Targeted usage percentage
+        usage: 0.8        # Targeted usage percentage
       write:
         minimum: ${self:custom.baseCapacity}        # Minimum write capacity
         maximum: 100      # Maximum write capacity
-        usage: 0.7        # Targeted usage percentage
+        usage: 0.8        # Targeted usage percentage
 
 provider:
   name: aws
