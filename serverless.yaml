@@ -28,12 +28,22 @@ provider:
 
 functions:
   poll-for-blocks:
-    handler: index.start
+    handler: poll.start
     timeout: 180
     events:
       - schedule:
-          rate: rate(1 minutes)
-          enabled: true
+          rate: rate(1 minute)
+          enabled: false
+
+  handle-new-blocks:
+    handler: handle.start
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt:
+              - BlocksTable
+              - StreamArn
 
 resources:
   Resources:
@@ -54,6 +64,8 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
