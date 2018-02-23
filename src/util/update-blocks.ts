@@ -90,7 +90,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     const parentBlockNumber = toHex(new BigNumber(block.number).minus(1));
     const parentExists = await blockExists(block.parentHash, parentBlockNumber);
 
-    if (!parentExists) {
+    if (!parentExists && state) {
       logger.warn({
         blockHash: block.hash,
         blockNumber: block.number,
@@ -102,6 +102,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     }
   }
 
+  // TODO: should this thing also check parent exists?
   await saveBlockData(block, logs, state !== null);
 
   try {
