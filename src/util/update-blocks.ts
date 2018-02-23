@@ -20,7 +20,7 @@ async function getNextFetchBlock(state: BlockStreamState | null): Promise<BigNum
 
   const lastBlockNo = new BigNumber(state.lastReconciledBlock.number);
 
-  if (lastBlockNo.gt(STARTING_BLOCK)) {
+  if (lastBlockNo.gte(STARTING_BLOCK)) {
     return lastBlockNo.plus(1);
   }
 
