@@ -60,7 +60,7 @@ functions:
 
 resources:
   Resources:
-    BlocksTable:
+    BlockStreamStateTable:
         Type: AWS::DynamoDB::Table
         Properties:
           TableName: ${self:provider.environment.BLOCKSTREAM_STATE_TABLE}
