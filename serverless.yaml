@@ -42,7 +42,7 @@ provider:
         - sqs:SendMessageBatch
         - sqs:DeleteMessage
       Resource:
-        - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:provider.environment.SQS_BLOCK_RECEIVED_QUEUE}"
+        - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.queueName}"
 
 custom:
   webpackIncludeModules: true # enable auto-packing of external modules
