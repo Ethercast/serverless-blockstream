@@ -24,7 +24,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   const currentBlockNo = await client.eth_blockNumber();
 
   if (currentBlockNo.lt(nextFetchBlock)) {
-    logger.info({
+    logger.debug({
       currentBlockNo,
       nextFetchBlock
     }, 'starting block is greater than current block, skipping iteration');
