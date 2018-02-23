@@ -32,7 +32,7 @@ provider:
     BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-bs-state
     BLOCKS_TABLE: ${self:custom.prefix}-blocks
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
-    SQS_BLOCK_RECEIVED_QUEUE_URL: "https://sqs.#{AWS::Region}.amazonaws.com/#{AWS::AccountId}/${self:custom.queueName}"
+    SQS_BLOCK_RECEIVED_QUEUE_NAME: ${self:custom.queueName}
     BLOCK_DATA_TTL_MS: "3600000" # 1 hour
     LOG_LEVEL: "info" # info log level
     NETWORK_ID: "1"

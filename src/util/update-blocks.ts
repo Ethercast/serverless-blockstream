@@ -7,13 +7,25 @@ import saveBlockData, {
   saveBlockStreamState
 } from './save-block-data';
 import EthClient from '../client/eth-client';
-import { NETWORK_ID, SQS_BLOCK_RECEIVED_QUEUE_URL, STARTING_BLOCK } from './env';
+import { NETWORK_ID, SQS_BLOCK_RECEIVED_QUEUE_NAME, STARTING_BLOCK } from './env';
 import { SQS } from 'aws-sdk';
 import { BlockWithTransactionHashes, Log } from './model';
 import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
 
 const sqs = new SQS();
+
+const getQueueUrl: () => Promise<string> = _.once(async function () {
+  const { QueueUrl } = await sqs.getQueueUrl({
+    QueueName: SQS_BLOCK_RECEIVED_QUEUE_NAME
+  }).promise();
+
+  if (!QueueUrl) {
+    throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
+  }
+
+  return QueueUrl;
+});
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
@@ -91,9 +103,10 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
   try {
     const queueMessage = { hash: block.hash, number: block.number };
+    const QueueUrl = await getQueueUrl();
 
     const { MessageId } = await sqs.sendMessage({
-      QueueUrl: SQS_BLOCK_RECEIVED_QUEUE_URL,
+      QueueUrl,
       MessageGroupId: '1',
       MessageDeduplicationId: block.hash,
       MessageBody: JSON.stringify(queueMessage)
