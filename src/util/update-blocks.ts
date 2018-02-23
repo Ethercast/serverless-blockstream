@@ -86,7 +86,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     await saveBlockData(block, logs, state !== null);
   } catch (err) {
     logger.error({ err, metadata }, 'failed to save block data');
-    return
+    return;
   }
 
   try {
