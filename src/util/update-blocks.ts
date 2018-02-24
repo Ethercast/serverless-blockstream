@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { saveBlockData, blockExists } from './ddb/ddb-block-data';
 import EthClient from '../client/eth-client';
-import { NETWORK_ID, STARTING_BLOCK, DRAIN_QUEUE_LAMBDA_NAME } from './env';
+import { NETWORK_ID, STARTING_BLOCK, DRAIN_QUEUE_LAMBDA_NAME, SQS_BLOCK_RECEIVED_QUEUE_NAME } from './env';
 import { Lambda } from 'aws-sdk';
 import { BlockQueueMessage, BlockWithTransactionHashes, Log } from './model';
 import toHex from './to-hex';
@@ -142,7 +142,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
   try {
     const queueMessage: BlockQueueMessage = { hash: block.hash, number: block.number };
-    const QueueUrl = await getQueueUrl(DRAIN_QUEUE_LAMBDA_NAME);
+    const QueueUrl = await getQueueUrl(SQS_BLOCK_RECEIVED_QUEUE_NAME);
 
     const { MessageId } = await sqs.sendMessage({
       QueueUrl,

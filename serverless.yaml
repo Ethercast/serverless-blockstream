@@ -10,7 +10,7 @@ custom:
   webpackIncludeModules: true # enable auto-packing of external modules
   region: ${opt:region, self:provider.region}
   prefix: ${self:service}-${opt:stage, self:provider.stage}
-  drainQLambdaName: ${self:custom.prefix}-drain-q.fifo
+  drainQLambdaName: ${self:custom.prefix}-drain-q
   queueName: ${self:custom.prefix}-new-blocks.fifo
   baseCapacity: 3
   capacities:

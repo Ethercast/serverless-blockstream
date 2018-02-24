@@ -7,7 +7,10 @@ import {
 import { BlockQueueMessage, Log } from './util/model';
 import { getBlocksMatchingNumber } from './util/ddb/ddb-block-data';
 import _ = require('underscore');
-import { DESTINATION_LOG_QUEUE_NAME, DRAIN_QUEUE_LAMBDA_NAME, NETWORK_ID } from './util/env';
+import {
+  DESTINATION_LOG_QUEUE_NAME, DRAIN_QUEUE_LAMBDA_NAME, NETWORK_ID,
+  SQS_BLOCK_RECEIVED_QUEUE_NAME
+} from './util/env';
 
 interface LogMessage {
   log: Log;
@@ -82,7 +85,7 @@ async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message) 
 export const start: Handler = async (event, context, callback) => {
   let QueueUrl: string;
   try {
-    QueueUrl = await getQueueUrl(DRAIN_QUEUE_LAMBDA_NAME);
+    QueueUrl = await getQueueUrl(SQS_BLOCK_RECEIVED_QUEUE_NAME);
   } catch (err) {
     logger.error({ err }, 'failed to get queue url');
     context.done(err);
