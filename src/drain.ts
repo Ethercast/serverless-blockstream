@@ -46,8 +46,7 @@ async function flushMessagesToQueue(logMessages: LogMessage[]): Promise<void> {
 
       return {
         Id,
-        MessageBody: JSON.stringify(logMessage),
-        MessageGroupId: `net-${NETWORK_ID}`
+        MessageBody: JSON.stringify(logMessage)
       };
     });
 
