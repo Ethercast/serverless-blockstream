@@ -10,21 +10,21 @@ custom:
   webpackIncludeModules: true # enable auto-packing of external modules
   region: ${opt:region, self:provider.region}
   prefix: ${self:service}-${opt:stage, self:provider.stage}
-  drainQLambdaName: ${self:custom.prefix}-drain-q
+  drainBlockQueueLambdaName: ${self:custom.prefix}-drain-block-q
   newBlockQueueName: ${self:custom.prefix}-new-blocks.fifo
   logFirehoseQueue: ${self:custom.prefix}-log-firehose.fifo
-  baseCapacity: 3
-  notificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
+  baseDynamoDDBCapacity: 3
+  alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
   capacities:
     - table: BlocksTable  # DynamoDB Resource
       index:              # List or single index name
         - ByBlockNumber
       read:
-        minimum: ${self:custom.baseCapacity}        # Minimum read capacity
+        minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum read capacity
         maximum: 100      # Maximum read capacity
         usage: 0.8        # Targeted usage percentage
       write:
-        minimum: ${self:custom.baseCapacity}        # Minimum write capacity
+        minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum write capacity
         maximum: 100      # Maximum write capacity
         usage: 0.8        # Targeted usage percentage
 
@@ -34,14 +34,14 @@ provider:
   environment: # service wide environment variables
     BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-bs-state # the table containing the state of blockstream
     BLOCKS_TABLE: ${self:custom.prefix}-blocks # the table containing full blocks and their logs (compressed)
-    DRAIN_BLOCK_QUEUE_LAMBDA_NAME: ${self:custom.drainQLambdaName} # The lambda triggered when blocks are added to the queue
-    NEW_BLOCK_QUEUE_NAME: ${self:custom.newBlockQueueName}  # Queues
-    LOG_FIREHOSE_QUEUE_NAME: ${self:custom.logFirehoseQueue} # Queues
+    DRAIN_BLOCK_QUEUE_LAMBDA_NAME: ${self:custom.drainBlockQueueLambdaName} # The lambda triggered when blocks are added to the queue
+    NEW_BLOCK_QUEUE_NAME: ${self:custom.newBlockQueueName}  # Queue that receives new blocks
+    LOG_FIREHOSE_QUEUE_NAME: ${self:custom.logFirehoseQueue} # Queue that receives log events
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy" # the ethereum node URL that is used
-    BLOCK_DATA_TTL_MS: "3600000" # how long block data lives in the DB
+    BLOCK_DATA_TTL_MS: "604800000" # 7 days in milliseconds
     LOG_LEVEL: "info" # info log level
     NETWORK_ID: "1" # id of the network, validated against the node
-    STARTING_BLOCK: "5146275" # the block to start from
+    STARTING_BLOCK: "5150000" # the block to start from
 
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow
@@ -69,7 +69,7 @@ provider:
       Action: # Gives the poller permission to execute the drain q lambda
         - lambda:InvokeFunction
       Resource:
-        - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:custom.drainQLambdaName}"
+        - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:custom.drainBlockQueueLambdaName}"
     - Effect: Allow
       Action: # Gives permission to push logs to the SQS queue
         - sqs:SendMessage
@@ -89,7 +89,7 @@ functions:
           enabled: true
 
   drain-queue:
-    name: ${self:custom.drainQLambdaName}
+    name: ${self:custom.drainBlockQueueLambdaName}
     handler: src/drain.start
     memorySize: 128
     timeout: 120
@@ -107,8 +107,8 @@ resources:
             - AttributeName: network_id
               KeyType: HASH
           ProvisionedThroughput:
-            ReadCapacityUnits: ${self:custom.baseCapacity}
-            WriteCapacityUnits: ${self:custom.baseCapacity}
+            ReadCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
+            WriteCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
 
     BlocksTable:
       Type: AWS::DynamoDB::Table
@@ -125,8 +125,8 @@ resources:
           - AttributeName: number
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: ${self:custom.baseCapacity}
-          WriteCapacityUnits: ${self:custom.baseCapacity}
+          ReadCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
+          WriteCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
@@ -139,8 +139,8 @@ resources:
             Projection:
               ProjectionType: KEYS_ONLY
             ProvisionedThroughput:
-              ReadCapacityUnits: ${self:custom.baseCapacity}
-              WriteCapacityUnits: ${self:custom.baseCapacity}
+              ReadCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
+              WriteCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
 
     NewBlockQueue:
       Type: AWS::SQS::Queue
@@ -162,7 +162,7 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         Subscription:
-          - Endpoint: ${self:custom.notificationEmail}
+          - Endpoint: ${self:custom.alertNotificationEmail}
             Protocol: email
 
     NewBlockQueueDepthAlarm:
