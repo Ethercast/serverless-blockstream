@@ -9,7 +9,8 @@ plugins:
 custom:
   webpackIncludeModules: true # enable auto-packing of external modules
   region: ${opt:region, self:provider.region}
-  prefix: ${self:service}-${opt:stage, self:provider.stage}
+  stage: ${opt:stage, self:provider.stage}
+  prefix: ${self:service}-${self:custom.stage}
   drainBlockQueueLambdaName: ${self:custom.prefix}-drain-block-q
   newBlockQueueName: ${self:custom.prefix}-new-blocks.fifo
   logFirehoseQueue: ${self:custom.prefix}-log-firehose.fifo
@@ -95,6 +96,12 @@ functions:
     timeout: 120
 
 resources:
+  Outputs:
+    LogFirehoseQueueName:
+      Description: The name of the log firehose SQS queue to which all incoming logs events are sent
+      Value: !Sub "${LogFirehoseQueue.QueueName}"
+      Export:
+        Name: ${self:custom.stage}-LogFirehoseQueueName
   Resources:
     BlockStreamStateTable:
         Type: AWS::DynamoDB::Table
