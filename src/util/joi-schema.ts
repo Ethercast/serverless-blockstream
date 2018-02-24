@@ -58,8 +58,8 @@ function validate<T>(item: T, schema: Schema): T {
   const { error, value } = schema.validate(item, { allowUnknown: true, convert: false });
 
   if (error && error.details && error.details.length > 0) {
-    logger.error({ error, value }, 'invalid log');
-    throw new Error('invalid log: ' + error.message);
+    logger.error({ error }, 'schema validation failed');
+    throw new Error('schema validation failed: ' + error.message);
   }
 
   return value;
