@@ -33,6 +33,7 @@ provider:
     BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-bs-state
     BLOCKS_TABLE: ${self:custom.prefix}-blocks
     DRAIN_QUEUE_LAMBDA_NAME: ${self:custom.drainQLambdaName}
+    DESTINATION_LOG_QUEUE_NAME: "process"
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
     SQS_BLOCK_RECEIVED_QUEUE_NAME: ${self:custom.queueName}
     BLOCK_DATA_TTL_MS: "3600000" # 1 hour
@@ -66,6 +67,7 @@ provider:
         - lambda:InvokeFunction
       Resource:
         - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:custom.drainQLambdaName}"
+        - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:provider.environment.DESTINATION_LOG_QUEUE_NAME}"
 
 functions:
   poll-for-blocks:

@@ -17,3 +17,4 @@ export const BLOCKSTREAM_STATE_TABLE: string = env.get('BLOCKSTREAM_STATE_TABLE'
 export const SQS_BLOCK_RECEIVED_QUEUE_NAME: string = env.get('SQS_BLOCK_RECEIVED_QUEUE_NAME').required().asString();
 
 export const DRAIN_QUEUE_LAMBDA_NAME: string = env.get('DRAIN_QUEUE_LAMBDA_NAME').required().asString();
+export const DESTINATION_LOG_QUEUE_NAME: string = env.get('DESTINATION_LOG_QUEUE_NAME').required().asString();

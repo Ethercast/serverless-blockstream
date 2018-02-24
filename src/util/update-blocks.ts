@@ -142,7 +142,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
   try {
     const queueMessage: BlockQueueMessage = { hash: block.hash, number: block.number };
-    const QueueUrl = await getQueueUrl();
+    const QueueUrl = await getQueueUrl(DRAIN_QUEUE_LAMBDA_NAME);
 
     const { MessageId } = await sqs.sendMessage({
       QueueUrl,

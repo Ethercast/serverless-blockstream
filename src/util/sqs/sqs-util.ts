@@ -6,17 +6,16 @@ import logger from '../logger';
 
 export const sqs = new SQS();
 
-export const getQueueUrl: () => Promise<string> = _.once(async function () {
-  const { QueueUrl } = await sqs.getQueueUrl({
-    QueueName: SQS_BLOCK_RECEIVED_QUEUE_NAME
-  }).promise();
+export const getQueueUrl: (QueueName: string) => Promise<string> =
+  _.memoize(async function (QueueName: string) {
+    const { QueueUrl } = await sqs.getQueueUrl({ QueueName }).promise();
 
-  if (!QueueUrl) {
-    throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
-  }
+    if (!QueueUrl) {
+      throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
+    }
 
-  return QueueUrl;
-});
+    return QueueUrl;
+  }) as (QueueName: string) => Promise<string>;
 
 // Helper function to drain a queue
 export async function drainQueue(QueueUrl: string,
@@ -58,7 +57,7 @@ export async function drainQueue(QueueUrl: string,
           ReceiptHandle
         }).promise();
 
-        logger.info({ ReceiptHandle, MessageId: Messages[i].MessageId }, 'processed queue message');
+        logger.info({ MessageId: Messages[i].MessageId }, 'processed queue message');
       } catch (err) {
         logger.error({ err, Message: Messages[i] }, 'drainQueue: failed to process a queue message');
         throw err;
