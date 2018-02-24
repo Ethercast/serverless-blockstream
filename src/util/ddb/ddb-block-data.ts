@@ -44,8 +44,7 @@ export async function getBlocksMatchingNumber(number: BlockNumber): Promise<Deco
         ':number': toHex(number)
       },
       ReturnConsumedCapacity: 'TOTAL',
-      ConsistentRead: true,
-      AttributesToGet: ['payload']
+      ConsistentRead: true
     }).promise();
     logger.debug({ ConsumedCapacity, Count, number }, 'got blocks matching number');
 
