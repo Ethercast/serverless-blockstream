@@ -34,7 +34,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   if (blocksToCurrent.gt(10000)) {
     logger.fatal('MORE THAN 10K BLOCKS BEHIND THE NETWORK. WILL NEVER CATCH UP');
     return;
-  } else  if (blocksToCurrent.gt(1000)) {
+  } else if (blocksToCurrent.gt(1000)) {
     logger.error('more than 1000 blocks behind the network! it could take a while to catch up!');
   } else if (blocksToCurrent.gt(100)) {
     logger.error('more than 100 blocks behind the network!');
@@ -75,8 +75,8 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
-  if (_.any(logs, ({removed})=>removed)) {
-    logger.error({metadata},'block received with a log already marked removed');
+  if (_.any(logs, ({ removed }) => removed)) {
+    logger.error({ metadata }, 'block received with a log already marked removed');
     return;
   }
 
