@@ -190,15 +190,15 @@ resources:
     NewBlockQueueActiveAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmDescription: "Alarm if new blocks are not being entered into the queue"
+        AlarmDescription: "Alarm if new blocks have not been entered into queue in five minutes"
         Namespace: "AWS/SQS"
         MetricName: NumberOfMessagesSent
         Dimensions:
           - Name: QueueName
             Value: ${self:custom.newBlockQueueName}
         Statistic: Sum
-        Period: 60
-        EvaluationPeriods: 3
+        Period: 300
+        EvaluationPeriods: 1
         Threshold: 0
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
@@ -234,15 +234,15 @@ resources:
     LogFirehoseQueueActiveAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmDescription: "Alarm if new logs are not being entered into the queue"
+        AlarmDescription: "Alarm if logs have not been added to queue in five minutes"
         Namespace: "AWS/SQS"
         MetricName: NumberOfMessagesSent
         Dimensions:
           - Name: QueueName
             Value: ${self:custom.logFirehoseQueue}
         Statistic: Sum
-        Period: 60
-        EvaluationPeriods: 3
+        Period: 300
+        EvaluationPeriods: 1
         Threshold: 0
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
