@@ -80,6 +80,9 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
+  // TODO: make sure the block and all the logs match the expected format, an additional check against changes to the
+  // protocol
+
   //  check if the parent exists and rewind blocks if it does not
   if (state) {
     const parentBlockNumber = toHex(new BigNumber(block.number).minus(1));
