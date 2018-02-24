@@ -60,11 +60,6 @@ provider:
         - sqs:GetQueueUrl
       Resource:
         - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.queueName}"
-    - Effect: Allow
-      Action: # Gives the poller permission to execute the drain q lambda
-        - lambda:InvokeFunction
-      Resource:
-        - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:custom.drainQLambdaName}"
 
 functions:
   poll-for-blocks:
@@ -73,7 +68,7 @@ functions:
     timeout: 120
     events:
       - schedule:
-          rate: rate(1 minute)
+          rate: rate(2 minutes)
           enabled: true
 
   drain-queue:
@@ -81,6 +76,10 @@ functions:
     handler: src/drain.start
     memorySize: 256
     timeout: 120
+    events:
+      - schedule:
+          rate: rate(2 minutes)
+          enabled: true
 
 resources:
   Resources:

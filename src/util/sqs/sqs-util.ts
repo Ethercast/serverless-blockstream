@@ -19,7 +19,10 @@ export const getQueueUrl: () => Promise<string> = _.once(async function () {
 });
 
 // Helper function to drain a queue
-export async function drainQueue(QueueUrl: string, handleMessage: (message: Message) => Promise<void>, MaxNumberOfMessages: number = 10) {
+export async function drainQueue(QueueUrl: string,
+                                 handleMessage: (message: Message) => Promise<void>,
+                                 MaxNumberOfMessages: number = 10,
+                                 WaitTimeSeconds: number = 0) {
   let Messages: MessageList | undefined;
 
   // while we can fetch messages
@@ -27,7 +30,8 @@ export async function drainQueue(QueueUrl: string, handleMessage: (message: Mess
     Messages =
       (await sqs.receiveMessage({
         QueueUrl,
-        MaxNumberOfMessages
+        MaxNumberOfMessages,
+        WaitTimeSeconds
       }).promise())
         .Messages
     ) {

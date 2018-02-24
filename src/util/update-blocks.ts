@@ -146,7 +146,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
     const { MessageId } = await sqs.sendMessage({
       QueueUrl,
-      MessageGroupId: '1',
+      MessageGroupId: `net-${NETWORK_ID}`,
       MessageDeduplicationId: block.hash,
       MessageBody: JSON.stringify(queueMessage)
     }).promise();
