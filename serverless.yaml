@@ -55,6 +55,7 @@ provider:
       Action: # Gives permission to push logs to the SQS queue
         - sqs:SendMessage
         - sqs:SendMessageBatch
+        - sqs:ReceiveMessage
         - sqs:DeleteMessage
         - sqs:GetQueueUrl
       Resource:
