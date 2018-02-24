@@ -14,7 +14,7 @@ custom:
   drainBlockQueueLambdaName: ${self:custom.prefix}-drain-block-q
   newBlockQueueName: ${self:custom.prefix}-new-blocks.fifo
   logFirehoseQueue: ${self:custom.prefix}-log-firehose.fifo
-  baseDynamoDDBCapacity: 3
+  baseDynamoDDBCapacity: 2
   alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
   capacities:
     - table: BlocksTable  # DynamoDB Resource
