@@ -29,6 +29,19 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
+  const blocksToCurrent = currentBlockNo.minus(nextFetchBlock);
+
+  if (blocksToCurrent.gt(10000)) {
+    logger.fatal('MORE THAN 10K BLOCKS BEHIND THE NETWORK. WILL NEVER CATCH UP');
+    return;
+  } else  if (blocksToCurrent.gt(1000)) {
+    logger.error('more than 1000 blocks behind the network! it could take a while to catch up!');
+  } else if (blocksToCurrent.gt(100)) {
+    logger.error('more than 100 blocks behind the network!');
+  } else if (blocksToCurrent.gt(10)) {
+    logger.warn('more than 10 blocks behind the network.');
+  }
+
   logger.debug({ currentBlockNo, nextFetchBlock }, 'fetching block');
 
   // get the block info and all the logs for the block
