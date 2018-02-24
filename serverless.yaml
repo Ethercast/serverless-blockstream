@@ -217,7 +217,7 @@ resources:
         MetricName: ApproximateNumberOfMessagesVisible
         Dimensions:
           - Name: QueueName
-            Value : ${self:custom.logFirehoseQueue}
+            Value: ${self:custom.logFirehoseQueue}
         Statistic: Sum
         Period: 300
         EvaluationPeriods: 1
