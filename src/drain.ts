@@ -38,6 +38,7 @@ async function flushMessagesToQueue(notValidatedLogs: Log[]): Promise<void> {
       return {
         Id,
         MessageBody: JSON.stringify(log),
+        MessageDeduplicationId: Id,
         MessageGroupId: `net-${NETWORK_ID}`
       };
     });
