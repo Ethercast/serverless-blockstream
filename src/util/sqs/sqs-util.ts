@@ -52,10 +52,13 @@ export async function drainQueue(QueueUrl: string,
 
       try {
         await handleMessage(Messages[i]);
+
         await sqs.deleteMessage({
           QueueUrl,
           ReceiptHandle
         }).promise();
+
+        logger.info({ ReceiptHandle, MessageId: Messages[i].MessageId }, 'processed queue message');
       } catch (err) {
         logger.error({ err, Message: Messages[i] }, 'drainQueue: failed to process a queue message');
         throw err;

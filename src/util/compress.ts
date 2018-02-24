@@ -19,7 +19,7 @@ export async function inflatePayload(payload: Buffer): Promise<DecodedBlockPaylo
       if (err) {
         reject(err);
       } else {
-        return JSON.parse(buffer.toString('utf-8'));
+        resolve(JSON.parse(buffer.toString('utf-8')));
       }
     });
   });
