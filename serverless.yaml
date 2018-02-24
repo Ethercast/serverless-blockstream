@@ -62,12 +62,12 @@ provider:
         - sqs:GetQueueUrl
       Resource:
         - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.queueName}"
+        - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:provider.environment.DESTINATION_LOG_QUEUE_NAME}"
     - Effect: Allow
       Action: # Gives the poller permission to execute the drain q lambda
         - lambda:InvokeFunction
       Resource:
         - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:custom.drainQLambdaName}"
-        - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:provider.environment.DESTINATION_LOG_QUEUE_NAME}"
 
 functions:
   poll-for-blocks:
