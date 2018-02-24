@@ -75,6 +75,11 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
+  if (_.any(logs, ({removed})=>removed)) {
+    logger.error({metadata},'block received with a log already marked removed');
+    return;
+  }
+
   //  check if the parent exists and rewind blocks if it does not
   if (state) {
     const parentBlockNumber = toHex(new BigNumber(block.number).minus(1));

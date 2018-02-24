@@ -14,14 +14,8 @@ import {
 } from './util/env';
 import * as crypto from 'crypto';
 
-
-interface LogMessage {
-  log: Log;
-  removed: boolean;
-}
-
-async function flushMessagesToQueue(logMessages: LogMessage[]): Promise<void> {
-  if (logMessages.length === 0) {
+async function flushMessagesToQueue(logs: Log[]): Promise<void> {
+  if (logs.length === 0) {
     return;
   }
 
@@ -33,20 +27,20 @@ async function flushMessagesToQueue(logMessages: LogMessage[]): Promise<void> {
     throw err;
   }
 
-  for (let i = 0; i < logMessages.length; i += 10) {
-    const chunk = logMessages.slice(i, i + 10);
+  for (let i = 0; i < logs.length; i += 10) {
+    const chunk = logs.slice(i, i + 10);
 
 
-    const entries: SendMessageBatchRequestEntryList = chunk.map((logMessage) => {
+    const entries: SendMessageBatchRequestEntryList = chunk.map((log) => {
       const Id: string = crypto.createHash('sha256')
-        .update(logMessage.log.blockHash)
-        .update(logMessage.log.transactionHash)
-        .update(logMessage.log.logIndex)
+        .update(log.blockHash)
+        .update(log.transactionHash)
+        .update(log.logIndex)
         .digest('hex');
 
       return {
         Id,
-        MessageBody: JSON.stringify(logMessage)
+        MessageBody: JSON.stringify(log)
       };
     });
 
@@ -92,21 +86,21 @@ async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message) 
   }, 'processing block changes');
 
   // first send messages for all the logs that were in the blocks that are now overwritten
-  const logMessages = _.chain(removed)
+  const logs: Log[] = _.chain(removed)
     .map(({ logs }) => logs)
     .flatten(true)
-    .map(log => ({ log, removed: true }))
+    .map(log => ({ ...log, removed: true }))
     .concat(
       _.map(
         added.logs,
-        log => ({ log, removed: false })
+        log => ({ ...log, removed: false })
       )
     )
     .value();
 
-  await flushMessagesToQueue(logMessages);
+  await flushMessagesToQueue(logs);
 
-  logger.info({ count: logMessages.length }, 'flushed messages to queue');
+  logger.info({ count: logs.length }, 'flushed messages to queue');
 }
 
 export const start: Handler = async (event, context, callback) => {

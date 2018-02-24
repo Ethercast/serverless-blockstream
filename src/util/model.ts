@@ -34,6 +34,7 @@ export interface Log {
   address: string;
   data: string;
   topics: string[];
+  removed: boolean;
 }
 
 export interface Transaction {
