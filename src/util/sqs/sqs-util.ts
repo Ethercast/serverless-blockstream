@@ -82,7 +82,7 @@ export async function drainQueue(QueueUrl: string,
       }
 
       if (context.getRemainingTimeInMillis() < 3000) {
-        logger.info({}, 'not fetching next block since there is no time remaining');
+        logger.info( 'not fetching next block since there is no time remaining');
         break;
       }
     }
