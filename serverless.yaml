@@ -81,7 +81,7 @@ provider:
 functions:
   poll-for-blocks:
     handler: src/poll.start
-    memorySize: 128 # optional, in MB, default is 1024
+    memorySize: 256 # optional, in MB, default is 1024
     timeout: 120
     events:
       - schedule:
@@ -91,7 +91,7 @@ functions:
   drain-queue:
     name: ${self:custom.drainBlockQueueLambdaName}
     handler: src/drain.start
-    memorySize: 128
+    memorySize: 256
     timeout: 120
 
 resources:
@@ -176,8 +176,8 @@ resources:
             Value: ${self:custom.newBlockQueueName}
         Statistic: Maximum
         Period: 60
-        EvaluationPeriods: 1
         Threshold: 5
+        EvaluationPeriods: 3
         ComparisonOperator: GreaterThanThreshold
         AlarmActions:
           - Ref: AlarmTopic
@@ -196,8 +196,8 @@ resources:
             Value: ${self:custom.newBlockQueueName}
         Statistic: Sum
         Period: 300
-        EvaluationPeriods: 1
         Threshold: 0
+        EvaluationPeriods: 3
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
           - Ref: AlarmTopic
@@ -216,8 +216,8 @@ resources:
             Value: ${self:custom.logFirehoseQueue}
         Statistic: Maximum
         Period: 60
-        EvaluationPeriods: 1
         Threshold: 500
+        EvaluationPeriods: 3
         ComparisonOperator: GreaterThanThreshold
         AlarmActions:
           - Ref: AlarmTopic
@@ -236,8 +236,8 @@ resources:
             Value: ${self:custom.logFirehoseQueue}
         Statistic: Sum
         Period: 300
-        EvaluationPeriods: 1
         Threshold: 0
+        EvaluationPeriods: 3
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
           - Ref: AlarmTopic
