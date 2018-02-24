@@ -47,6 +47,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:BatchWriteItem
+        - dynamodb:BatchGetItem
       Resource:
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKSTREAM_STATE_TABLE}"
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKS_TABLE}"
