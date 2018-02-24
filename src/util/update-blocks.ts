@@ -1,31 +1,17 @@
 import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
-import saveBlockData, {
-  blockExists,
-  getBlockStreamState,
-  saveBlockStreamState
-} from './save-block-data';
+import { saveBlockData, blockExists } from './ddb/ddb-block-data';
 import EthClient from '../client/eth-client';
-import { NETWORK_ID, SQS_BLOCK_RECEIVED_QUEUE_NAME, STARTING_BLOCK } from './env';
-import { SQS } from 'aws-sdk';
-import { BlockWithTransactionHashes, Log } from './model';
+import { NETWORK_ID, STARTING_BLOCK, DRAIN_QUEUE_LAMBDA_NAME } from './env';
+import { Lambda } from 'aws-sdk';
+import { BlockQueueMessage, BlockWithTransactionHashes, Log } from './model';
 import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
+import { getQueueUrl, sqs } from './sqs/sqs-util';
+import { getBlockStreamState, saveBlockStreamState } from './ddb/ddb-blockstream-state';
 
-const sqs = new SQS();
-
-const getQueueUrl: () => Promise<string> = _.once(async function () {
-  const { QueueUrl } = await sqs.getQueueUrl({
-    QueueName: SQS_BLOCK_RECEIVED_QUEUE_NAME
-  }).promise();
-
-  if (!QueueUrl) {
-    throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
-  }
-
-  return QueueUrl;
-});
+const lambda = new Lambda();
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
@@ -75,7 +61,6 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
-
   //  check if the parent exists and rewind blocks if it does
   if (state) {
     const parentBlockNumber = toHex(new BigNumber(block.number).minus(1));
@@ -102,7 +87,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   }
 
   try {
-    const queueMessage = { hash: block.hash, number: block.number };
+    const queueMessage: BlockQueueMessage = { hash: block.hash, number: block.number };
     const QueueUrl = await getQueueUrl();
 
     const { MessageId } = await sqs.sendMessage({
@@ -133,6 +118,25 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   } catch (err) {
     // TODO: if this fails, should we retract the message we sent on the queue?
     logger.error({ err, metadata }, 'failed to update blockstream state');
+    return;
+  }
+
+  // now trigger a lambda to drain the queue
+  try {
+    logger.debug({ metadata, DRAIN_QUEUE_LAMBDA_NAME }, 'invoking lambda asynchronously to drain queue');
+
+    const { Status } = await lambda.invokeAsync({
+      InvokeArgs: '',
+      FunctionName: DRAIN_QUEUE_LAMBDA_NAME
+    }).promise();
+
+    if (Status !== 202) {
+      throw new Error(`failed to invoke lambda to drain the queue: status ${Status}`);
+    }
+
+    logger.info({ metadata }, 'lambda successfully invoked');
+  } catch (err) {
+    logger.error({ DRAIN_QUEUE_LAMBDA_NAME, err, metadata }, 'failed to invoke lambda after pushing to queue');
     return;
   }
 }
