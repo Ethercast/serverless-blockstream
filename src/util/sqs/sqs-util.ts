@@ -15,22 +15,23 @@ export const getQueueUrl: (QueueName: string) => Promise<string> =
     }
 
     return (
-      QUEUE_URL_CACHE[QueueName] = sqs.getQueueUrl({ QueueName }).promise()
-        .then(
-          ({ QueueUrl }) => {
-            if (!QueueUrl) {
-              throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
+      QUEUE_URL_CACHE[QueueName] =
+        sqs.getQueueUrl({ QueueName }).promise()
+          .then(
+            ({ QueueUrl }) => {
+              if (!QueueUrl) {
+                throw new Error('could not find queue url: ' + QueueName);
+              }
 
+              return QueueUrl;
             }
-            return QueueUrl;
-          }
-        )
-        .catch(
-          err => {
-            logger.error({ err, QueueName }, 'failed to get queue');
-            throw err;
-          }
-        )
+          )
+          .catch(
+            err => {
+              logger.error({ err, QueueName }, 'failed to get queue');
+              throw err;
+            }
+          )
     );
   };
 
@@ -82,7 +83,7 @@ export async function drainQueue(QueueUrl: string,
       }
 
       if (context.getRemainingTimeInMillis() < 3000) {
-        logger.info( 'not fetching next block since there is no time remaining');
+        logger.info('not fetching next block since there is no time remaining');
         break;
       }
     }

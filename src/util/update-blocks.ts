@@ -140,9 +140,17 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
+
+  let QueueUrl: string;
+  try {
+    QueueUrl = await getQueueUrl(SQS_BLOCK_RECEIVED_QUEUE_NAME);
+  } catch (err) {
+    logger.error({ err }, 'could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
+    return;
+  }
+
   try {
     const queueMessage: BlockQueueMessage = { hash: block.hash, number: block.number };
-    const QueueUrl = await getQueueUrl(SQS_BLOCK_RECEIVED_QUEUE_NAME);
 
     const { MessageId } = await sqs.sendMessage({
       QueueUrl,
@@ -153,7 +161,11 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
     logger.info({ queueMessage, MessageId }, 'placed message in queue');
   } catch (err) {
-    logger.error({ err, metadata }, 'failed to deliver block notification message to queue');
+    logger.error({
+      QueueName: SQS_BLOCK_RECEIVED_QUEUE_NAME,
+      err,
+      metadata
+    }, 'failed to deliver block notification message to queue');
     return;
   }
 

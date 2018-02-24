@@ -20,7 +20,13 @@ interface LogMessage {
 }
 
 async function flushMessagesToQueue(logMessages: LogMessage[]): Promise<void> {
-  const QueueUrl = await getQueueUrl(DESTINATION_LOG_QUEUE_NAME);
+  let QueueUrl: string;
+  try {
+    QueueUrl = await getQueueUrl(DESTINATION_LOG_QUEUE_NAME);
+  } catch (err) {
+    logger.error({ err }, `failed to get queue url: ${DESTINATION_LOG_QUEUE_NAME}`);
+    throw err;
+  }
 
   for (let i = 0; i < logMessages.length; i += 10) {
     const chunk = logMessages.slice(i, i + 10);
@@ -96,7 +102,7 @@ export const start: Handler = async (event, context, callback) => {
   try {
     QueueUrl = await getQueueUrl(SQS_BLOCK_RECEIVED_QUEUE_NAME);
   } catch (err) {
-    logger.error({ err }, 'failed to get queue url');
+    logger.error({ err, QueueName: SQS_BLOCK_RECEIVED_QUEUE_NAME }, 'failed to get queue url');
     context.done(err);
     return;
   }
