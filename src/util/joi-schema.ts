@@ -22,7 +22,7 @@ const JoiLog = object({
   removed: boolean().required()
 });
 
-const JoiBlockWithTransactionHashes = object({
+const JoiBlock = object({
   hash: hex256.required(),
   difficulty: hex.required(),
   extraData: hex.required(),
@@ -44,6 +44,9 @@ const JoiBlockWithTransactionHashes = object({
   uncles: array().items(hex256).required()
 });
 
+const JoiBlockWithTransactionHashes = JoiBlock.keys({
+  transactions: array().items(hex256).required()
+});
 
 export function mustBeValidLog(log: Log): Log {
   return validate(log, JoiLog);
