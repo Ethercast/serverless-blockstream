@@ -68,10 +68,10 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     const parentExists = await blockExists(block.parentHash, parentBlockNumber);
 
     if (!parentExists) {
-      logger.warn({
+      logger.info({
         metadata,
         parentBlockNumber
-      }, 'expected parent does not exist, rewinding to last known block');
+      }, 'parent doesnt exist, beginning rewind process');
 
       // the next block number to check
       let checkingBlockNumber = new BigNumber(parentBlockNumber).minus(1);
