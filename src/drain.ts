@@ -2,8 +2,7 @@ import { Handler } from 'aws-lambda';
 import logger from './util/logger';
 import { drainQueue, getQueueUrl, sqs } from './util/sqs/sqs-util';
 import {
-  Integer, Message, MessageBodyAttributeMap, SendMessageBatchRequestEntryList,
-  String
+  Message, SendMessageBatchRequestEntryList
 } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage, Log } from './util/model';
 import { getBlocksMatchingNumber } from './util/ddb/ddb-block-data';

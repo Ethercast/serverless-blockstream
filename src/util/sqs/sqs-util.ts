@@ -8,24 +8,31 @@ export const sqs = new SQS();
 
 const QUEUE_URL_CACHE: { [queueName: string]: Promise<string> } = {};
 
-export const getQueueUrl: (QueueName: string) => Promise<string> = async function (QueueName: string) {
-  if (QUEUE_URL_CACHE[QueueName]) {
-    return QUEUE_URL_CACHE[QueueName];
-  }
+export const getQueueUrl: (QueueName: string) => Promise<string> =
+  async function (QueueName: string) {
+    if (QUEUE_URL_CACHE[QueueName]) {
+      return QUEUE_URL_CACHE[QueueName];
+    }
 
-  return (
-    QUEUE_URL_CACHE[QueueName] = sqs.getQueueUrl({ QueueName }).promise()
-      .then(
-        ({ QueueUrl }) => {
-          if (!QueueUrl) {
-            throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
+    return (
+      QUEUE_URL_CACHE[QueueName] = sqs.getQueueUrl({ QueueName }).promise()
+        .then(
+          ({ QueueUrl }) => {
+            if (!QueueUrl) {
+              throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
 
+            }
+            return QueueUrl;
           }
-          return QueueUrl;
-        }
-      )
-  );
-};
+        )
+        .catch(
+          err => {
+            logger.error({ err, QueueName }, 'failed to get queue');
+            throw err;
+          }
+        )
+    );
+  };
 
 // Helper function to drain a queue
 export async function drainQueue(QueueUrl: string,
