@@ -9,12 +9,9 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
   const client = await getClient(SRC_NODE_URL);
 
   const clientVersion = await client.web3_clientVersion();
-  logger.info({ clientVersion }, 'ethereum node client version');
-
-  // TODO: check against compatible client versions
-
   const netVersion = await client.net_version();
-  logger.info({ netVersion }, 'ethereum network id');
+  // TODO: check against compatible client versions
+  logger.info({ SRC_NODE_URL, netVersion, clientVersion }, 'ethereum node information');
 
   if (netVersion !== NETWORK_ID) {
     logger.error({ netVersion, NETWORK_ID }, 'NETWORK_ID and netVersion do not match');

@@ -17,7 +17,7 @@ const lambda = new Lambda();
  * This function is executed on a loop and reconciles one block worth of data
  */
 export default async function reconcileBlocks(client: EthClient): Promise<void> {
-  let state = await getBlockStreamState();
+  const state = await getBlockStreamState();
   const nextFetchBlock = await getNextFetchBlock(state, STARTING_BLOCK);
   const currentBlockNo = await client.eth_blockNumber();
 
@@ -44,6 +44,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   }
 
   const metadata = {
+    state,
     blockHash: block.hash,
     blockNumber: block.number,
     logCount: logs.length,
@@ -61,7 +62,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     return;
   }
 
-  //  check if the parent exists and rewind blocks if it does
+  //  check if the parent exists and rewind blocks if it does not
   if (state) {
     const parentBlockNumber = toHex(new BigNumber(block.number).minus(1));
     const parentExists = await blockExists(block.parentHash, parentBlockNumber);
@@ -70,15 +71,68 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
       logger.warn({
         metadata,
         parentBlockNumber
-      }, 'parent does not exist! do not know how to rewind blocks yet');
+      }, 'expected parent does not exist, rewinding to last known block');
 
-      // TODO: update the state to point at the last reconciled block that is still on-chain
+      // the next block number to check
+      let checkingBlockNumber = new BigNumber(parentBlockNumber).minus(1);
+
+      // iterate through parent blocks reported by the node until we get to one that exists
+      while (true) {
+        // in this case, all our block data is bad.. this should never happen with at least 1 hour of history!
+        if (checkingBlockNumber.lt(STARTING_BLOCK)) {
+          logger.error(
+            { checkingBlockNumber, metadata },
+            'retraced and could not recover from a chain reorg!!! all our block data appears incorrect'
+          );
+          throw new Error('could not recover from chain reorg');
+        }
+
+        if (checkingBlockNumber.minus(state.lastReconciledBlock.number).abs().gt(50)) {
+          logger.error(
+            { checkingBlockNumber, metadata },
+            'retraced back 50 blocks and could not find a block in dynamo'
+          );
+          throw new Error('failed to reconcile chain reorg within 50 blocks');
+        }
+
+        const block = await client.eth_getBlockByNumber(checkingBlockNumber, false);
+        if (block === null) {
+          logger.error({
+            checkingBlockNumber
+          }, 'ethereum node returned null while checking for parent block numbers during a chain reorg!');
+          throw new Error('missing block number from node during chain reorg');
+        }
+
+        const exists = await blockExists(block.hash, block.number);
+
+        // we can save the state, we've reconciled the chain reorg
+        if (exists) {
+          logger.info({
+            checkingBlockNumber,
+            metadata,
+            block: { hash: block.hash, number: block.number }
+          }, 'chain org reconciled, block found in dynamo that exists on the node');
+
+          await saveBlockStreamState(
+            null,
+            {
+              lastReconciledBlock: {
+                hash: block.hash,
+                number: block.number
+              },
+              network_id: NETWORK_ID
+            }
+          );
+          break;
+        }
+
+        checkingBlockNumber = checkingBlockNumber.minus(1);
+      }
 
       return;
     }
   }
 
-  // TODO: should this thing also check parent exists?
   try {
     await saveBlockData(block, logs, state !== null);
   } catch (err) {
@@ -125,13 +179,13 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   try {
     logger.debug({ metadata, DRAIN_QUEUE_LAMBDA_NAME }, 'invoking lambda asynchronously to drain queue');
 
-    const { Status } = await lambda.invokeAsync({
-      InvokeArgs: '',
-      FunctionName: DRAIN_QUEUE_LAMBDA_NAME
+    const { StatusCode } = await lambda.invoke({
+      FunctionName: DRAIN_QUEUE_LAMBDA_NAME,
+      InvocationType: 'Event'
     }).promise();
 
-    if (Status !== 202) {
-      throw new Error(`failed to invoke lambda to drain the queue: status ${Status}`);
+    if (StatusCode !== 202) {
+      throw new Error(`failed to invoke lambda to drain the queue: StatusCode ${StatusCode}`);
     }
 
     logger.info({ metadata }, 'lambda successfully invoked');

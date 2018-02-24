@@ -2,7 +2,6 @@ import { BlockStreamState } from '../model';
 import logger from '../logger';
 import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID } from '../env';
 import { DynamoDB } from 'aws-sdk';
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -29,7 +28,7 @@ export async function getBlockStreamState(): Promise<BlockStreamState | null> {
 
 export async function saveBlockStreamState(prevState: BlockStreamState | null, nextState: BlockStreamState): Promise<void> {
   // build the input parameters
-  let input: DocumentClient.PutItemInput = {
+  let input: DynamoDB.DocumentClient.PutItemInput = {
     TableName: BLOCKSTREAM_STATE_TABLE,
     Item: nextState
   };

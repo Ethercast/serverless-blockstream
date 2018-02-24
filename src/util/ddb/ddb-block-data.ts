@@ -5,7 +5,6 @@ import { DynamoDB } from 'aws-sdk';
 import toHex, { BlockNumber } from '../to-hex';
 import BigNumber from 'bignumber.js';
 import { deflatePayload, inflatePayload } from '../compress';
-import { BatchGetRequestMap } from 'aws-sdk/clients/dynamodb';
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -67,7 +66,7 @@ export async function getBlocksMatchingNumber(number: BlockNumber): Promise<Deco
 
   const decodedBlocks: DecodedBlockPayload[] = [];
 
-  let requestItems: BatchGetRequestMap = {
+  let requestItems: DynamoDB.DocumentClient.BatchGetRequestMap = {
     [BLOCKS_TABLE]: {
       Keys: blockKeys,
       ProjectionExpression: 'payload'
@@ -91,7 +90,7 @@ export async function getBlocksMatchingNumber(number: BlockNumber): Promise<Deco
       const { payload } = Responses[BLOCKS_TABLE][i];
 
       const decoded: DecodedBlockPayload = await inflatePayload(payload);
-      
+
       decodedBlocks.push(decoded);
     }
 
