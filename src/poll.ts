@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import logger from './util/logger';
 import updateBlocks from './util/update-blocks';
 import { Callback, Context, Handler } from 'aws-lambda';

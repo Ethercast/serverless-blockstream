@@ -9,6 +9,7 @@
     "bunyan": "^1.8.12",
     "env-var": "^3.2.0",
     "isomorphic-fetch": "^2.2.1",
+    "source-map-support": "^0.5.3",
     "ts-loader": "^3.5.0",
     "typescript": "^2.7.2",
     "underscore": "^1.8.3",

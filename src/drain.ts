@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import { Handler } from 'aws-lambda';
 import logger from './util/logger';
 import { drainQueue, getQueueUrl, sqs } from './util/sqs/sqs-util';
