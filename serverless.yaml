@@ -181,8 +181,6 @@ resources:
         ComparisonOperator: GreaterThanThreshold
         AlarmActions:
           - Ref: AlarmTopic
-        InsufficientDataActions:
-          - Ref: AlarmTopic
         OKActions:
           - Ref: AlarmTopic
         TreatMissingData: breaching
@@ -202,8 +200,6 @@ resources:
         Threshold: 0
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
-          - Ref: AlarmTopic
-        InsufficientDataActions:
           - Ref: AlarmTopic
         OKActions:
           - Ref: AlarmTopic
@@ -225,8 +221,6 @@ resources:
         ComparisonOperator: GreaterThanThreshold
         AlarmActions:
           - Ref: AlarmTopic
-        InsufficientDataActions:
-          - Ref: AlarmTopic
         OKActions:
           - Ref: AlarmTopic
         TreatMissingData: breaching
@@ -246,8 +240,6 @@ resources:
         Threshold: 0
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
-          - Ref: AlarmTopic
-        InsufficientDataActions:
           - Ref: AlarmTopic
         OKActions:
           - Ref: AlarmTopic
