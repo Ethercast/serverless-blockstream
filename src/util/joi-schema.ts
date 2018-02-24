@@ -50,7 +50,7 @@ export function mustBeValidLog(log: Log): Log {
   return validate(log, JoiLog);
 }
 
-export function mustBeValidBlock(block: BlockWithTransactionHashes): BlockWithTransactionHashes {
+export function mustBeValidBlockWithTransactionHashes(block: BlockWithTransactionHashes): BlockWithTransactionHashes {
   return validate(block, JoiBlockWithTransactionHashes);
 }
 

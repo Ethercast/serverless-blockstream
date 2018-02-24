@@ -10,7 +10,7 @@ import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
-import { mustBeValidBlock, mustBeValidLog } from './joi-schema';
+import { mustBeValidBlockWithTransactionHashes, mustBeValidLog } from './joi-schema';
 
 const lambda = new Lambda();
 
@@ -58,7 +58,7 @@ export default async function reconcileBlock(client: EthClient): Promise<void> {
   }
 
   // validate logs coming from the client are in the expected format
-  const block = mustBeValidBlock(notValidatedBlock);
+  const block = mustBeValidBlockWithTransactionHashes(notValidatedBlock);
   const logs = notValidatedLogs.map(mustBeValidLog);
 
   const metadata = {
