@@ -72,7 +72,7 @@ provider:
 functions:
   poll-for-blocks:
     handler: src/poll.start
-    memorySize: 256 # optional, in MB, default is 1024
+    memorySize: 128 # optional, in MB, default is 1024
     timeout: 120
     events:
       - schedule:
@@ -82,7 +82,7 @@ functions:
   drain-queue:
     name: ${self:custom.drainQLambdaName}
     handler: src/drain.start
-    memorySize: 256
+    memorySize: 128
     timeout: 120
 
 resources:
