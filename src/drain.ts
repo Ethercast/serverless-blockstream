@@ -6,7 +6,7 @@ import { Message, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage, Log } from './util/model';
 import { getBlocksMatchingNumber } from './util/ddb/block-data';
 import _ = require('underscore');
-import { LOG_FIREHOSE_QUEUE_NAME, NEW_BLOCK_QUEUE_NAME } from './util/env';
+import { LOG_FIREHOSE_QUEUE_NAME, NETWORK_ID, NEW_BLOCK_QUEUE_NAME } from './util/env';
 import * as crypto from 'crypto';
 import { mustBeValidLog } from './util/joi-schema';
 
@@ -37,7 +37,8 @@ async function flushMessagesToQueue(notValidatedLogs: Log[]): Promise<void> {
 
       return {
         Id,
-        MessageBody: JSON.stringify(log)
+        MessageBody: JSON.stringify(log),
+        MessageGroupId: `net-${NETWORK_ID}`
       };
     });
 
