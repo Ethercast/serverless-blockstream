@@ -32,9 +32,9 @@ async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message) 
   }
 
   logger.info({
-    removed: removed.map(({ block: { hash, number } }) => ({ hash, number })),
-    added: { hash: added.block.hash, number: added.block.number }
-  }, 'processing blocks as removed');
+    removed: removed.map(({ block: { hash, number }, logs }) => ({ hash, number, logCount: logs.length })),
+    added: { hash: added.block.hash, number: added.block.number, logCount: added.logs.length }
+  }, 'processing block changes');
 
   // first send messages for all the logs that were in the blocks that are now overwritten
   _.each(
@@ -44,8 +44,9 @@ async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message) 
     }
   );
 
-
-  added.logs.forEach(log => {
+  _.each(
+    added.logs,
+    log => {
       // TODO: send queue messages for added logs
     }
   );
