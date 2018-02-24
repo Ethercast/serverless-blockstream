@@ -99,7 +99,10 @@ resources:
   Outputs:
     LogFirehoseQueueName:
       Description: The name of the log firehose SQS queue to which all incoming logs events are sent
-      Value: !Sub "${LogFirehoseQueue.QueueName}"
+      Value:
+        Fn::GetAtt:
+          - "LogFirehoseQueue"
+          - "QueueName"
       Export:
         Name: ${self:custom.stage}-LogFirehoseQueueName
   Resources:
