@@ -174,10 +174,10 @@ resources:
         Dimensions:
           - Name: QueueName
             Value: ${self:custom.newBlockQueueName}
-        Statistic: Sum
-        Period: 300
+        Statistic: Maximum
+        Period: 60
         EvaluationPeriods: 1
-        Threshold: 10
+        Threshold: 5
         ComparisonOperator: GreaterThanThreshold
         AlarmActions:
           - Ref: AlarmTopic
@@ -218,10 +218,10 @@ resources:
         Dimensions:
           - Name: QueueName
             Value: ${self:custom.logFirehoseQueue}
-        Statistic: Sum
-        Period: 300
+        Statistic: Maximum
+        Period: 60
         EvaluationPeriods: 1
-        Threshold: 10
+        Threshold: 500
         ComparisonOperator: GreaterThanThreshold
         AlarmActions:
           - Ref: AlarmTopic
