@@ -73,7 +73,7 @@ functions:
     timeout: 120
     events:
       - schedule:
-          rate: rate(1 minute)
+          rate: rate(2 minutes)
           enabled: true
 
   drain-queue:
