@@ -8,7 +8,7 @@ import { BlockQueueMessage, Log } from './util/model';
 import { getBlocksMatchingNumber } from './util/ddb/ddb-block-data';
 import _ = require('underscore');
 import {
-  DESTINATION_LOG_QUEUE_NAME, DRAIN_QUEUE_LAMBDA_NAME, NETWORK_ID,
+  DESTINATION_LOG_QUEUE_NAME, NETWORK_ID,
   SQS_BLOCK_RECEIVED_QUEUE_NAME
 } from './util/env';
 import * as crypto from 'crypto';
@@ -88,7 +88,7 @@ async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message) 
 
   await flushMessagesToQueue(logMessages);
 
-  logger.info({});
+  logger.info({ count: logMessages.length }, 'flushed messages to queue');
 }
 
 export const start: Handler = async (event, context, callback) => {

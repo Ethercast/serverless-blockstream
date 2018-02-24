@@ -75,7 +75,7 @@ export async function drainQueue(QueueUrl: string,
           ReceiptHandle
         }).promise();
 
-        logger.info({ MessageId: Messages[i].MessageId }, 'processed queue message');
+        logger.info({ MessageId: Messages[i].MessageId }, 'drainQueue: processed queue message');
       } catch (err) {
         logger.error({ err, Message: Messages[i] }, 'drainQueue: failed to process a queue message');
         throw err;
