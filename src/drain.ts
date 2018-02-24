@@ -11,6 +11,8 @@ import {
   DESTINATION_LOG_QUEUE_NAME, DRAIN_QUEUE_LAMBDA_NAME, NETWORK_ID,
   SQS_BLOCK_RECEIVED_QUEUE_NAME
 } from './util/env';
+import * as crypto from 'crypto';
+
 
 interface LogMessage {
   log: Log;
@@ -23,12 +25,19 @@ async function flushMessagesToQueue(logMessages: LogMessage[]): Promise<void> {
   for (let i = 0; i < logMessages.length; i += 10) {
     const chunk = logMessages.slice(i, i + 10);
 
-    const entries: SendMessageBatchRequestEntryList = chunk.map((logMessage) => ({
-      Id: `${logMessage.log.blockHash}-${logMessage.log.transactionHash}-${logMessage.log.logIndex}`,
-      MessageBody: JSON.stringify(logMessage),
-      MessageDeduplicationId: `${logMessage.log.blockHash}-${logMessage.log.transactionHash}-${logMessage.log.logIndex}`,
-      MessageGroupId: `net-${NETWORK_ID}`
-    }));
+
+    const entries: SendMessageBatchRequestEntryList = chunk.map((logMessage) => {
+      const Id = crypto.createHash('sha256')
+        .update(`${logMessage.log.blockHash}-${logMessage.log.transactionHash}-${logMessage.log.logIndex}`)
+        .digest('hex');
+
+      return {
+        Id,
+        MessageBody: JSON.stringify(logMessage),
+        MessageDeduplicationId: Id,
+        MessageGroupId: `net-${NETWORK_ID}`
+      };
+    });
 
     await sqs.sendMessageBatch({ QueueUrl, Entries: entries }).promise();
   }
