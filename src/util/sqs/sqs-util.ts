@@ -6,16 +6,26 @@ import logger from '../logger';
 
 export const sqs = new SQS();
 
-export const getQueueUrl: (QueueName: string) => Promise<string> =
-  _.memoize(async function (QueueName: string) {
-    const { QueueUrl } = await sqs.getQueueUrl({ QueueName }).promise();
+const QUEUE_URL_CACHE: { [queueName: string]: Promise<string> } = {};
 
-    if (!QueueUrl) {
-      throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
-    }
+export const getQueueUrl: (QueueName: string) => Promise<string> = async function (QueueName: string) {
+  if (QUEUE_URL_CACHE[QueueName]) {
+    return QUEUE_URL_CACHE[QueueName];
+  }
 
-    return QueueUrl;
-  }) as (QueueName: string) => Promise<string>;
+  return (
+    QUEUE_URL_CACHE[QueueName] = sqs.getQueueUrl({ QueueName }).promise()
+      .then(
+        ({ QueueUrl }) => {
+          if (!QueueUrl) {
+            throw new Error('could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
+
+          }
+          return QueueUrl;
+        }
+      )
+  );
+};
 
 // Helper function to drain a queue
 export async function drainQueue(QueueUrl: string,
