@@ -15,7 +15,7 @@ export const BLOCKS_TABLE: string = env.get('BLOCKS_TABLE').required().asString(
 // export const LOGS_TABLE: string = env.get('LOGS_TABLE').required().asString();
 export const BLOCKSTREAM_STATE_TABLE: string = env.get('BLOCKSTREAM_STATE_TABLE').required().asString();
 
-export const SQS_BLOCK_RECEIVED_QUEUE_NAME: string = env.get('SQS_BLOCK_RECEIVED_QUEUE_NAME').required().asString();
-export const DESTINATION_LOG_QUEUE_NAME: string = env.get('DESTINATION_LOG_QUEUE_NAME').required().asString();
+export const NEW_BLOCK_QUEUE_NAME: string = env.get('NEW_BLOCK_QUEUE_NAME').required().asString();
+export const LOG_FIREHOSE_QUEUE_NAME: string = env.get('LOG_FIREHOSE_QUEUE_NAME').required().asString();
 
-export const DRAIN_QUEUE_LAMBDA_NAME: string = env.get('DRAIN_QUEUE_LAMBDA_NAME').required().asString();
+export const DRAIN_BLOCK_QUEUE_LAMBDA_NAME: string = env.get('DRAIN_BLOCK_QUEUE_LAMBDA_NAME').required().asString();

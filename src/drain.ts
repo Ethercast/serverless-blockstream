@@ -2,34 +2,31 @@ import 'source-map-support/register';
 import { Handler } from 'aws-lambda';
 import logger from './util/logger';
 import { drainQueue, getQueueUrl, sqs } from './util/sqs/sqs-util';
-import {
-  Message, SendMessageBatchRequestEntryList
-} from 'aws-sdk/clients/sqs';
+import { Message, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage, Log } from './util/model';
-import { getBlocksMatchingNumber } from './util/ddb/ddb-block-data';
+import { getBlocksMatchingNumber } from './util/ddb/block-data';
 import _ = require('underscore');
-import {
-  DESTINATION_LOG_QUEUE_NAME, NETWORK_ID,
-  SQS_BLOCK_RECEIVED_QUEUE_NAME
-} from './util/env';
+import { LOG_FIREHOSE_QUEUE_NAME, NEW_BLOCK_QUEUE_NAME } from './util/env';
 import * as crypto from 'crypto';
+import { mustBeValidLog } from './util/joi-schema';
 
-async function flushMessagesToQueue(logs: Log[]): Promise<void> {
-  if (logs.length === 0) {
+async function flushMessagesToQueue(notValidatedLogs: Log[]): Promise<void> {
+  if (notValidatedLogs.length === 0) {
     return;
   }
 
+  const logs = notValidatedLogs.map(mustBeValidLog);
+
   let QueueUrl: string;
   try {
-    QueueUrl = await getQueueUrl(DESTINATION_LOG_QUEUE_NAME);
+    QueueUrl = await getQueueUrl(LOG_FIREHOSE_QUEUE_NAME);
   } catch (err) {
-    logger.error({ err }, `failed to get queue url: ${DESTINATION_LOG_QUEUE_NAME}`);
+    logger.error({ err }, `failed to get queue url: ${LOG_FIREHOSE_QUEUE_NAME}`);
     throw err;
   }
 
   for (let i = 0; i < logs.length; i += 10) {
     const chunk = logs.slice(i, i + 10);
-
 
     const entries: SendMessageBatchRequestEntryList = chunk.map((log) => {
       const Id: string = crypto.createHash('sha256')
@@ -106,15 +103,17 @@ async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message) 
 export const start: Handler = async (event, context, callback) => {
   let QueueUrl: string;
   try {
-    QueueUrl = await getQueueUrl(SQS_BLOCK_RECEIVED_QUEUE_NAME);
+    QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
   } catch (err) {
-    logger.error({ err, QueueName: SQS_BLOCK_RECEIVED_QUEUE_NAME }, 'failed to get queue url');
+    logger.error({ err, QueueName: NEW_BLOCK_QUEUE_NAME }, 'failed to get queue url');
     context.done(err);
     return;
   }
 
   try {
-    await drainQueue(QueueUrl, processQueueMessage, context);
+    const shouldContinue = () => context.getRemainingTimeInMillis() > 3000;
+
+    await drainQueue(QueueUrl, processQueueMessage, shouldContinue);
   } catch (err) {
     logger.error({ err }, 'error while draining the queue');
     context.done(err);

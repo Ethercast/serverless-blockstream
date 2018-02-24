@@ -11,7 +11,8 @@ custom:
   region: ${opt:region, self:provider.region}
   prefix: ${self:service}-${opt:stage, self:provider.stage}
   drainQLambdaName: ${self:custom.prefix}-drain-q
-  queueName: ${self:custom.prefix}-new-blocks.fifo
+  newBlockQueueName: ${self:custom.prefix}-new-blocks.fifo
+  logFirehoseQueue: ${self:custom.prefix}-log-firehose.fifo
   baseCapacity: 3
   capacities:
     - table: BlocksTable  # DynamoDB Resource
@@ -30,16 +31,17 @@ provider:
   name: aws
   runtime: nodejs6.10
   environment: # service wide environment variables
-    BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-bs-state
-    BLOCKS_TABLE: ${self:custom.prefix}-blocks
-    DRAIN_QUEUE_LAMBDA_NAME: ${self:custom.drainQLambdaName}
-    DESTINATION_LOG_QUEUE_NAME: "process"
-    SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"
-    SQS_BLOCK_RECEIVED_QUEUE_NAME: ${self:custom.queueName}
-    BLOCK_DATA_TTL_MS: "3600000" # 1 hour
+    BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-bs-state # the table containing the state of blockstream
+    BLOCKS_TABLE: ${self:custom.prefix}-blocks # the table containing full blocks and their logs (compressed)
+    DRAIN_BLOCK_QUEUE_LAMBDA_NAME: ${self:custom.drainQLambdaName} # The lambda triggered when blocks are added to the queue
+    NEW_BLOCK_QUEUE_NAME: ${self:custom.newBlockQueueName}  # Queues
+    LOG_FIREHOSE_QUEUE_NAME: ${self:custom.logFirehoseQueue} # Queues
+    SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy" # the ethereum node URL that is used
+    BLOCK_DATA_TTL_MS: "3600000" # how long block data lives in the DB
     LOG_LEVEL: "info" # info log level
-    NETWORK_ID: "1"
-    STARTING_BLOCK: "5146275"
+    NETWORK_ID: "1" # id of the network, validated against the node
+    STARTING_BLOCK: "5146275" # the block to start from
+
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow
       Action: # Gives permission to DynamoDB tables in a specific region
@@ -61,13 +63,19 @@ provider:
         - sqs:DeleteMessage
         - sqs:GetQueueUrl
       Resource:
-        - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.queueName}"
-        - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:provider.environment.DESTINATION_LOG_QUEUE_NAME}"
+        - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.newBlockQueueName}"
     - Effect: Allow
       Action: # Gives the poller permission to execute the drain q lambda
         - lambda:InvokeFunction
       Resource:
         - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:custom.drainQLambdaName}"
+    - Effect: Allow
+      Action: # Gives permission to push logs to the SQS queue
+        - sqs:SendMessage
+        - sqs:SendMessageBatch
+        - sqs:GetQueueUrl
+      Resource:
+        - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.logFirehoseQueue}"
 
 functions:
   poll-for-blocks:
@@ -136,7 +144,15 @@ resources:
     NewBlockQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${self:custom.queueName}
+        QueueName: ${self:custom.newBlockQueueName}
+        FifoQueue: true
+        MessageRetentionPeriod: 1209600
+        VisibilityTimeout: 60
+
+    LogFirehoseQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.logFirehoseQueue}
         FifoQueue: true
         MessageRetentionPeriod: 1209600
         VisibilityTimeout: 60

@@ -1,6 +1,6 @@
 import 'source-map-support/register';
 import logger from './util/logger';
-import updateBlocks from './util/update-blocks';
+import reconcileBlock from './util/reconcile-block';
 import { Callback, Context, Handler } from 'aws-lambda';
 import { NETWORK_ID, SRC_NODE_URL } from './util/env';
 import getClient from './client/get-client';
@@ -38,7 +38,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
 
       locked = true;
 
-      updateBlocks(client)
+      reconcileBlock(client)
         .then(
           () => {
             locked = false;

@@ -1,8 +1,6 @@
 import { SQS } from 'aws-sdk';
-import { SQS_BLOCK_RECEIVED_QUEUE_NAME } from '../env';
 import { MessageList, Message } from 'aws-sdk/clients/sqs';
 import logger from '../logger';
-import { Context } from 'aws-lambda';
 
 export const sqs = new SQS();
 
@@ -38,7 +36,7 @@ export const getQueueUrl: (QueueName: string) => Promise<string> =
 // Helper function to drain a queue
 export async function drainQueue(QueueUrl: string,
                                  handleMessage: (message: Message) => Promise<void>,
-                                 context: Context,
+                                 shouldContinue: () => boolean,
                                  MaxNumberOfMessages: number = 10,
                                  WaitTimeSeconds: number = 0) {
   let Messages: MessageList | undefined;
@@ -82,8 +80,8 @@ export async function drainQueue(QueueUrl: string,
         throw err;
       }
 
-      if (context.getRemainingTimeInMillis() < 3000) {
-        logger.info('not fetching next block since there is no time remaining');
+      if (!shouldContinue()) {
+        logger.info('drainQueue: not fetching next block since shouldContinue returned false');
         break;
       }
     }

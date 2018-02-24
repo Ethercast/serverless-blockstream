@@ -5,6 +5,7 @@ import { DynamoDB } from 'aws-sdk';
 import toHex, { BlockNumber } from '../to-hex';
 import BigNumber from 'bignumber.js';
 import { deflatePayload, inflatePayload } from '../compress';
+import { mustBeValidBlock, mustBeValidLog } from '../joi-schema';
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -127,7 +128,10 @@ async function putBlock(block: BlockWithTransactionHashes, logs: Log[]) {
   ).promise();
 }
 
-export async function saveBlockData(block: BlockWithTransactionHashes, logs: Log[], checkParentExists: boolean): Promise<void> {
+export async function saveBlockData(notValidatedBlock: BlockWithTransactionHashes, notValidatedLogs: Log[], checkParentExists: boolean): Promise<void> {
+  const block = mustBeValidBlock(notValidatedBlock);
+  const logs = notValidatedLogs.map(mustBeValidLog);
+
   const metadata = {
     blockHash: block.hash,
     blockNumber: block.number,

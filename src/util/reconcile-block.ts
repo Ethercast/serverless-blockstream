@@ -1,31 +1,29 @@
 import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
-import { saveBlockData, blockExists } from './ddb/ddb-block-data';
+import { saveBlockData, blockExists } from './ddb/block-data';
 import EthClient from '../client/eth-client';
-import { NETWORK_ID, STARTING_BLOCK, DRAIN_QUEUE_LAMBDA_NAME, SQS_BLOCK_RECEIVED_QUEUE_NAME } from './env';
+import { NETWORK_ID, STARTING_BLOCK, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME } from './env';
 import { Lambda } from 'aws-sdk';
 import { BlockQueueMessage, BlockWithTransactionHashes, Log } from './model';
 import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
-import { getBlockStreamState, saveBlockStreamState } from './ddb/ddb-blockstream-state';
+import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
+import { mustBeValidBlock, mustBeValidLog } from './joi-schema';
 
 const lambda = new Lambda();
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
  */
-export default async function reconcileBlocks(client: EthClient): Promise<void> {
+export default async function reconcileBlock(client: EthClient): Promise<void> {
   const state = await getBlockStreamState();
   const nextFetchBlock = await getNextFetchBlock(state, STARTING_BLOCK);
   const currentBlockNo = await client.eth_blockNumber();
 
   if (currentBlockNo.lt(nextFetchBlock)) {
-    logger.debug({
-      currentBlockNo,
-      nextFetchBlock
-    }, 'next fetch block is not yet available');
+    logger.debug({ currentBlockNo, nextFetchBlock }, 'next fetch block is not yet available');
     return;
   }
 
@@ -45,16 +43,23 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
   logger.debug({ currentBlockNo, nextFetchBlock }, 'fetching block');
 
   // get the block info and all the logs for the block
-  const [block, logs]: [BlockWithTransactionHashes | null, Log[]] = await Promise.all([
+  const [
+    notValidatedBlock,
+    notValidatedLogs
+  ]: [BlockWithTransactionHashes | null, Log[]] = await Promise.all([
     client.eth_getBlockByNumber(nextFetchBlock, false),
     client.eth_getLogs({ fromBlock: nextFetchBlock, toBlock: nextFetchBlock })
   ]);
 
   // missing block, try again later
-  if (block === null) {
+  if (notValidatedBlock === null) {
     logger.debug({ currentBlockNo, nextFetchBlock }, 'block came back as null');
     return;
   }
+
+  // validate logs coming from the client are in the expected format
+  const block = mustBeValidBlock(notValidatedBlock);
+  const logs = notValidatedLogs.map(mustBeValidLog);
 
   const metadata = {
     state,
@@ -79,9 +84,6 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     logger.error({ metadata }, 'block received with a log already marked removed');
     return;
   }
-
-  // TODO: make sure the block and all the logs match the expected format, an additional check against changes to the
-  // protocol
 
   //  check if the parent exists and rewind blocks if it does not
   if (state) {
@@ -164,9 +166,9 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
   let QueueUrl: string;
   try {
-    QueueUrl = await getQueueUrl(SQS_BLOCK_RECEIVED_QUEUE_NAME);
+    QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
   } catch (err) {
-    logger.error({ err }, 'could not find queue url: ' + SQS_BLOCK_RECEIVED_QUEUE_NAME);
+    logger.error({ err }, 'could not find queue url: ' + NEW_BLOCK_QUEUE_NAME);
     return;
   }
 
@@ -183,7 +185,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
     logger.info({ queueMessage, MessageId }, 'placed message in queue');
   } catch (err) {
     logger.error({
-      QueueName: SQS_BLOCK_RECEIVED_QUEUE_NAME,
+      QueueName: NEW_BLOCK_QUEUE_NAME,
       err,
       metadata
     }, 'failed to deliver block notification message to queue');
@@ -210,10 +212,10 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
   // now trigger a lambda to drain the queue
   try {
-    logger.debug({ metadata, DRAIN_QUEUE_LAMBDA_NAME }, 'invoking lambda asynchronously to drain queue');
+    logger.debug({ metadata, DRAIN_BLOCK_QUEUE_LAMBDA_NAME }, 'invoking lambda asynchronously to drain queue');
 
     const { StatusCode } = await lambda.invoke({
-      FunctionName: DRAIN_QUEUE_LAMBDA_NAME,
+      FunctionName: DRAIN_BLOCK_QUEUE_LAMBDA_NAME,
       InvocationType: 'Event'
     }).promise();
 
@@ -223,7 +225,7 @@ export default async function reconcileBlocks(client: EthClient): Promise<void> 
 
     logger.info({ metadata }, 'lambda successfully invoked');
   } catch (err) {
-    logger.error({ DRAIN_QUEUE_LAMBDA_NAME, err, metadata }, 'failed to invoke lambda after pushing to queue');
+    logger.error({ DRAIN_BLOCK_QUEUE_LAMBDA_NAME, err, metadata }, 'failed to invoke lambda after pushing to queue');
     return;
   }
 }
