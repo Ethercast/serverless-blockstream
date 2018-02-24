@@ -20,6 +20,10 @@ interface LogMessage {
 }
 
 async function flushMessagesToQueue(logMessages: LogMessage[]): Promise<void> {
+  if (logMessages.length === 0) {
+    return;
+  }
+
   let QueueUrl: string;
   try {
     QueueUrl = await getQueueUrl(DESTINATION_LOG_QUEUE_NAME);
