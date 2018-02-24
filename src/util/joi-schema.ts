@@ -2,7 +2,7 @@ import { array, boolean, object, Schema, string } from 'joi';
 import { BlockWithTransactionHashes, Log } from './model';
 import logger from './logger';
 
-const hex = string().regex(/^0x[0-9A-Fa-f]*$/).lowercase();
+const hex = string().regex(/^0x[0-9A-Fa-f]*$/);
 const hex256 = hex.length(66);
 const hex160 = hex.length(42);
 const hexUint = hex.max(66);
@@ -10,8 +10,7 @@ const hexUint = hex.max(66);
 const address = hex160;
 const topic = hex256;
 
-// SHOULD BE COMPLETE
-export const JoiLog = object({
+const JoiLog = object({
   logIndex: hexUint.required(),
   blockNumber: hexUint.required(),
   blockHash: hex256.required(),
@@ -23,7 +22,7 @@ export const JoiLog = object({
   removed: boolean().required()
 });
 
-export const JoiBlockWithTransactionHashes = object({
+const JoiBlockWithTransactionHashes = object({
   hash: hex256.required(),
   difficulty: hex.required(),
   extraData: hex.required(),
@@ -55,7 +54,7 @@ export function mustBeValidBlockWithTransactionHashes(block: BlockWithTransactio
 }
 
 function validate<T>(item: T, schema: Schema): T {
-  const { error, value } = schema.validate(item, { allowUnknown: true, convert: false });
+  const { error, value } = schema.validate(item, { allowUnknown: false, convert: false });
 
   if (error && error.details && error.details.length > 0) {
     logger.error({ error }, 'schema validation failed');

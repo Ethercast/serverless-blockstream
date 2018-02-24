@@ -14,6 +14,7 @@ custom:
   newBlockQueueName: ${self:custom.prefix}-new-blocks.fifo
   logFirehoseQueue: ${self:custom.prefix}-log-firehose.fifo
   baseCapacity: 3
+  notificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
   capacities:
     - table: BlocksTable  # DynamoDB Resource
       index:              # List or single index name
@@ -156,3 +157,98 @@ resources:
         FifoQueue: true
         MessageRetentionPeriod: 1209600
         VisibilityTimeout: 60
+
+    AlarmTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        Subscription:
+          - Endpoint: ${self:custom.notificationEmail}
+            Protocol: email
+
+    NewBlockQueueDepthAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: "Alarm if new blocks are not being removed from the queue"
+        Namespace: "AWS/SQS"
+        MetricName: ApproximateNumberOfMessagesVisible
+        Dimensions:
+          - Name: QueueName
+            Value: ${self:custom.newBlockQueueName}
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 10
+        ComparisonOperator: GreaterThanThreshold
+        AlarmActions:
+          - Ref: AlarmTopic
+        InsufficientDataActions:
+          - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
+        TreatMissingData: breaching
+
+    NewBlockQueueActiveAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: "Alarm if new blocks are not being entered into the queue"
+        Namespace: "AWS/SQS"
+        MetricName: NumberOfMessagesSent
+        Dimensions:
+          - Name: QueueName
+            Value: ${self:custom.newBlockQueueName}
+        Statistic: Sum
+        Period: 60
+        EvaluationPeriods: 1
+        Threshold: 0
+        ComparisonOperator: LessThanOrEqualToThreshold
+        AlarmActions:
+          - Ref: AlarmTopic
+        InsufficientDataActions:
+          - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
+        TreatMissingData: breaching
+
+    LogFirehoseQueueDepthAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: "Alarm if new logs are not being removed from the queue"
+        Namespace: "AWS/SQS"
+        MetricName: ApproximateNumberOfMessagesVisible
+        Dimensions:
+          - Name: QueueName
+            Value : ${self:custom.logFirehoseQueue}
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 10
+        ComparisonOperator: GreaterThanThreshold
+        AlarmActions:
+          - Ref: AlarmTopic
+        InsufficientDataActions:
+          - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
+        TreatMissingData: breaching
+
+    LogFirehoseQueueActiveAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: "Alarm if new logs are not being entered into the queue"
+        Namespace: "AWS/SQS"
+        MetricName: NumberOfMessagesSent
+        Dimensions:
+          - Name: QueueName
+            Value: ${self:custom.logFirehoseQueue}
+        Statistic: Sum
+        Period: 60
+        EvaluationPeriods: 1
+        Threshold: 0
+        ComparisonOperator: LessThanOrEqualToThreshold
+        AlarmActions:
+          - Ref: AlarmTopic
+        InsufficientDataActions:
+          - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
+        TreatMissingData: breaching
