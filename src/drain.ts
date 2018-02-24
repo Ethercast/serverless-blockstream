@@ -91,7 +91,7 @@ export const start: Handler = async (event, context, callback) => {
   }
 
   try {
-    await drainQueue(QueueUrl, processQueueMessage);
+    await drainQueue(QueueUrl, processQueueMessage, context);
   } catch (err) {
     logger.error({ err }, 'error while draining the queue');
     context.done(err);
