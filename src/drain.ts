@@ -37,8 +37,10 @@ async function flushMessagesToQueue(logMessages: LogMessage[]): Promise<void> {
 
 
     const entries: SendMessageBatchRequestEntryList = chunk.map((logMessage) => {
-      const Id = crypto.createHash('sha256')
-        .update(`${logMessage.log.blockHash}-${logMessage.log.transactionHash}-${logMessage.log.logIndex}`)
+      const Id: string = crypto.createHash('sha256')
+        .update(logMessage.log.blockHash)
+        .update(logMessage.log.transactionHash)
+        .update(logMessage.log.logIndex)
         .digest('hex');
 
       return {
@@ -49,7 +51,14 @@ async function flushMessagesToQueue(logMessages: LogMessage[]): Promise<void> {
       };
     });
 
-    await sqs.sendMessageBatch({ QueueUrl, Entries: entries }).promise();
+    const { Successful, Failed } = await sqs.sendMessageBatch({ QueueUrl, Entries: entries }).promise();
+
+    if (Failed.length > 0) {
+      logger.warn({ Failed }, 'some messages failed to send');
+      throw new Error('some messages failed to send to the downstream queue');
+    } else {
+      logger.info('successfully flushed chunk to queue');
+    }
   }
 }
 
