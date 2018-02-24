@@ -36,7 +36,7 @@ export async function getBlocksMatchingNumber(number: BlockNumber): Promise<Deco
     const { ConsumedCapacity, Count, Items } = await ddbClient.query({
       TableName: BLOCKS_TABLE,
       IndexName: BLOCK_TABLE_BLOCK_NUMBER_INDEX_NAME,
-      FilterExpression: '#number = :number',
+      KeyConditionExpression: '#number = :number',
       ExpressionAttributeNames: {
         '#number': 'number'
       },
