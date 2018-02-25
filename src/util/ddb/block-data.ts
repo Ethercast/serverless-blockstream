@@ -1,4 +1,4 @@
-import { BlockWithTransactionHashes, DecodedBlockPayload, Log } from '../model';
+import { DecodedBlockPayload } from '../model';
 import logger from '../logger';
 import { BLOCK_DATA_TTL_MS, BLOCKS_TABLE } from '../env';
 import { DynamoDB } from 'aws-sdk';
@@ -6,6 +6,7 @@ import toHex, { BlockNumber } from '../to-hex';
 import BigNumber from 'bignumber.js';
 import { deflatePayload, inflatePayload } from '../compress';
 import { mustBeValidBlockWithTransactionHashes, mustBeValidLog } from '../joi-schema';
+import { BlockWithTransactionHashes, Log } from '../../client/model';
 
 const ddbClient = new DynamoDB.DocumentClient();
 

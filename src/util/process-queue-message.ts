@@ -2,12 +2,13 @@ import 'source-map-support/register';
 import logger from './logger';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { Message, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
-import { BlockQueueMessage, Log } from './model';
+import { BlockQueueMessage } from './model';
 import { getBlocksMatchingNumber } from './ddb/block-data';
 import _ = require('underscore');
 import { LOG_FIREHOSE_QUEUE_NAME, NETWORK_ID } from './env';
 import * as crypto from 'crypto';
 import { mustBeValidLog } from './joi-schema';
+import { Log } from '../client/model';
 
 async function flushMessagesToQueue(validatedLogs: Log[]): Promise<void> {
   if (validatedLogs.length === 0) {

@@ -1,5 +1,6 @@
 import * as zlib from 'zlib';
-import { BlockWithTransactionHashes, DecodedBlockPayload, Log } from './model';
+import { DecodedBlockPayload } from './model';
+import { BlockWithTransactionHashes, Log } from '../client/model';
 
 export async function deflatePayload(block: BlockWithTransactionHashes, logs: Log[]): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {

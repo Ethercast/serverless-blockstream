@@ -1,14 +1,13 @@
 import * as WebSocket from 'ws';
-import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter } from '../util/model';
+import { LogFilter, TransactionReceipt } from './model';
 import BigNumber from 'bignumber.js';
 import logger from '../util/logger';
-import { MethodParameter, serializeToMethodParameter } from './util';
+import { buildRequest, MethodParameter } from './util';
 import EthClient, { BlockParameter, Method } from './eth-client';
+import { BlockWithFullTransactions, BlockWithTransactionHashes } from './model';
 
 export default class EthWSClient implements EthClient {
   ws: WebSocket;
-
-  nextRequestId: number = 1;
 
   constructor({ ws }: { ws: WebSocket }) {
     this.ws = ws;
@@ -17,35 +16,46 @@ export default class EthWSClient implements EthClient {
   web3_clientVersion = () => this.cmd<string>(Method.web3_clientVersion);
 
   public eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+
   public eth_getBlockByHash(hash: string, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
   public eth_getBlockByHash(hash: string, includeFullTransactions: boolean): any {
-    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, [hash, includeFullTransactions]);
+    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, hash, includeFullTransactions);
   }
 
   public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+
   public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
   public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: boolean): any {
-    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
+    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, block, includeFullTransactions);
   }
 
   public eth_blockNumber = () => this.cmd<string>(Method.eth_blockNumber).then(s => new BigNumber(s));
 
-  public eth_getLogs = (filter: LogFilter) => this.cmd<any>(Method.eth_getLogs, [filter]);
+  public eth_getLogs = (filter: LogFilter) => this.cmd<any>(Method.eth_getLogs, filter);
 
   public net_version(): Promise<number> {
     return this.cmd<string>(Method.net_version).then(s => parseInt(s));
   }
 
-  private async cmd<TResponse>(method: Method, params: MethodParameter[] = []): Promise<TResponse> {
+  public eth_getTransactionReceipt(hash: string): Promise<TransactionReceipt> {
+    return this.cmd<TransactionReceipt>(Method.eth_getTransactionReceipt, hash);
+  }
+
+  public eth_getTransactionReceipts(hash: string[]): Promise<TransactionReceipt[]> {
+    // this is cheaper over websockets
+    return Promise.all(hash.map(this.eth_getTransactionReceipt));
+  }
+
+  private async cmd<TResponse>(method: Method, ...params: MethodParameter[]): Promise<TResponse> {
     const { ws } = this;
 
     if (ws.readyState !== ws.OPEN) {
       throw new Error('websocket is not open!');
     }
 
-    const requestId = this.nextRequestId++;
-
     return new Promise<any>((resolve, reject) => {
+      const request = buildRequest(method, params);
+
       let resolved = false;
 
       const listener = function (event: { data: any; type: string; target: WebSocket }): void {
@@ -55,7 +65,7 @@ export default class EthWSClient implements EthClient {
           try {
             const msgData = JSON.parse(event.data);
 
-            if (msgData.id === requestId) {
+            if (msgData.id === request.id) {
               resolve(msgData.result);
               resolved = true;
               ws.removeEventListener('message', listener);
@@ -67,13 +77,6 @@ export default class EthWSClient implements EthClient {
       };
 
       ws.addEventListener('message', listener);
-
-      const request = {
-        jsonrpc: '2.0',
-        id: requestId,
-        method,
-        params: serializeToMethodParameter(params)
-      };
 
       logger.debug({ method, request }, 'sending request');
 

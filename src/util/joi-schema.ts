@@ -1,6 +1,7 @@
-import { array, boolean, object, Schema, string } from 'joi';
-import { BlockWithTransactionHashes, Log } from './model';
+import { alternatives, array, boolean, object, Schema, string } from 'joi';
+import { BlockWithTransactionHashes } from '../client/model';
 import logger from './logger';
+import { Log } from '../client/model';
 
 const hex = string().regex(/^0x[0-9A-Fa-f]*$/);
 const hex256 = hex.length(66);
@@ -28,7 +29,7 @@ const JoiBlock = object({
   extraData: hex.required(),
   gasLimit: hex.required(),
   gasUsed: hex.required(),
-  logsBloom: hex.required(),
+  logsBloom: hex256.required(),
   miner: address.required(),
   mixHash: hex.required(),
   nonce: hex.required(),
@@ -46,6 +47,19 @@ const JoiBlock = object({
 
 const JoiBlockWithTransactionHashes = JoiBlock.keys({
   transactions: array().items(hex256).required()
+});
+
+const JoiTransactionReceipt = object({
+  transactionHash: hex256.required(),
+  transactionIndex: hex.required(),
+  blockNumber: hex.required(),
+  blockHash: hex256.required(),
+  cumulativeGasUsed: hex.required(),
+  gasUsed: hex.required(),
+  contractAddress: address.required(),
+  logs: array().items(JoiLog).required(),
+  logsBloom: hex256.required(),
+  status: alternatives().valid('0x0', '0x1')
 });
 
 export function mustBeValidLog(log: Log): Log {

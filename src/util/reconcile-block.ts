@@ -5,12 +5,13 @@ import { saveBlockData, blockExists } from './ddb/block-data';
 import EthClient from '../client/eth-client';
 import { NETWORK_ID, STARTING_BLOCK, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME } from './env';
 import { Lambda } from 'aws-sdk';
-import { BlockQueueMessage, BlockWithTransactionHashes, Log } from './model';
+import { BlockQueueMessage } from './model';
 import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { mustBeValidBlockWithTransactionHashes, mustBeValidLog } from './joi-schema';
+import { BlockWithTransactionHashes, Log } from '../client/model';
 
 const lambda = new Lambda();
 

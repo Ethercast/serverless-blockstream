@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import toHex from '../util/to-hex';
+import { Method } from './eth-client';
 
 export type MethodParameter = boolean | string | number | BigNumber | object;
 
@@ -26,4 +27,15 @@ export function serializeToMethodParameter(p: any): MethodParameter {
     default:
       throw new Error('unhandled type');
   }
+}
+
+let nextId = 1;
+
+export function buildRequest(method: Method, params: MethodParameter[]) {
+  return {
+    jsonrpc: '2.0',
+    id: nextId++,
+    method,
+    params: serializeToMethodParameter(params)
+  };
 }
