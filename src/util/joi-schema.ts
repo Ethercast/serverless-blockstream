@@ -1,4 +1,4 @@
-import { alternatives, array, boolean, object, Schema, string } from 'joi';
+import { allow, alternatives, array, boolean, object, Schema, string, when } from 'joi';
 import {
   BlockWithFullTransactions, BlockWithTransactionHashes, Transaction,
   TransactionReceipt
@@ -80,7 +80,14 @@ const JoiTransactionReceipt = object({
   logs: array().items(JoiLog).required(),
   contractAddress: address.allow(null).required(),
   from: address.required(),
-  to: address.required(),
+  to: when(
+    'contractAddress',
+    {
+      is: null,
+      then: address,
+      otherwise: allow(null)
+    }
+  ).required(),
   logsBloom: hex.required(),
   status: alternatives().valid('0x0', '0x1')
 });
