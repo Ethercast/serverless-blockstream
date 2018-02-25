@@ -19,7 +19,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
   logger.info({ SRC_NODE_URL, netVersion, clientVersion }, 'ethereum node information');
 
   if (netVersion !== NETWORK_ID) {
-    logger.error({ netVersion, NETWORK_ID }, 'NETWORK_ID and netVersion do not match');
+    logger.fatal({ netVersion, NETWORK_ID }, 'NETWORK_ID and netVersion do not match');
     context.done(new Error('invalid network ID'));
     return;
   }
@@ -51,7 +51,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
         )
         .catch(
           err => {
-            logger.error({ err }, 'unexpected error encountered');
+            logger.fatal({ err }, 'unexpected error encountered');
 
             context.done(err);
           }
