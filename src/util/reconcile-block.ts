@@ -35,9 +35,9 @@ export default async function reconcileBlock(client: EthClient): Promise<void> {
   } else if (blocksToCurrent.gt(1000)) {
     logger.error('more than 1000 blocks behind the network! it could take a while to catch up!');
   } else if (blocksToCurrent.gt(100)) {
-    logger.error('more than 100 blocks behind the network!');
+    logger.warn('more than 100 blocks behind the network!');
   } else if (blocksToCurrent.gt(10)) {
-    logger.warn('more than 10 blocks behind the network.');
+    logger.info('more than 10 blocks behind the network.');
   }
 
   logger.debug({ currentBlockNo, nextFetchBlock }, 'fetching block');
@@ -91,10 +91,7 @@ export default async function reconcileBlock(client: EthClient): Promise<void> {
     const parentExists = await blockExists(block.parentHash, parentBlockNumber);
 
     if (!parentExists) {
-      logger.info({
-        metadata,
-        parentBlockNumber
-      }, 'parent doesnt exist, beginning rewind process');
+      logger.info({ metadata, parentBlockNumber }, 'parent doesnt exist, beginning rewind process');
 
       // the next block number to check
       let checkingBlockNumber = new BigNumber(parentBlockNumber).minus(1);
