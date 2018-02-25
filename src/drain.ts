@@ -10,7 +10,7 @@ export const start: Handler = async (event, context, callback) => {
   try {
     QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
   } catch (err) {
-    logger.error({ err, QueueName: NEW_BLOCK_QUEUE_NAME }, 'failed to get queue url');
+    logger.fatal({ err, QueueName: NEW_BLOCK_QUEUE_NAME }, 'failed to get queue url');
     context.done(err);
     return;
   }
@@ -21,7 +21,7 @@ export const start: Handler = async (event, context, callback) => {
 
     await drainQueue(QueueUrl, processQueueMessage, shouldContinue);
   } catch (err) {
-    logger.error({ err }, 'error while draining the queue');
+    logger.fatal({ err }, 'error while draining the queue');
     context.done(err);
   }
 

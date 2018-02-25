@@ -5,7 +5,6 @@ import { saveBlockData, isBlockSaved } from './ddb/block-data';
 import { NETWORK_ID, STARTING_BLOCK, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME } from './env';
 import { Lambda } from 'aws-sdk';
 import { BlockQueueMessage } from './model';
-import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';

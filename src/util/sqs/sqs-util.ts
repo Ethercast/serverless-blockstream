@@ -62,7 +62,7 @@ export async function drainQueue(QueueUrl: string,
       const { ReceiptHandle } = Messages[i];
 
       if (!ReceiptHandle) {
-        logger.error({ Message: Messages[i] }, 'no receipt handle on receive!');
+        logger.fatal({ Message: Messages[i] }, 'no receipt handle on receive!');
         throw new Error('no receipt handle');
       }
 
@@ -76,7 +76,7 @@ export async function drainQueue(QueueUrl: string,
 
         logger.info({ MessageId: Messages[i].MessageId }, 'drainQueue: processed queue message');
       } catch (err) {
-        logger.error({ err, Message: Messages[i] }, 'drainQueue: failed to process a queue message');
+        logger.fatal({ err, Message: Messages[i] }, 'drainQueue: failed to process a queue message');
         throw err;
       }
 
