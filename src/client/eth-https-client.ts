@@ -13,20 +13,36 @@ export default class EthHttpsClient implements EthClient {
     this.endpointUrl = endpointUrl;
   }
 
-  public eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+  public eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes>;
 
-  public eth_getBlockByHash(hash: string, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
+  public eth_getBlockByHash(hash: string, includeFullTransactions: true): Promise<BlockWithFullTransactions>;
 
   public eth_getBlockByHash(hash: string, includeFullTransactions: boolean): any {
-    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, [hash, includeFullTransactions]);
+    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByHash, [hash, includeFullTransactions])
+      .then(
+        block => {
+          if (block === null) {
+            throw new Error('block by number does not exist');
+          }
+
+          return block;
+        }
+      );
   }
 
-  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: false): Promise<BlockWithTransactionHashes | null>;
+  public eth_getBlockByNumber(blockNumber: BlockParameter, includeFullTransactions: false): Promise<BlockWithTransactionHashes>;
 
-  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: true): Promise<BlockWithFullTransactions | null>;
+  public eth_getBlockByNumber(blockNumber: BlockParameter, includeFullTransactions: true): Promise<BlockWithFullTransactions>;
 
-  public eth_getBlockByNumber(block: BlockParameter, includeFullTransactions: boolean): any {
-    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes | null>(Method.eth_getBlockByNumber, [block, includeFullTransactions]);
+  public eth_getBlockByNumber(blockNumber: BlockParameter, includeFullTransactions: boolean): any {
+    return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByNumber, [blockNumber, includeFullTransactions])
+      .then(block => {
+        if (block === null) {
+          throw new Error('block by number does not exist');
+        }
+
+        return block;
+      });
   }
 
   public net_version(): Promise<number> {

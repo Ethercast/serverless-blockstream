@@ -5,7 +5,7 @@ import { Callback, Context, Handler } from 'aws-lambda';
 import { NETWORK_ID, SRC_NODE_URL } from './util/env';
 import getClient from './client/get-client';
 import * as _ from 'underscore';
-import ValidatedClient from './util/validated-client';
+import ValidatedClient from './util/validated-eth-client';
 
 export const start: Handler = async (event: any, context: Context, cb: Callback) => {
   const unvalidatedClient = await getClient(SRC_NODE_URL);

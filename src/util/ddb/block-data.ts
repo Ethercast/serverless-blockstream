@@ -16,7 +16,7 @@ export function getBlockDataTtl(): number {
   return (new Date()).getTime() + BLOCK_DATA_TTL_MS;
 }
 
-export async function blockExists(hash: string, number: BlockNumber): Promise<boolean> {
+export async function isBlockSaved(hash: string, number: BlockNumber): Promise<boolean> {
   const { Item } = await ddbClient.get({
     TableName: BLOCKS_TABLE,
     Key: {
@@ -144,7 +144,7 @@ export async function saveBlockData(notValidatedBlock: BlockWithTransactionHashe
   if (checkParentExists) {
     logger.info({ metadata }, 'checking for existence of parent hash');
 
-    const parentExists = await blockExists(
+    const parentExists = await isBlockSaved(
       block.parentHash,
       new BigNumber(block.number).minus(1)
     );

@@ -1,7 +1,7 @@
 import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
-import { saveBlockData, blockExists } from './ddb/block-data';
+import { saveBlockData, isBlockSaved } from './ddb/block-data';
 import { NETWORK_ID, STARTING_BLOCK, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME } from './env';
 import { Lambda } from 'aws-sdk';
 import { BlockQueueMessage } from './model';
@@ -9,15 +9,16 @@ import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
-import { Log } from '../client/model';
-import ValidatedClient from './validated-client';
+import { BlockWithTransactionHashes, Log, TransactionReceipt } from '../client/model';
+import ValidatedEthClient from './validated-eth-client';
+import rewindBlocks from './rewind-blocks';
 
 const lambda = new Lambda();
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
  */
-export default async function reconcileBlock(client: ValidatedClient): Promise<void> {
+export default async function reconcileBlock(client: ValidatedEthClient): Promise<void> {
   const state = await getBlockStreamState();
   const nextFetchBlock = await getNextFetchBlock(state, STARTING_BLOCK);
   const currentBlockNo = await client.eth_blockNumber();
@@ -42,18 +43,25 @@ export default async function reconcileBlock(client: ValidatedClient): Promise<v
 
   logger.debug({ currentBlockNo, nextFetchBlock }, 'fetching block');
 
-  const block = await client.eth_getBlockByNumber(nextFetchBlock, false);
-
-  // missing block, try again later
-  if (block === null) {
-    logger.debug({ currentBlockNo, nextFetchBlock }, 'block came back as null');
+  let block: BlockWithTransactionHashes;
+  try {
+    block = await client.eth_getBlockByNumber(nextFetchBlock, false);
+  } catch (err) {
+    logger.info({ err }, 'failed to get block by number');
     return;
   }
 
   logger.debug({ blockHash: block.hash, transactionsCount: block.transactions.length }, 'fetching tx receipts');
-  const receipts = await client.eth_getTransactionReceipts(block.transactions);
 
-  const logs: Log[] = _.flatten(receipts.map(receipt => receipt.logs), true);
+  let transactionReceipts: TransactionReceipt[];
+  try {
+    transactionReceipts = await client.eth_getTransactionReceipts(block.transactions);
+  } catch (err) {
+    logger.info({ blockNumber: block.number, blockHash: block.hash, err }, 'failed to get receipts');
+    return;
+  }
+
+  const logs: Log[] = _.flatten(transactionReceipts.map(receipt => receipt.logs), true);
 
   const metadata = {
     state,
@@ -82,68 +90,17 @@ export default async function reconcileBlock(client: ValidatedClient): Promise<v
   //  check if the parent exists and rewind blocks if it does not
   if (state) {
     const parentBlockNumber = toHex(new BigNumber(block.number).minus(1));
-    const parentExists = await blockExists(block.parentHash, parentBlockNumber);
+    const parentExists = await isBlockSaved(block.parentHash, parentBlockNumber);
 
     if (!parentExists) {
-      logger.info({ metadata, parentBlockNumber }, 'parent doesnt exist, beginning rewind process');
+      logger.info({ metadata }, 'beginning chain reorganization');
 
-      // the next block number to check
-      let checkingBlockNumber = new BigNumber(parentBlockNumber).minus(1);
-
-      // iterate through parent blocks reported by the node until we get to one that exists
-      while (true) {
-        // in this case, all our block data is bad.. this should never happen with at least 1 hour of history!
-        if (checkingBlockNumber.lt(STARTING_BLOCK)) {
-          logger.error(
-            { checkingBlockNumber, metadata },
-            'retraced and could not recover from a chain reorg!!! all our block data appears incorrect'
-          );
-          throw new Error('could not recover from chain reorg');
-        }
-
-        if (checkingBlockNumber.minus(state.lastReconciledBlock.number).abs().gt(50)) {
-          logger.error(
-            { checkingBlockNumber, metadata },
-            'retraced back 50 blocks and could not find a block in dynamo'
-          );
-          throw new Error('failed to reconcile chain reorg within 50 blocks');
-        }
-
-        const block = await client.eth_getBlockByNumber(checkingBlockNumber, false);
-        if (block === null) {
-          logger.error({
-            checkingBlockNumber
-          }, 'ethereum node returned null while checking for parent block numbers during a chain reorg!');
-          throw new Error('missing block number from node during chain reorg');
-        }
-
-        const exists = await blockExists(block.hash, block.number);
-
-        // we can save the state, we've reconciled the chain reorg
-        if (exists) {
-          logger.info({
-            checkingBlockNumber,
-            metadata,
-            block: { hash: block.hash, number: block.number }
-          }, 'chain org reconciled, block found in dynamo that exists on the node');
-
-          await saveBlockStreamState(
-            null,
-            {
-              lastReconciledBlock: {
-                hash: block.hash,
-                number: block.number
-              },
-              network_id: NETWORK_ID
-            }
-          );
-          break;
-        }
-
-        checkingBlockNumber = checkingBlockNumber.minus(1);
+      try {
+        await rewindBlocks(client, state, metadata);
+      } catch (err) {
+        logger.fatal({ metadata, state, err }, 'failed to handle chain reorganization');
+        return;
       }
-
-      return;
     }
   }
 

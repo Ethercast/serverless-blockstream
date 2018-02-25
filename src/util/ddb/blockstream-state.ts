@@ -58,6 +58,7 @@ export async function saveBlockStreamState(prevState: BlockStreamState | null, n
     await ddbClient.put(input).promise();
   } catch (err) {
     logger.error({ err, input }, 'failed to save blockstream state');
+
     throw err;
   }
 }
