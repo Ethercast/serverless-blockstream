@@ -9,7 +9,7 @@ import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
-import { BlockWithTransactionHashes, Log } from '../client/model';
+import { Log } from '../client/model';
 import ValidatedClient from './validated-client';
 
 const lambda = new Lambda();
