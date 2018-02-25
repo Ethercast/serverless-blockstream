@@ -4,7 +4,7 @@ import {
   TransactionReceipt
 } from '../client/model';
 import {
-  mustBeValidBlockWithFullTransactions, mustBeValidBlockWithTransactionHashes,
+  mustBeValidBlockWithFullTransactions, mustBeValidBlockWithTransactionHashes, mustBeValidLog,
   mustBeValidTransactionReceipt
 } from './joi-schema';
 
@@ -76,21 +76,21 @@ export default class ValidatedClient implements EthClient {
   }
 
   eth_blockNumber(): Promise<BigNumber> {
-    return this.eth_blockNumber();
+    return this.client.eth_blockNumber();
   }
 
   eth_getLogs(filter: LogFilter): Promise<Log[]> {
-    return this.eth_getLogs(filter);
+    return this.client.eth_getLogs(filter).then(logs => logs.map(mustBeValidLog));
   }
 
   eth_getTransactionReceipt(hash: string): Promise<TransactionReceipt> {
-    return this.eth_getTransactionReceipt(hash).then(
+    return this.client.eth_getTransactionReceipt(hash).then(
       receipt => mustBeValidTransactionReceipt(receipt)
     );
   }
 
   eth_getTransactionReceipts(hashes: string[]): Promise<TransactionReceipt[]> {
-    return this.eth_getTransactionReceipts(hashes)
+    return this.client.eth_getTransactionReceipts(hashes)
       .then(
         receipts => receipts.map(mustBeValidTransactionReceipt)
       );

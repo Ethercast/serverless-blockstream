@@ -2,7 +2,6 @@ import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { saveBlockData, blockExists } from './ddb/block-data';
-import EthClient from '../client/eth-client';
 import { NETWORK_ID, STARTING_BLOCK, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME } from './env';
 import { Lambda } from 'aws-sdk';
 import { BlockQueueMessage } from './model';
@@ -10,15 +9,15 @@ import toHex from './to-hex';
 import getNextFetchBlock from './get-next-fetch-block';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
-import { mustBeValidBlockWithTransactionHashes, mustBeValidLog } from './joi-schema';
 import { BlockWithTransactionHashes, Log } from '../client/model';
+import ValidatedClient from './validated-client';
 
 const lambda = new Lambda();
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
  */
-export default async function reconcileBlock(client: EthClient): Promise<void> {
+export default async function reconcileBlock(client: ValidatedClient): Promise<void> {
   const state = await getBlockStreamState();
   const nextFetchBlock = await getNextFetchBlock(state, STARTING_BLOCK);
   const currentBlockNo = await client.eth_blockNumber();
@@ -45,22 +44,18 @@ export default async function reconcileBlock(client: EthClient): Promise<void> {
 
   // get the block info and all the logs for the block
   const [
-    notValidatedBlock,
-    notValidatedLogs
+    block,
+    logs
   ]: [BlockWithTransactionHashes | null, Log[]] = await Promise.all([
     client.eth_getBlockByNumber(nextFetchBlock, false),
     client.eth_getLogs({ fromBlock: nextFetchBlock, toBlock: nextFetchBlock })
   ]);
 
   // missing block, try again later
-  if (notValidatedBlock === null) {
+  if (block === null) {
     logger.debug({ currentBlockNo, nextFetchBlock }, 'block came back as null');
     return;
   }
-
-  // validate logs coming from the client are in the expected format
-  const block = mustBeValidBlockWithTransactionHashes(notValidatedBlock);
-  const logs = notValidatedLogs.map(mustBeValidLog);
 
   const metadata = {
     state,
