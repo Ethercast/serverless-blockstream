@@ -22,11 +22,11 @@ custom:
         - ByBlockNumber
       read:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum read capacity
-        maximum: 100      # Maximum read capacity
+        maximum: 1000      # Maximum read capacity
         usage: 0.8        # Targeted usage percentage
       write:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum write capacity
-        maximum: 100      # Maximum write capacity
+        maximum: 1000      # Maximum write capacity
         usage: 0.8        # Targeted usage percentage
 
 provider:
@@ -106,7 +106,7 @@ resources:
       Export:
         Name: ${self:custom.stage}-LogFirehoseQueueName
   Resources:
-    BlockStreamStateTable:
+    BlockStreamStateTable: # This table is throttled and should not autoscale
         Type: AWS::DynamoDB::Table
         Properties:
           TableName: ${self:provider.environment.BLOCKSTREAM_STATE_TABLE}
@@ -120,7 +120,7 @@ resources:
             ReadCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
             WriteCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
 
-    BlocksTable:
+    BlocksTable: # This table's autoscaling is to handle downtimes or node switching. When it needs to catch up, it costs more.
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.BLOCKS_TABLE}
