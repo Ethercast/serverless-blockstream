@@ -42,20 +42,18 @@ export default async function reconcileBlock(client: ValidatedClient): Promise<v
 
   logger.debug({ currentBlockNo, nextFetchBlock }, 'fetching block');
 
-  // get the block info and all the logs for the block
-  const [
-    block,
-    logs
-  ]: [BlockWithTransactionHashes | null, Log[]] = await Promise.all([
-    client.eth_getBlockByNumber(nextFetchBlock, false),
-    client.eth_getLogs({ fromBlock: nextFetchBlock, toBlock: nextFetchBlock })
-  ]);
+  const block = await client.eth_getBlockByNumber(nextFetchBlock, false);
 
   // missing block, try again later
   if (block === null) {
     logger.debug({ currentBlockNo, nextFetchBlock }, 'block came back as null');
     return;
   }
+
+  logger.debug({ blockHash: block.hash, transactionsCount: block.transactions.length }, 'fetching tx receipts');
+  const receipts = await client.eth_getTransactionReceipts(block.transactions);
+
+  const logs: Log[] = _.flatten(receipts.map(receipt => receipt.logs), true);
 
   const metadata = {
     state,
