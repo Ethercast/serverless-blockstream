@@ -53,7 +53,9 @@ export interface TransactionReceipt {
   blockHash: string; // hex256
   cumulativeGasUsed: string; // hex
   gasUsed: string; // hex
-  contractAddress: string; // address
+  from: string; // hex
+  to: string; // hex
+  contractAddress: string | null; // address
   logs: Log[],
   logsBloom: string // hex
   status: '0x0' | '0x1'; // hex, 0x0 (FAILURE) or 0x1 (SUCCESS)

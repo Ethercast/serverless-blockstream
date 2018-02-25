@@ -77,8 +77,10 @@ const JoiTransactionReceipt = object({
   blockHash: hex256.required(),
   cumulativeGasUsed: hex.required(),
   gasUsed: hex.required(),
-  contractAddress: address.required(),
   logs: array().items(JoiLog).required(),
+  contractAddress: address.allow(null).required(),
+  from: address.required(),
+  to: address.required(),
   logsBloom: hex.required(),
   status: alternatives().valid('0x0', '0x1')
 });
