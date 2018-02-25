@@ -89,17 +89,21 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
 
   //  check if the parent exists and rewind blocks if it does not
   if (state) {
-    const parentBlockNumber = toHex(new BigNumber(block.number).minus(1));
-    const parentExists = await isBlockSaved(block.parentHash, parentBlockNumber);
+    const parentBlockSaved = await isBlockSaved(
+      block.parentHash,
+      new BigNumber(block.number).minus(1)
+    );
 
-    if (!parentExists) {
-      logger.info({ metadata }, 'beginning chain reorganization');
+    if (!parentBlockSaved) {
+      logger.warn({ metadata }, 'detected chain reorg, attempting to rewind blocks');
 
       try {
         await rewindBlocks(client, state, metadata);
+        logger.info({ metadata }, 'successfully reconciled chain reorg');
+        return;
       } catch (err) {
         logger.fatal({ metadata, state, err }, 'failed to handle chain reorganization');
-        return;
+        throw new Error('failed to handle chain reorg');
       }
     }
   }
@@ -154,6 +158,9 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     );
   } catch (err) {
     // TODO: if this fails, should we retract the message we sent on the queue?
+    // probably not, we guarantee at-least-once delivery but not only-once delivery (it doesn't exist)
+    // and this at worst causes the messages to be sent twice, which is not even a problem if it happens
+    // within 5 minutes thanks to deduplication
     logger.error({ err, metadata }, 'failed to update blockstream state');
     return;
   }
