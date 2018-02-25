@@ -5,13 +5,17 @@ import { Callback, Context, Handler } from 'aws-lambda';
 import { NETWORK_ID, SRC_NODE_URL } from './util/env';
 import getClient from './client/get-client';
 import * as _ from 'underscore';
+import ValidatedClient from './util/validated-client';
 
 export const start: Handler = async (event: any, context: Context, cb: Callback) => {
-  const client = await getClient(SRC_NODE_URL);
+  const unvalidatedClient = await getClient(SRC_NODE_URL);
+  // validate everything coming out of the ethereum node
+  const client = new ValidatedClient(unvalidatedClient);
 
   const clientVersion = await client.web3_clientVersion();
   const netVersion = await client.net_version();
-  // TODO: check against compatible client versions
+
+  // TODO: check against compatible client versions (not as important with all the validation)
   logger.info({ SRC_NODE_URL, netVersion, clientVersion }, 'ethereum node information');
 
   if (netVersion !== NETWORK_ID) {

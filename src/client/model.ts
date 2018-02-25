@@ -55,7 +55,7 @@ export interface TransactionReceipt {
   gasUsed: string; // hex
   contractAddress: string; // address
   logs: Log[],
-  logsBloom: string // 256 bytes???
+  logsBloom: string // hex
   status: '0x0' | '0x1'; // hex, 0x0 (FAILURE) or 0x1 (SUCCESS)
 }
 

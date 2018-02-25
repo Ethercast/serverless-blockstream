@@ -40,7 +40,16 @@ export default class EthHttpsClient implements EthClient {
   public eth_getLogs = (filter: LogFilter) => this.cmd<Log[]>(Method.eth_getLogs, [filter]);
 
   public eth_getTransactionReceipt(hash: string): Promise<TransactionReceipt> {
-    return this.cmd<TransactionReceipt>(Method.eth_getTransactionReceipt, [hash]);
+    return this.cmd<TransactionReceipt>(Method.eth_getTransactionReceipt, [hash])
+      .then(
+        receipt => {
+          if (receipt === null) {
+            throw new Error('invalid transaction hash');
+          }
+
+          return receipt;
+        }
+      );
   }
 
   public async eth_getTransactionReceipts(hashes: string[]): Promise<TransactionReceipt[]> {
@@ -54,6 +63,10 @@ export default class EthHttpsClient implements EthClient {
       ({ result }: { result: any }) => {
         if (typeof result === 'undefined') {
           throw new Error('inavlid response: ' + JSON.stringify(result));
+        }
+
+        if (result === null) {
+          throw new Error('invalid transaction hash');
         }
 
         return result as TransactionReceipt;

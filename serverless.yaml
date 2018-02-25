@@ -42,7 +42,7 @@ provider:
     BLOCK_DATA_TTL_MS: "604800000" # 7 days in milliseconds
     LOG_LEVEL: "info" # info log level
     NETWORK_ID: "1" # id of the network, validated against the node
-    STARTING_BLOCK: "5150000" # the block to start from
+    STARTING_BLOCK: "5153453" # the block to start from
 
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow

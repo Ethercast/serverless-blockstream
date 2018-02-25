@@ -1,5 +1,8 @@
 import { alternatives, array, boolean, object, Schema, string } from 'joi';
-import { BlockWithTransactionHashes } from '../client/model';
+import {
+  BlockWithFullTransactions, BlockWithTransactionHashes, Transaction,
+  TransactionReceipt
+} from '../client/model';
 import logger from './logger';
 import { Log } from '../client/model';
 
@@ -29,7 +32,7 @@ const JoiBlock = object({
   extraData: hex.required(),
   gasLimit: hex.required(),
   gasUsed: hex.required(),
-  logsBloom: hex256.required(),
+  logsBloom: hex.required(),
   miner: address.required(),
   mixHash: hex.required(),
   nonce: hex.required(),
@@ -49,6 +52,24 @@ const JoiBlockWithTransactionHashes = JoiBlock.keys({
   transactions: array().items(hex256).required()
 });
 
+const JoiTransaction = object({
+  hash: hex256.required(),
+  nonce: hex.required(),
+  blockHash: hex256.required(),
+  blockNumber: hex.required(),
+  transactionIndex: hex.required(),
+  from: address.required(),
+  to: address.required(),
+  value: hex.required(),
+  gas: hex.required(),
+  gasPrice: hex.required(),
+  input: hex.required()
+});
+
+const JoiBlockWithTransactions = JoiBlock.keys({
+  transactions: array().items(JoiTransaction).required()
+});
+
 const JoiTransactionReceipt = object({
   transactionHash: hex256.required(),
   transactionIndex: hex.required(),
@@ -58,7 +79,7 @@ const JoiTransactionReceipt = object({
   gasUsed: hex.required(),
   contractAddress: address.required(),
   logs: array().items(JoiLog).required(),
-  logsBloom: hex256.required(),
+  logsBloom: hex.required(),
   status: alternatives().valid('0x0', '0x1')
 });
 
@@ -68,6 +89,18 @@ export function mustBeValidLog(log: Log): Log {
 
 export function mustBeValidBlockWithTransactionHashes(block: BlockWithTransactionHashes): BlockWithTransactionHashes {
   return validate(block, JoiBlockWithTransactionHashes);
+}
+
+export function mustBeValidBlockWithFullTransactions(block: BlockWithFullTransactions): BlockWithFullTransactions {
+  return validate(block, JoiBlockWithTransactions);
+}
+
+export function mustBeValidTransaction(transaction: Transaction): Transaction {
+  return validate(transaction, JoiTransaction);
+}
+
+export function mustBeValidTransactionReceipt(transactionReceipt: TransactionReceipt): TransactionReceipt {
+  return validate(transactionReceipt, JoiTransactionReceipt);
 }
 
 function validate<T>(item: T, schema: Schema): T {

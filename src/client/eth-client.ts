@@ -32,5 +32,5 @@ export default interface EthClient {
 
   eth_getTransactionReceipt(hash: string): Promise<TransactionReceipt>;
 
-  eth_getTransactionReceipts(hash: string[]): Promise<TransactionReceipt[]>;
+  eth_getTransactionReceipts(hashes: string[]): Promise<TransactionReceipt[]>;
 }
