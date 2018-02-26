@@ -12,12 +12,12 @@ export async function getBlockStreamState(): Promise<BlockStreamState | null> {
     const { Item } = await ddbClient.get({
       TableName: BLOCKSTREAM_STATE_TABLE,
       Key: {
-        network_id: NETWORK_ID
+        networkId: NETWORK_ID
       },
       ConsistentRead: true
     }).promise();
 
-    if (!Item || Item.network_id !== NETWORK_ID) {
+    if (!Item || Item.networkId !== NETWORK_ID) {
       return null;
     }
 
