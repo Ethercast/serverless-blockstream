@@ -39,10 +39,10 @@ provider:
     NEW_BLOCK_QUEUE_NAME: ${self:custom.newBlockQueueName}  # Queue that receives new blocks
     LOG_FIREHOSE_QUEUE_NAME: ${self:custom.logFirehoseQueue} # Queue that receives log events
     SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy" # the ethereum node URL that is used
+    NUM_BLOCKS_DELAY: "0" # how many blocks behind the chain we wait to send logs
     BLOCK_DATA_TTL_MS: "604800000" # 7 days in milliseconds
     LOG_LEVEL: "info" # info log level
     NETWORK_ID: "1" # id of the network, validated against the node
-    STARTING_BLOCK: "5153453" # the block to start from
 
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow

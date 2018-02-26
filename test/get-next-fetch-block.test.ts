@@ -5,10 +5,9 @@ import getNextFetchBlock from '../src/util/get-next-fetch-block';
 
 const atBlockNumber = (number: number): BlockStreamState => ({
   network_id: 1,
-  lastReconciledBlock: {
-    hash: 'fake-hash',
-    number: toHex(number)
-  }
+  blockHash: 'fake-hash',
+  blockNumber: toHex(number),
+  timestamp: new Date()
 });
 
 describe('getNextFetchBlock', () => {

@@ -1,11 +1,10 @@
 import { BlockWithTransactionHashes, Log } from '../client/model';
 
 export interface BlockStreamState {
-  lastReconciledBlock: {
-    hash: string;
-    number: string;
-  };
   network_id: number;
+  blockHash: string;
+  blockNumber: string;
+  timestamp: Date;
 }
 
 export interface BlockQueueMessage {
@@ -18,7 +17,7 @@ export interface DynamoBlock {
   hash: string;
   number: string;
   parentHash: string;
-  ttl: string;
+  ttl: number;
   payload: string;
 }
 

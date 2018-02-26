@@ -22,7 +22,7 @@ export default class EthHttpsClient implements EthClient {
       .then(
         block => {
           if (block === null) {
-            throw new Error('block by number does not exist');
+            throw new Error(`block by hash does not exist: ${hash}`);
           }
 
           return block;
@@ -38,7 +38,7 @@ export default class EthHttpsClient implements EthClient {
     return this.cmd<BlockWithFullTransactions | BlockWithTransactionHashes>(Method.eth_getBlockByNumber, [blockNumber, includeFullTransactions])
       .then(block => {
         if (block === null) {
-          throw new Error('block by number does not exist');
+          throw new Error(`block by number does not exist: ${blockNumber}`);
         }
 
         return block;

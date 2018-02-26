@@ -1,4 +1,4 @@
-import { DecodedBlockPayload } from '../model';
+import { DecodedBlockPayload, DynamoBlock } from '../model';
 import logger from '../logger';
 import { BLOCK_DATA_TTL_MS, BLOCKS_TABLE } from '../env';
 import { DynamoDB } from 'aws-sdk';
@@ -108,22 +108,28 @@ async function putBlock(block: BlockWithTransactionHashes, logs: Log[]) {
   logger.debug({ hash: block.hash, number: block.number }, 'compressing block and logs');
   const payload = await deflatePayload(block, logs);
 
-  logger.info({ hash: block.hash, number: block.number, payloadSize: payload.length }, 'compressed payload length');
+  logger.debug({
+    hash: block.hash,
+    number: block.number,
+    payloadSize: payload.length
+  }, 'compressed payload buffer size');
 
   // when this data expires
   const ttl = getBlockDataTtl();
+
+  const Item: DynamoBlock = {
+    hash: block.hash,
+    number: block.number,
+    parentHash: block.parentHash,
+    ttl,
+    payload: payload.toString('utf-8')
+  };
 
   // save the individual block
   return ddbClient.put(
     {
       TableName: BLOCKS_TABLE,
-      Item: {
-        hash: block.hash,
-        number: block.number,
-        parentHash: block.parentHash,
-        ttl,
-        payload
-      },
+      Item,
       ReturnConsumedCapacity: 'TOTAL'
     }
   ).promise();

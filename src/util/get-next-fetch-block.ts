@@ -9,7 +9,7 @@ export default function getNextFetchBlock(state: BlockStreamState | null, starti
     return new BigNumber(startingBlock);
   }
 
-  const lastBlockNo = new BigNumber(state.lastReconciledBlock.number);
+  const lastBlockNo = new BigNumber(state.blockNumber);
 
   if (lastBlockNo.gte(startingBlock)) {
     return lastBlockNo.plus(1);

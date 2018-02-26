@@ -2,7 +2,10 @@ import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { saveBlockData, isBlockSaved } from './ddb/block-data';
-import { NETWORK_ID, STARTING_BLOCK, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME } from './env';
+import {
+  NETWORK_ID, STARTING_BLOCK, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME,
+  NUM_BLOCKS_DELAY
+} from './env';
 import { Lambda } from 'aws-sdk';
 import { BlockQueueMessage } from './model';
 import getNextFetchBlock from './get-next-fetch-block';
@@ -20,7 +23,10 @@ const lambda = new Lambda();
 export default async function reconcileBlock(client: ValidatedEthClient): Promise<void> {
   const state = await getBlockStreamState();
   const nextFetchBlock = await getNextFetchBlock(state, STARTING_BLOCK);
-  const currentBlockNo = await client.eth_blockNumber();
+
+  // we have a configurable block delay which lets us reduce the frequency fo chain reorgs
+  // as well as other harmless errors
+  const currentBlockNo = (await client.eth_blockNumber()).minus(NUM_BLOCKS_DELAY);
 
   if (currentBlockNo.lt(nextFetchBlock)) {
     logger.debug({ currentBlockNo, nextFetchBlock }, 'next fetch block is not yet available');
@@ -46,7 +52,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   try {
     block = await client.eth_getBlockByNumber(nextFetchBlock, false);
   } catch (err) {
-    logger.info({ err }, 'failed to get block by number');
+    logger.info({ err, currentBlockNo }, 'failed to get current block by number');
     return;
   }
 
@@ -148,11 +154,10 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     await saveBlockStreamState(
       state,
       {
-        lastReconciledBlock: {
-          hash: block.hash,
-          number: block.number
-        },
-        network_id: NETWORK_ID
+        network_id: NETWORK_ID,
+        blockHash: block.hash,
+        blockNumber: block.number,
+        timestamp: new Date()
       }
     );
   } catch (err) {

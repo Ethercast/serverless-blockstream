@@ -14,7 +14,7 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
   logger.info({ metadata, state }, 'rewindBlocks: beginning rewind process');
 
   // the first block number we should check for existence in the ethereum node
-  let checkingBlockNumber = new BigNumber(state.lastReconciledBlock.number);
+  let checkingBlockNumber = new BigNumber(state.blockNumber);
 
   // iterate through parent blocks reported by the node until we get to one that exists
   while (true) {
@@ -27,7 +27,7 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
       throw new Error('rewindBlocks: could not recover from chain reorg');
     }
 
-    if (checkingBlockNumber.minus(state.lastReconciledBlock.number).abs().gt(50)) {
+    if (checkingBlockNumber.minus(state.blockNumber).abs().gt(50)) {
       logger.fatal(
         { checkingBlockNumber, metadata },
         'rewindBlocks: retraced back 50 blocks and could not find a block in dynamo'
@@ -58,11 +58,10 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
       await saveBlockStreamState(
         null,
         {
-          lastReconciledBlock: {
-            hash: block.hash,
-            number: block.number
-          },
-          network_id: NETWORK_ID
+          network_id: NETWORK_ID,
+          blockHash: block.hash,
+          blockNumber: block.number,
+          timestamp: new Date()
         }
       );
       break;

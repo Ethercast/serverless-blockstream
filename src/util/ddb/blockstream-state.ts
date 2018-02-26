@@ -37,17 +37,16 @@ export async function saveBlockStreamState(prevState: BlockStreamState | null, n
   if (prevState !== null) {
     input = {
       ...input,
-      ConditionExpression: '#network_id = :network_id AND #lastReconciledBlock.#hash = :hash AND #lastReconciledBlock.#number = :number',
+      ConditionExpression: '#network_id = :network_id AND #blockHash = :blockHash AND #blockNumber = :blockNumber',
       ExpressionAttributeNames: {
         '#network_id': 'network_id',
-        '#lastReconciledBlock': 'lastReconciledBlock',
-        '#hash': 'hash',
-        '#number': 'number'
+        '#blockHash': 'blockHash',
+        '#blockNumber': 'blockNumber'
       },
       ExpressionAttributeValues: {
         ':network_id': prevState.network_id,
-        ':hash': prevState.lastReconciledBlock.hash,
-        ':number': prevState.lastReconciledBlock.number
+        ':blockHash': prevState.blockHash,
+        ':blockNumber': prevState.blockNumber
       }
     };
   }
