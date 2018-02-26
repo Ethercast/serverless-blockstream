@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-import { BlockMetadata, getBlock, getBlockMetadata, isBlockSaved } from './ddb/block-data';
+import { BlockMetadata, getBlockMetadata } from './ddb/block-data';
 import logger from './logger';
 import { saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockStreamState } from './model';
@@ -16,13 +16,13 @@ import { REWIND_BLOCK_LOOKBACK } from './env';
  * This call branch should continue to be called into until the last reconciled block matches the parent hash of the
  * next valid block.
  */
-export default async function rewindBlocks(client: ValidatedEthClient, state: BlockStreamState, metadata: any) {
+export default async function rewindOneBlock(client: ValidatedEthClient, state: BlockStreamState, metadata: any) {
   if (state.rewindCount > REWIND_BLOCK_LOOKBACK) {
-    logger.fatal({ state, metadata }, 'rewindBlocks: rewind count is too high, actual chain org is unlikely');
+    logger.fatal({ state, metadata }, 'rewindOneBlock: rewind count is too high, actual chain org is unlikely');
     throw new Error('fatal error in rewind blocks: rewind count too high');
   }
 
-  logger.info({ metadata, state }, 'rewindBlocks: beginning rewind process');
+  logger.info({ metadata, state }, 'rewindOneBlock: beginning rewind process');
 
   // get the block metadata for the last saved block
   let blockMetadata: BlockMetadata;
@@ -34,7 +34,7 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
       err,
       metadata,
       state
-    }, 'rewindBlocks: could not rewind since last state block was not found in dynamo');
+    }, 'rewindOneBlock: could not rewind since last state block was not found in dynamo');
     return;
   }
 
@@ -54,7 +54,7 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
       metadata,
       state,
       blockMetadata
-    }, 'rewindBlocks: failed to save state with the parent block hash');
+    }, 'rewindOneBlock: failed to save state with the parent block hash');
     return;
   }
 
@@ -66,7 +66,7 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
       err,
       metadata,
       state
-    }, 'rewindBlocks: failed to notify queue of removed block');
+    }, 'rewindOneBlock: failed to notify queue of removed block');
     return;
   }
 }

@@ -3,17 +3,16 @@ import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { saveBlockData, isBlockSaved } from './ddb/block-data';
 import {
-  NETWORK_ID, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME,
+  DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME,
   NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK
 } from './env';
 import { Lambda } from 'aws-sdk';
-import { BlockQueueMessage } from './model';
 import getNextFetchBlock from './get-next-fetch-block';
-import { getQueueUrl, notifyQueueOfBlock, sqs } from './sqs/sqs-util';
+import { notifyQueueOfBlock } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithTransactionHashes, Log, TransactionReceipt } from '../client/model';
 import ValidatedEthClient from './validated-eth-client';
-import rewindBlocks from './rewind-blocks';
+import rewindBlocks from './rewind-one-block';
 
 const lambda = new Lambda();
 
