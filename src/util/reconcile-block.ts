@@ -4,7 +4,7 @@ import * as _ from 'underscore';
 import { saveBlockData, isBlockSaved } from './ddb/block-data';
 import {
   NETWORK_ID, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME,
-  NUM_BLOCKS_DELAY
+  NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK
 } from './env';
 import { Lambda } from 'aws-sdk';
 import { BlockQueueMessage } from './model';
@@ -27,7 +27,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   // as well as other harmless errors due to delays in node data indexing
   const currentBlockNo: BigNumber = (await client.eth_blockNumber()).minus(NUM_BLOCKS_DELAY);
 
-  const nextFetchBlock: BigNumber = await getNextFetchBlock(state, currentBlockNo);
+  const nextFetchBlock: BigNumber = await getNextFetchBlock(state, currentBlockNo, REWIND_BLOCK_LOOKBACK);
 
   if (currentBlockNo.lt(nextFetchBlock)) {
     logger.debug({ currentBlockNo, nextFetchBlock }, 'next fetch block is not yet available');
