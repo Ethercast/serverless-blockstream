@@ -201,7 +201,7 @@ resources:
           - Ref: AlarmTopic
         OKActions:
           - Ref: AlarmTopic
-        TreatMissingData: notBreaching
+        TreatMissingData: missing
 
     NewBlockQueueActiveAlarm:
       Type: AWS::CloudWatch::Alarm
@@ -241,7 +241,7 @@ resources:
           - Ref: AlarmTopic
         OKActions:
           - Ref: AlarmTopic
-        TreatMissingData: notBreaching
+        TreatMissingData: missing
 
     LogFirehoseQueueActiveAlarm:
       Type: AWS::CloudWatch::Alarm
