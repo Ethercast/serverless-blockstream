@@ -40,7 +40,6 @@ export async function getBlock(hash: string, number: string): Promise<DecodedBlo
         hash,
         number: toHex(number)
       },
-      AttributesToGet: ['payload'],
       ReturnConsumedCapacity: 'TOTAL'
     }).promise();
 
