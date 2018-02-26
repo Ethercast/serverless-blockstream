@@ -4,10 +4,11 @@ import { expect } from 'chai';
 import getNextFetchBlock from '../src/util/get-next-fetch-block';
 
 const atBlockNumber = (number: number): BlockStreamState => ({
-  network_id: 1,
+  networkId: 1,
   blockHash: 'fake-hash',
-  blockNumber: toHex(number),
-  timestamp: (new Date()).getTime()
+  blockNumber: new BigNumber(number).valueOf(),
+  timestamp: (new Date()).getTime(),
+  rewindCount: 0
 });
 
 describe('getNextFetchBlock', () => {

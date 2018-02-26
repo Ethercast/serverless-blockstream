@@ -1,6 +1,9 @@
 import { SQS } from 'aws-sdk';
 import { MessageList, Message } from 'aws-sdk/clients/sqs';
 import logger from '../logger';
+import { BlockWithTransactionHashes } from '../../client/model';
+import { NETWORK_ID, NEW_BLOCK_QUEUE_NAME } from '../env';
+import { BlockQueueMessage } from '../model';
 
 export const sqs = new SQS();
 
@@ -85,5 +88,36 @@ export async function drainQueue(QueueUrl: string,
         break;
       }
     }
+  }
+}
+
+export async function notifyQueueOfBlock(metadata: Pick<BlockWithTransactionHashes, 'hash' | 'number'>, removed: boolean) {
+  let QueueUrl: string;
+  try {
+    QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
+  } catch (err) {
+    logger.error({ err, metadata, removed }, 'could not find queue url: ' + NEW_BLOCK_QUEUE_NAME);
+    throw err;
+  }
+
+  try {
+    const queueMessage: BlockQueueMessage = { hash: metadata.hash, number: metadata.number, removed };
+
+    const { MessageId } = await sqs.sendMessage({
+      QueueUrl,
+      MessageGroupId: `net-${NETWORK_ID}`,
+      MessageDeduplicationId: `${metadata.hash}-${metadata.number}-${removed}`,
+      MessageBody: JSON.stringify(queueMessage)
+    }).promise();
+
+    logger.info({ queueMessage, MessageId }, 'placed message in queue');
+  } catch (err) {
+    logger.error({
+      QueueName: NEW_BLOCK_QUEUE_NAME,
+      err,
+      metadata,
+      removed
+    }, 'failed to deliver block notification message to queue');
+    throw err;
   }
 }

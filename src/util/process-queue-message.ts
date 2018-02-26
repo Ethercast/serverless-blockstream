@@ -84,7 +84,6 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
     .map(log => ({ ...log, removed }))
     .map(mustBeValidLog)
     .sortBy(({ logIndex }) => new BigNumber(logIndex).toNumber())
-    .sortBy(({ transactionIndex }) => new BigNumber(transactionIndex).toNumber())
     .value();
 
   await flushLogMessagesToQueue(removed ? validatedLogs.reverse() : validatedLogs);

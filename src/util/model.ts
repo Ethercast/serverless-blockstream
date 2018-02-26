@@ -1,10 +1,11 @@
 import { BlockWithTransactionHashes, Log } from '../client/model';
 
 export interface BlockStreamState {
-  network_id: number;
+  networkId: number;
   blockHash: string;
   blockNumber: string;
   timestamp: number;
+  rewindCount: number;
 }
 
 export interface BlockQueueMessage {

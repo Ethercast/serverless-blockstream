@@ -119,10 +119,10 @@ resources:
         Properties:
           TableName: ${self:provider.environment.BLOCKSTREAM_STATE_TABLE}
           AttributeDefinitions:
-            - AttributeName: network_id
+            - AttributeName: networkId
               AttributeType: N
           KeySchema:
-            - AttributeName: network_id
+            - AttributeName: networkId
               KeyType: HASH
           ProvisionedThroughput:
             ReadCapacityUnits: ${self:custom.baseDynamoDDBCapacity}

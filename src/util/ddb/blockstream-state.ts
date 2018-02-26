@@ -28,30 +28,37 @@ export async function getBlockStreamState(): Promise<BlockStreamState | null> {
   }
 }
 
-export async function saveBlockStreamState(prevState: BlockStreamState | null, reconciledBlock: BlockWithTransactionHashes): Promise<void> {
+export async function saveBlockStreamState(prevState: BlockStreamState | null, reconciledBlock: Pick<BlockWithTransactionHashes, 'hash' | 'number'>, isRewind: boolean): Promise<void> {
   // build the input parameters
+  const Item: BlockStreamState = {
+    networkId: NETWORK_ID,
+    blockHash: reconciledBlock.hash,
+    blockNumber: (new BigNumber(reconciledBlock.number)).valueOf(),
+    timestamp: (new Date()).getTime(),
+    rewindCount: Math.max(
+      (prevState === null ? 0 : prevState.rewindCount) +
+      (isRewind ? 1 : -1),
+      0
+    )
+  };
+
   let input: DynamoDB.DocumentClient.PutItemInput = {
     TableName: BLOCKSTREAM_STATE_TABLE,
-    Item: {
-      network_id: NETWORK_ID,
-      blockHash: reconciledBlock.hash,
-      blockNumber: (new BigNumber(reconciledBlock.number)).valueOf(),
-      timestamp: (new Date()).getTime()
-    }
+    Item
   };
 
   // add conditions to the expression if there's a previous state
   if (prevState !== null) {
     input = {
       ...input,
-      ConditionExpression: '#network_id = :network_id AND #blockHash = :blockHash AND #blockNumber = :blockNumber',
+      ConditionExpression: '#networkId = :networkId AND #blockHash = :blockHash AND #blockNumber = :blockNumber',
       ExpressionAttributeNames: {
-        '#network_id': 'network_id',
+        '#networkId': 'networkId',
         '#blockHash': 'blockHash',
         '#blockNumber': 'blockNumber'
       },
       ExpressionAttributeValues: {
-        ':network_id': prevState.network_id,
+        ':networkId': prevState.networkId,
         ':blockHash': prevState.blockHash,
         ':blockNumber': prevState.blockNumber
       }

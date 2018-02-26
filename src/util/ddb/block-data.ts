@@ -7,6 +7,7 @@ import BigNumber from 'bignumber.js';
 import { deflatePayload, inflatePayload } from '../compress';
 import { mustBeValidBlockWithTransactionHashes, mustBeValidLog } from '../joi-schema';
 import { BlockWithTransactionHashes, Log } from '../../client/model';
+import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -17,16 +18,39 @@ export function getBlockDataTtl(): number {
 }
 
 export async function isBlockSaved(hash: string, number: BlockNumber): Promise<boolean> {
+  try {
+    await getBlockMetadata(hash, number);
+  } catch (err) {
+    return false;
+  }
+
+  return true;
+}
+
+export type BlockMetadata = Pick<DynamoBlock, 'hash' | 'number' | 'parentHash'>;
+
+export async function getBlockMetadata(hash: string, number: BlockNumber): Promise<BlockMetadata> {
   const { Item } = await ddbClient.get({
     TableName: BLOCKS_TABLE,
     Key: {
       hash,
       number: toHex(number)
     },
-    AttributesToGet: ['hash', 'number']
+    ProjectionExpression: '#hash, #number, #parentHash',
+    ExpressionAttributeNames: {
+      '#hash': 'hash',
+      '#number': 'number',
+      '#parentHash': 'parentHash'
+    }
   }).promise();
 
-  return !!(Item && Item.hash === hash && Item.number === toHex(number));
+  const block = Item as DynamoBlock;
+
+  if (!block || block.hash !== hash || block.number !== toHex(number) || !block.parentHash) {
+    throw new Error(`getBlockMetadata: invalid block passed: ${hash} & ${number}`);
+  }
+
+  return block;
 }
 
 export async function getBlock(hash: string, number: string): Promise<DecodedBlockPayload> {
@@ -99,7 +123,10 @@ export async function getBlocksMatchingNumber(number: BlockNumber): Promise<Deco
   let requestItems: DynamoDB.DocumentClient.BatchGetRequestMap = {
     [BLOCKS_TABLE]: {
       Keys: blockKeys,
-      ProjectionExpression: 'payload'
+      ProjectionExpression: '#payload',
+      ExpressionAttributeNames: {
+        '#payload': 'payload'
+      }
     }
   };
 

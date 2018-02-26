@@ -9,7 +9,7 @@ import {
 import { Lambda } from 'aws-sdk';
 import { BlockQueueMessage } from './model';
 import getNextFetchBlock from './get-next-fetch-block';
-import { getQueueUrl, sqs } from './sqs/sqs-util';
+import { getQueueUrl, notifyQueueOfBlock, sqs } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithTransactionHashes, Log, TransactionReceipt } from '../client/model';
 import ValidatedEthClient from './validated-eth-client';
@@ -122,26 +122,8 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     return;
   }
 
-
-  let QueueUrl: string;
   try {
-    QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
-  } catch (err) {
-    logger.error({ err }, 'could not find queue url: ' + NEW_BLOCK_QUEUE_NAME);
-    return;
-  }
-
-  try {
-    const queueMessage: BlockQueueMessage = { hash: block.hash, number: block.number, removed: false };
-
-    const { MessageId } = await sqs.sendMessage({
-      QueueUrl,
-      MessageGroupId: `net-${NETWORK_ID}`,
-      MessageDeduplicationId: block.hash,
-      MessageBody: JSON.stringify(queueMessage)
-    }).promise();
-
-    logger.info({ queueMessage, MessageId }, 'placed message in queue');
+    await notifyQueueOfBlock(block, false);
   } catch (err) {
     logger.error({
       QueueName: NEW_BLOCK_QUEUE_NAME,
@@ -153,7 +135,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
 
   try {
     // LAST step: save the blockstream state
-    await saveBlockStreamState(state, block);
+    await saveBlockStreamState(state, block, false);
   } catch (err) {
     // TODO: if this fails, should we retract the message we sent on the queue?
     // probably not, we guarantee at-least-once delivery but not only-once delivery (it doesn't exist)

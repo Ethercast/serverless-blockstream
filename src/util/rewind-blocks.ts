@@ -1,58 +1,72 @@
-import { REWIND_BLOCK_LOOKBACK } from './env';
-import { BlockWithTransactionHashes } from '../client/model';
 import BigNumber from 'bignumber.js';
-import { isBlockSaved } from './ddb/block-data';
+import { BlockMetadata, getBlock, getBlockMetadata, isBlockSaved } from './ddb/block-data';
 import logger from './logger';
 import { saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockStreamState } from './model';
 import ValidatedEthClient from './validated-eth-client';
+import toHex from './to-hex';
+import { notifyQueueOfBlock } from './sqs/sqs-util';
+import { REWIND_BLOCK_LOOKBACK } from './env';
 
 /**
- * This function is called to rewind blocks when the last reconciled block
- * TODO: change this to rewind one block at a time, sending out messages that blocks were removed
+ * This function is called to rewind blocks when the last reconciled block hash doesn't match the hash of the fetched block.
+ *
+ * We rewind by getting the last reconciled block out of dynamo, marking it removed, and updating our state.
+ *
+ * This call branch should continue to be called into until the last reconciled block matches the parent hash of the
+ * next valid block.
  */
 export default async function rewindBlocks(client: ValidatedEthClient, state: BlockStreamState, metadata: any) {
-  logger.info({ metadata, state }, 'rewindBlocks: beginning rewind process');
-
-  // the first block number we should check for existence in the ethereum node
-  let checkingBlockNumber = new BigNumber(state.blockNumber);
-
-  // iterate through parent blocks reported by the node until we get to one that exists
-  while (true) {
-    if (checkingBlockNumber.minus(state.blockNumber).abs().gt(REWIND_BLOCK_LOOKBACK)) {
-      logger.fatal(
-        { checkingBlockNumber, metadata, REWIND_BLOCK_LOOKBACK },
-        'rewindBlocks: retraced blocks and could not find a block in dynamo'
-      );
-      throw new Error('rewindBlocks: failed to reconcile chain reorg within REWIND_BLOCK_LOOKBACK blocks');
-    }
-
-    let block: BlockWithTransactionHashes;
-    try {
-      block = await client.eth_getBlockByNumber(checkingBlockNumber, false);
-    } catch (err) {
-      logger.error({
-        checkingBlockNumber
-      }, 'rewindBlocks: ethereum node errored while checking for parent block numbers during a chain reorg!');
-      throw new Error('rewindBlocks: missing block number from node during chain reorg');
-    }
-
-    const isSaved = await isBlockSaved(block.hash, block.number);
-
-    // we have seen this block, so we can say it's the last one we reconciled
-    if (isSaved) {
-      logger.info({
-        checkingBlockNumber,
-        metadata,
-        block: { hash: block.hash, number: block.number }
-      }, 'rewindBlocks: chain org reconciled, block found in dynamo that exists on the node');
-
-      await saveBlockStreamState(null, block);
-      break;
-    }
-
-    checkingBlockNumber = checkingBlockNumber.minus(1);
+  if (state.rewindCount > REWIND_BLOCK_LOOKBACK) {
+    logger.fatal({ state, metadata }, 'rewindBlocks: rewind count is too high, actual chain org is unlikely');
+    throw new Error('fatal error in rewind blocks: rewind count too high');
   }
 
-  return;
+  logger.info({ metadata, state }, 'rewindBlocks: beginning rewind process');
+
+  // get the block metadata for the last saved block
+  let blockMetadata: BlockMetadata;
+
+  try {
+    blockMetadata = await getBlockMetadata(state.blockNumber, state.blockHash);
+  } catch (err) {
+    logger.error({
+      err,
+      metadata,
+      state
+    }, 'rewindBlocks: could not rewind since last state block was not found in dynamo');
+    return;
+  }
+
+  try {
+    // rewind to the parent hash
+    await saveBlockStreamState(
+      state,
+      {
+        hash: blockMetadata.parentHash,
+        number: toHex(new BigNumber(blockMetadata.number).minus(1))
+      },
+      true
+    );
+  } catch (err) {
+    logger.fatal({
+      err,
+      metadata,
+      state,
+      blockMetadata
+    }, 'rewindBlocks: failed to save state with the parent block hash');
+    return;
+  }
+
+  // TODO: this operation should be transactionally bound to the above operation
+  try {
+    await notifyQueueOfBlock(blockMetadata, true);
+  } catch (err) {
+    logger.fatal({
+      err,
+      metadata,
+      state
+    }, 'rewindBlocks: failed to notify queue of removed block');
+    return;
+  }
 }
