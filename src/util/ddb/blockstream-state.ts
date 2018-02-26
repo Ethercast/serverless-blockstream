@@ -3,6 +3,7 @@ import logger from '../logger';
 import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID } from '../env';
 import { DynamoDB } from 'aws-sdk';
 import { BlockWithTransactionHashes } from '../../client/model';
+import BigNumber from 'bignumber.js';
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -34,7 +35,7 @@ export async function saveBlockStreamState(prevState: BlockStreamState | null, r
     Item: {
       network_id: NETWORK_ID,
       blockHash: reconciledBlock.hash,
-      blockNumber: new BigNumber(reconciledBlock.number).valueOf(),
+      blockNumber: (new BigNumber(reconciledBlock.number)).valueOf(),
       timestamp: (new Date()).getTime()
     }
   };
