@@ -1,11 +1,8 @@
 import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
-import { saveBlockData, isBlockSaved } from './ddb/block-data';
-import {
-  DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME,
-  NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK
-} from './env';
+import { isBlockSaved, saveBlockData } from './ddb/block-data';
+import { DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
 import { Lambda } from 'aws-sdk';
 import getNextFetchBlock from './get-next-fetch-block';
 import { notifyQueueOfBlock } from './sqs/sqs-util';

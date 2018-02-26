@@ -1,5 +1,5 @@
 import { SQS } from 'aws-sdk';
-import { MessageList, Message } from 'aws-sdk/clients/sqs';
+import { Message, MessageList } from 'aws-sdk/clients/sqs';
 import logger from '../logger';
 import { BlockWithTransactionHashes } from '../../client/model';
 import { NETWORK_ID, NEW_BLOCK_QUEUE_NAME } from '../env';

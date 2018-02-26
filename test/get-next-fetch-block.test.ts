@@ -1,5 +1,4 @@
 import { BlockStreamState } from '../src/util/model';
-import toHex from '../src/util/to-hex';
 import { expect } from 'chai';
 import getNextFetchBlock from '../src/util/get-next-fetch-block';
 

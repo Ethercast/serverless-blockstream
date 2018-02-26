@@ -1,10 +1,12 @@
 import { allow, alternatives, array, boolean, object, Schema, string, when } from 'joi';
 import {
-  BlockWithFullTransactions, BlockWithTransactionHashes, Transaction,
+  BlockWithFullTransactions,
+  BlockWithTransactionHashes,
+  Log,
+  Transaction,
   TransactionReceipt
 } from '../client/model';
 import logger from './logger';
-import { Log } from '../client/model';
 
 const hex = string().regex(/^0x[0-9A-Fa-f]*$/);
 const hex256 = hex.length(66);

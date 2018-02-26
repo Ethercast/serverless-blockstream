@@ -3,13 +3,13 @@ import logger from './logger';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { Message, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage } from './model';
-import { getBlock, getBlocksMatchingNumber } from './ddb/block-data';
-import _ = require('underscore');
+import { getBlock } from './ddb/block-data';
 import { LOG_FIREHOSE_QUEUE_NAME, NETWORK_ID } from './env';
 import * as crypto from 'crypto';
 import { mustBeValidLog } from './joi-schema';
 import { Log } from '../client/model';
 import BigNumber from 'bignumber.js';
+import _ = require('underscore');
 
 async function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
   if (validatedLogs.length === 0) {

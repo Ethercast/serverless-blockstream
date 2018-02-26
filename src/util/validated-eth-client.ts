@@ -1,10 +1,15 @@
 import EthClient, { BlockParameter } from '../client/eth-client';
 import {
-  BlockWithFullTransactions, BlockWithTransactionHashes, Log, LogFilter,
+  BlockWithFullTransactions,
+  BlockWithTransactionHashes,
+  Log,
+  LogFilter,
   TransactionReceipt
 } from '../client/model';
 import {
-  mustBeValidBlockWithFullTransactions, mustBeValidBlockWithTransactionHashes, mustBeValidLog,
+  mustBeValidBlockWithFullTransactions,
+  mustBeValidBlockWithTransactionHashes,
+  mustBeValidLog,
   mustBeValidTransactionReceipt
 } from './joi-schema';
 

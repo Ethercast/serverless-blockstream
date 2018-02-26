@@ -7,7 +7,6 @@ import BigNumber from 'bignumber.js';
 import { deflatePayload, inflatePayload } from '../compress';
 import { mustBeValidBlockWithTransactionHashes, mustBeValidLog } from '../joi-schema';
 import { BlockWithTransactionHashes, Log } from '../../client/model';
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
 
 const ddbClient = new DynamoDB.DocumentClient();
 

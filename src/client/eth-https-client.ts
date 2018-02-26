@@ -1,10 +1,9 @@
 import EthClient, { BlockParameter, Method } from './eth-client';
-import { Log, LogFilter, TransactionReceipt } from './model';
+import { BlockWithFullTransactions, BlockWithTransactionHashes, Log, LogFilter, TransactionReceipt } from './model';
 import { buildRequest, MethodParameter } from './util';
 import BigNumber from 'bignumber.js';
 import logger from '../util/logger';
 import * as fetch from 'isomorphic-fetch';
-import { BlockWithFullTransactions, BlockWithTransactionHashes } from './model';
 
 export default class EthHttpsClient implements EthClient {
   endpointUrl: string;
