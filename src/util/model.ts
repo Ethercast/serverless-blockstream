@@ -10,6 +10,7 @@ export interface BlockStreamState {
 export interface BlockQueueMessage {
   hash: string;
   number: string;
+  removed: boolean;
 }
 
 // what we actually store in dynamo for each block

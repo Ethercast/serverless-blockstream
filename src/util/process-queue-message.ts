@@ -60,7 +60,7 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
 
   logger.debug({ MessageId, Body }, 'processing message');
 
-  const { hash, number } = JSON.parse(Body) as BlockQueueMessage;
+  const { hash, number, removed } = JSON.parse(Body) as BlockQueueMessage;
 
   logger.info({ hash, number }, 'processing block');
 
@@ -70,26 +70,26 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
     throw new Error('no blocks matching the number in the queue message');
   }
 
-  const removed = _.filter(matchingBlocks, p => p.block.hash !== hash);
-  const added = _.find(matchingBlocks, p => p.block.hash === hash);
+  const removedBlocks = _.filter(matchingBlocks, p => p.block.hash !== hash);
+  const addedBlock = _.find(matchingBlocks, p => p.block.hash === hash);
 
-  if (!added) {
+  if (!addedBlock) {
     throw new Error(`block not found with hash ${hash} and number ${hash}`);
   }
 
   logger.info({
-    removed: removed.map(({ block: { hash, number }, logs }) => ({ hash, number, logCount: logs.length })),
-    added: { hash: added.block.hash, number: added.block.number, logCount: added.logs.length }
+    removed: removedBlocks.map(({ block: { hash, number }, logs }) => ({ hash, number, logCount: logs.length })),
+    added: { hash: addedBlock.block.hash, number: addedBlock.block.number, logCount: addedBlock.logs.length }
   }, 'processing block changes');
 
   // first send messages for all the logs that were in the blocks that are now overwritten
-  const validatedLogs: Log[] = _.chain(removed)
+  const validatedLogs: Log[] = _.chain(removedBlocks)
     .map(({ logs }) => logs)
     .flatten(true)
     .map(log => ({ ...log, removed: true }))
     .concat(
       _.map(
-        added.logs,
+        addedBlock.logs,
         log => ({ ...log, removed: false })
       )
     )

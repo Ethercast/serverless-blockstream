@@ -131,7 +131,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   }
 
   try {
-    const queueMessage: BlockQueueMessage = { hash: block.hash, number: block.number };
+    const queueMessage: BlockQueueMessage = { hash: block.hash, number: block.number, removed: false };
 
     const { MessageId } = await sqs.sendMessage({
       QueueUrl,

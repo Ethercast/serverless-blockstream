@@ -9,6 +9,7 @@ import ValidatedEthClient from './validated-eth-client';
 
 /**
  * This function is called to rewind blocks when the last reconciled block
+ * TODO: change this to rewind one block at a time, sending out messages that blocks were removed
  */
 export default async function rewindBlocks(client: ValidatedEthClient, state: BlockStreamState, metadata: any) {
   logger.info({ metadata, state }, 'rewindBlocks: beginning rewind process');
