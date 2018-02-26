@@ -9,6 +9,7 @@ import { LOG_FIREHOSE_QUEUE_NAME, NETWORK_ID } from './env';
 import * as crypto from 'crypto';
 import { mustBeValidLog } from './joi-schema';
 import { Log } from '../client/model';
+import BigNumber from 'bignumber.js';
 
 async function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
   if (validatedLogs.length === 0) {
