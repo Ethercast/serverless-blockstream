@@ -1,4 +1,4 @@
-import { NETWORK_ID } from './env';
+import { REWIND_BLOCK_LOOKBACK } from './env';
 import { BlockWithTransactionHashes } from '../client/model';
 import BigNumber from 'bignumber.js';
 import { isBlockSaved } from './ddb/block-data';
@@ -19,12 +19,12 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
 
   // iterate through parent blocks reported by the node until we get to one that exists
   while (true) {
-    if (checkingBlockNumber.minus(state.blockNumber).abs().gt(25)) {
+    if (checkingBlockNumber.minus(state.blockNumber).abs().gt(REWIND_BLOCK_LOOKBACK)) {
       logger.fatal(
-        { checkingBlockNumber, metadata },
+        { checkingBlockNumber, metadata, REWIND_BLOCK_LOOKBACK },
         'rewindBlocks: retraced blocks and could not find a block in dynamo'
       );
-      throw new Error('rewindBlocks: failed to reconcile chain reorg within N blocks');
+      throw new Error('rewindBlocks: failed to reconcile chain reorg within REWIND_BLOCK_LOOKBACK blocks');
     }
 
     let block: BlockWithTransactionHashes;

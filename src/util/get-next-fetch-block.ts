@@ -1,13 +1,14 @@
 import { BlockStreamState } from './model';
 import BigNumber from 'bignumber.js';
 import { BlockNumber } from './to-hex';
+import { REWIND_BLOCK_LOOKBACK } from './env';
 
 /**
  * Get the number of the next block to fetch
  */
 export default function getNextFetchBlock(state: BlockStreamState | null, currentBlockNo: BlockNumber): BigNumber {
   if (state === null) {
-    return new BigNumber(currentBlockNo);
+    return (new BigNumber(currentBlockNo)).minus(REWIND_BLOCK_LOOKBACK);
   }
 
   // just return the next unknown block

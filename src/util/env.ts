@@ -18,3 +18,4 @@ export const DRAIN_BLOCK_QUEUE_LAMBDA_NAME: string = env.get('DRAIN_BLOCK_QUEUE_
 
 export const NUM_BLOCKS_DELAY: number = env.get('NUM_BLOCKS_DELAY').required().asIntPositive();
 
+export const REWIND_BLOCK_LOOKBACK: number = env.get('REWIND_BLOCK_LOOKBACK').required().asIntPositive();

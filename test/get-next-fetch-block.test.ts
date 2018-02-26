@@ -7,23 +7,23 @@ const atBlockNumber = (number: number): BlockStreamState => ({
   network_id: 1,
   blockHash: 'fake-hash',
   blockNumber: toHex(number),
-  timestamp: new Date()
+  timestamp: (new Date()).getTime()
 });
 
 describe('getNextFetchBlock', () => {
-  it('returns the starting block if no state', () => {
+  it('returns the current block if no state', () => {
     expect(getNextFetchBlock(null, 5).toNumber()).to.equal(5);
   });
 
-  it('returns the starting block if last block is behind it', () => {
-    expect(getNextFetchBlock(atBlockNumber(1), 5).toNumber()).to.equal(5);
+  it('returns the next block if the current block is ahead', () => {
+    expect(getNextFetchBlock(atBlockNumber(1), 5).toNumber()).to.equal(2);
   });
 
   it('returns the next block after reconciling the first block', () => {
     expect(getNextFetchBlock(atBlockNumber(5), 5).toNumber()).to.equal(6);
   });
 
-  it('returns the next block after advancing past the starting block', () => {
+  it('returns the next block after advancing past the current block', () => {
     expect(getNextFetchBlock(atBlockNumber(10), 5).toNumber()).to.equal(11);
   });
 });
