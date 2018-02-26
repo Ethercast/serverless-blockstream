@@ -1,19 +1,20 @@
 import { BlockStreamState } from './model';
 import BigNumber from 'bignumber.js';
+import { BlockNumber } from './to-hex';
 
 /**
  * Get the number of the next block to fetch
  */
-export default function getNextFetchBlock(state: BlockStreamState | null, startingBlock: number): BigNumber {
-  if (!state) {
-    return new BigNumber(startingBlock);
+export default function getNextFetchBlock(state: BlockStreamState | null, currentBlockNo: BlockNumber): BigNumber {
+  if (state === null) {
+    return new BigNumber(currentBlockNo);
   }
 
   const lastBlockNo = new BigNumber(state.blockNumber);
 
-  if (lastBlockNo.gte(startingBlock)) {
+  if (lastBlockNo.gte(currentBlockNo)) {
     return lastBlockNo.plus(1);
   }
 
-  return new BigNumber(startingBlock);
+  return new BigNumber(currentBlockNo);
 }

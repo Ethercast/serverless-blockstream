@@ -25,4 +25,3 @@ export interface DecodedBlockPayload {
   block: BlockWithTransactionHashes;
   logs: Log[];
 }
-

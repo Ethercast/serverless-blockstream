@@ -14,6 +14,12 @@ custom:
   drainBlockQueueLambdaName: ${self:custom.prefix}-drain-block-queue
   newBlockQueueName: ${self:custom.prefix}-new-blocks.fifo
   logFirehoseQueue: ${self:custom.prefix}-log-firehose.fifo
+  srcNodeUrl: ${opt:nodeUrl, "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"}
+  networkId: ${opt:logLevel, "1"} # id of the network from which the stack pulls data, validated against the node
+  numBlocksDelay: ${opt:numBlocksDelay, "0"}
+  blockDataTtlMs: ${opt:blockDataTtlMs, "604800000"} # how long the data stays in dynamo before being removed
+  logLevel: ${opt:logLevel, "info"} # log level of the lambdas
+
   baseDynamoDDBCapacity: 2
   alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
   capacities:
@@ -38,11 +44,11 @@ provider:
     DRAIN_BLOCK_QUEUE_LAMBDA_NAME: ${self:custom.drainBlockQueueLambdaName} # The lambda triggered when blocks are added to the queue
     NEW_BLOCK_QUEUE_NAME: ${self:custom.newBlockQueueName}  # Queue that receives new blocks
     LOG_FIREHOSE_QUEUE_NAME: ${self:custom.logFirehoseQueue} # Queue that receives log events
-    SRC_NODE_URL: "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy" # the ethereum node URL that is used
-    NUM_BLOCKS_DELAY: "0" # how many blocks behind the chain we wait to send logs
-    BLOCK_DATA_TTL_MS: "604800000" # 7 days in milliseconds
-    LOG_LEVEL: "info" # info log level
-    NETWORK_ID: "1" # id of the network, validated against the node
+    SRC_NODE_URL: ${self:custom.srcNodeUrl} # the ethereum node URL that is used
+    NUM_BLOCKS_DELAY: ${self:custom.numBlocksDelay} # how many blocks behind the chain we wait to send logs
+    BLOCK_DATA_TTL_MS: ${self:custom.blockDataTtlMs}
+    LOG_LEVEL: ${self:custom.logLevel}
+    NETWORK_ID: ${self:custom.networkId}
 
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow
@@ -104,7 +110,7 @@ resources:
           - "LogFirehoseQueue"
           - "QueueName"
       Export:
-        Name: ${self:custom.stage}-LogFirehoseQueueName
+        Name: ${self:custom.prefix}-log-firehose-queue-name
   Resources:
     BlockStreamStateTable: # This table is throttled and should not autoscale
         Type: AWS::DynamoDB::Table

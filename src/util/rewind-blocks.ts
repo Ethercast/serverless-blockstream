@@ -1,4 +1,4 @@
-import { NETWORK_ID, STARTING_BLOCK } from './env';
+import { NETWORK_ID } from './env';
 import { BlockWithTransactionHashes } from '../client/model';
 import BigNumber from 'bignumber.js';
 import { isBlockSaved } from './ddb/block-data';
@@ -18,19 +18,10 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
 
   // iterate through parent blocks reported by the node until we get to one that exists
   while (true) {
-    // in this case, all our block data is bad.. this should never happen
-    if (checkingBlockNumber.lt(STARTING_BLOCK)) {
+    if (checkingBlockNumber.minus(state.blockNumber).abs().gt(25)) {
       logger.fatal(
         { checkingBlockNumber, metadata },
-        'rewindBlocks: retraced and could not recover from a chain reorg!!! all our block data appears incorrect'
-      );
-      throw new Error('rewindBlocks: could not recover from chain reorg');
-    }
-
-    if (checkingBlockNumber.minus(state.blockNumber).abs().gt(50)) {
-      logger.fatal(
-        { checkingBlockNumber, metadata },
-        'rewindBlocks: retraced back 50 blocks and could not find a block in dynamo'
+        'rewindBlocks: retraced blocks and could not find a block in dynamo'
       );
       throw new Error('rewindBlocks: failed to reconcile chain reorg within 50 blocks');
     }

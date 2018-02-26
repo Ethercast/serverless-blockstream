@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { saveBlockData, isBlockSaved } from './ddb/block-data';
 import {
-  NETWORK_ID, STARTING_BLOCK, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME,
+  NETWORK_ID, DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME,
   NUM_BLOCKS_DELAY
 } from './env';
 import { Lambda } from 'aws-sdk';
@@ -22,11 +22,12 @@ const lambda = new Lambda();
  */
 export default async function reconcileBlock(client: ValidatedEthClient): Promise<void> {
   const state = await getBlockStreamState();
-  const nextFetchBlock = await getNextFetchBlock(state, STARTING_BLOCK);
 
   // we have a configurable block delay which lets us reduce the frequency fo chain reorgs
-  // as well as other harmless errors
-  const currentBlockNo = (await client.eth_blockNumber()).minus(NUM_BLOCKS_DELAY);
+  // as well as other harmless errors due to delays in node data indexing
+  const currentBlockNo: BigNumber = (await client.eth_blockNumber()).minus(NUM_BLOCKS_DELAY);
+
+  const nextFetchBlock: BigNumber = await getNextFetchBlock(state, currentBlockNo);
 
   if (currentBlockNo.lt(nextFetchBlock)) {
     logger.debug({ currentBlockNo, nextFetchBlock }, 'next fetch block is not yet available');
