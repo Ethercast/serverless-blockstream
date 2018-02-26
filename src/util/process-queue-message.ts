@@ -3,14 +3,14 @@ import logger from './logger';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { Message, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage } from './model';
-import { getBlocksMatchingNumber } from './ddb/block-data';
+import { getBlock, getBlocksMatchingNumber } from './ddb/block-data';
 import _ = require('underscore');
 import { LOG_FIREHOSE_QUEUE_NAME, NETWORK_ID } from './env';
 import * as crypto from 'crypto';
 import { mustBeValidLog } from './joi-schema';
 import { Log } from '../client/model';
 
-async function flushMessagesToQueue(validatedLogs: Log[]): Promise<void> {
+async function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
   if (validatedLogs.length === 0) {
     return;
   }
@@ -60,43 +60,33 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
 
   logger.debug({ MessageId, Body }, 'processing message');
 
-  const { hash, number, removed } = JSON.parse(Body) as BlockQueueMessage;
+  const message = JSON.parse(Body) as BlockQueueMessage;
+  const { hash, number, removed } = message;
 
-  logger.info({ hash, number }, 'processing block');
+  logger.info({ MessageId, message }, 'processing message');
 
   // first get all the blocks that have this number
-  const matchingBlocks = await getBlocksMatchingNumber(number);
-  if (matchingBlocks.length === 0) {
-    throw new Error('no blocks matching the number in the queue message');
-  }
+  const blockPayload = await getBlock(hash, number);
 
-  const removedBlocks = _.filter(matchingBlocks, p => p.block.hash !== hash);
-  const addedBlock = _.find(matchingBlocks, p => p.block.hash === hash);
-
-  if (!addedBlock) {
+  if (!blockPayload) {
     throw new Error(`block not found with hash ${hash} and number ${hash}`);
   }
 
   logger.info({
-    removed: removedBlocks.map(({ block: { hash, number }, logs }) => ({ hash, number, logCount: logs.length })),
-    added: { hash: addedBlock.block.hash, number: addedBlock.block.number, logCount: addedBlock.logs.length }
-  }, 'processing block changes');
+    message,
+    transactionCount: blockPayload.block.transactions.length,
+    logCount: blockPayload.logs.length
+  }, 'got block, processing block changes');
 
   // first send messages for all the logs that were in the blocks that are now overwritten
-  const validatedLogs: Log[] = _.chain(removedBlocks)
-    .map(({ logs }) => logs)
-    .flatten(true)
-    .map(log => ({ ...log, removed: true }))
-    .concat(
-      _.map(
-        addedBlock.logs,
-        log => ({ ...log, removed: false })
-      )
-    )
+  const validatedLogs: Log[] = _.chain(blockPayload.logs)
+    .map(log => ({ ...log, removed }))
     .map(mustBeValidLog)
+    .sortBy(({ logIndex }) => new BigNumber(logIndex).toNumber())
+    .sortBy(({ transactionIndex }) => new BigNumber(transactionIndex).toNumber())
     .value();
 
-  await flushMessagesToQueue(validatedLogs);
+  await flushLogMessagesToQueue(removed ? validatedLogs.reverse() : validatedLogs);
 
-  logger.info({ count: validatedLogs.length }, 'flushed messages to queue');
+  logger.info({ message, count: validatedLogs.length }, 'flushed logs to queue');
 }

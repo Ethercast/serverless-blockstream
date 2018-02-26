@@ -19,7 +19,7 @@ export interface DynamoBlock {
   number: string;
   parentHash: string;
   ttl: number;
-  payload: string;
+  payload: Buffer;
 }
 
 export interface DecodedBlockPayload {

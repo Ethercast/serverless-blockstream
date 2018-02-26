@@ -29,6 +29,37 @@ export async function isBlockSaved(hash: string, number: BlockNumber): Promise<b
   return !!(Item && Item.hash === hash && Item.number === toHex(number));
 }
 
+export async function getBlock(hash: string, number: string): Promise<DecodedBlockPayload> {
+  logger.debug({ hash, number }, 'getting block payload from dynamo');
+
+  try {
+    const { Item, ConsumedCapacity } = await ddbClient.get({
+      TableName: BLOCKS_TABLE,
+      ConsistentRead: true,
+      Key: {
+        hash,
+        number: toHex(number)
+      },
+      AttributesToGet: ['payload'],
+      ReturnConsumedCapacity: 'TOTAL'
+    }).promise();
+
+    const block = Item as DynamoBlock;
+
+    if (!block || block.hash !== hash || block.number !== number) {
+      throw new Error(`failed to get block, invalid/missing hash or invalid/missing number returned from dynamo`);
+    }
+
+    logger.debug({ hash, number, ConsumedCapacity }, 'got block');
+
+    return inflatePayload(block.payload);
+  } catch (err) {
+    logger.error({ hash, number, err }, 'failed to get block from dynamo');
+    throw err;
+  }
+}
+
+
 export async function getBlocksMatchingNumber(number: BlockNumber): Promise<DecodedBlockPayload[]> {
   logger.debug({ number }, 'getting blocks matching number');
 
@@ -122,7 +153,7 @@ async function putBlock(block: BlockWithTransactionHashes, logs: Log[]) {
     number: block.number,
     parentHash: block.parentHash,
     ttl,
-    payload: payload.toString('utf-8')
+    payload
   };
 
   // save the individual block
