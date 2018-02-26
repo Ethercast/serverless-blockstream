@@ -24,7 +24,7 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
         { checkingBlockNumber, metadata },
         'rewindBlocks: retraced blocks and could not find a block in dynamo'
       );
-      throw new Error('rewindBlocks: failed to reconcile chain reorg within 50 blocks');
+      throw new Error('rewindBlocks: failed to reconcile chain reorg within N blocks');
     }
 
     let block: BlockWithTransactionHashes;
@@ -33,7 +33,7 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
     } catch (err) {
       logger.error({
         checkingBlockNumber
-      }, 'rewindBlocks: ethereum node returned null while checking for parent block numbers during a chain reorg!');
+      }, 'rewindBlocks: ethereum node errored while checking for parent block numbers during a chain reorg!');
       throw new Error('rewindBlocks: missing block number from node during chain reorg');
     }
 
@@ -47,15 +47,7 @@ export default async function rewindBlocks(client: ValidatedEthClient, state: Bl
         block: { hash: block.hash, number: block.number }
       }, 'rewindBlocks: chain org reconciled, block found in dynamo that exists on the node');
 
-      await saveBlockStreamState(
-        null,
-        {
-          network_id: NETWORK_ID,
-          blockHash: block.hash,
-          blockNumber: block.number,
-          timestamp: new Date()
-        }
-      );
+      await saveBlockStreamState(null, block);
       break;
     }
 

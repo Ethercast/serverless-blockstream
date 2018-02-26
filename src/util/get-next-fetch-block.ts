@@ -10,11 +10,6 @@ export default function getNextFetchBlock(state: BlockStreamState | null, curren
     return new BigNumber(currentBlockNo);
   }
 
-  const lastBlockNo = new BigNumber(state.blockNumber);
-
-  if (lastBlockNo.gte(currentBlockNo)) {
-    return lastBlockNo.plus(1);
-  }
-
-  return new BigNumber(currentBlockNo);
+  // just return the next unknown block
+  return (new BigNumber(state.blockNumber)).plus(1);
 }

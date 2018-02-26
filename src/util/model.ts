@@ -4,7 +4,7 @@ export interface BlockStreamState {
   network_id: number;
   blockHash: string;
   blockNumber: string;
-  timestamp: Date;
+  timestamp: number;
 }
 
 export interface BlockQueueMessage {

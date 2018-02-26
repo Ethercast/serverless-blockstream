@@ -15,7 +15,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
   const clientVersion = await client.web3_clientVersion();
   const netVersion = await client.net_version();
 
-  // TODO: check against compatible client versions (not as important with all the validation)
+  // TODO: check against compatible client versions (not as important with the validated client)
   logger.info({ SRC_NODE_URL, netVersion, clientVersion }, 'ethereum node information');
 
   if (netVersion !== NETWORK_ID) {

@@ -53,7 +53,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   try {
     block = await client.eth_getBlockByNumber(nextFetchBlock, false);
   } catch (err) {
-    logger.info({ err, currentBlockNo }, 'failed to get current block by number');
+    logger.debug({ err, currentBlockNo }, 'failed to get current block by number');
     return;
   }
 
@@ -63,7 +63,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   try {
     transactionReceipts = await client.eth_getTransactionReceipts(block.transactions);
   } catch (err) {
-    logger.info({ blockNumber: block.number, blockHash: block.hash, err }, 'failed to get receipts');
+    logger.debug({ blockNumber: block.number, blockHash: block.hash, err }, 'failed to get receipts');
     return;
   }
 
@@ -75,16 +75,17 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     blockNumber: block.number,
     logCount: logs.length,
     transactionCount: block.transactions.length,
+    receiptsCount: transactionReceipts.length,
     parentHash: block.parentHash
   };
 
-  logger.info({ metadata }, 'fetched block data');
+  logger.info({ metadata }, 'processing block data');
 
   // if any logs are not for this block, we encountered a race condition, try again later. log everything
   // since this rarely happens
   if (_.any(logs, ({ blockHash }) => blockHash !== block.hash)) {
     logger.warn({ metadata }, 'inconsistent logs: not all logs matched the block');
-    logger.debug({ block, logs }, 'inconsistent logs');
+    logger.debug({ block, transactionReceipts, logs }, 'inconsistent logs');
     return;
   }
 
@@ -93,7 +94,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     return;
   }
 
-  //  check if the parent exists and rewind blocks if it does not
+  //  detect chain reorganizations
   if (state) {
     const parentBlockSaved = await isBlockSaved(
       block.parentHash,
@@ -152,15 +153,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
 
   try {
     // LAST step: save the blockstream state
-    await saveBlockStreamState(
-      state,
-      {
-        network_id: NETWORK_ID,
-        blockHash: block.hash,
-        blockNumber: block.number,
-        timestamp: new Date()
-      }
-    );
+    await saveBlockStreamState(state, block);
   } catch (err) {
     // TODO: if this fails, should we retract the message we sent on the queue?
     // probably not, we guarantee at-least-once delivery but not only-once delivery (it doesn't exist)

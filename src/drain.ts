@@ -23,6 +23,7 @@ export const start: Handler = async (event, context, callback) => {
   } catch (err) {
     logger.fatal({ err }, 'error while draining the queue');
     context.done(err);
+    return;
   }
 
   context.done();

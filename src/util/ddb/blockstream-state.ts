@@ -2,6 +2,7 @@ import { BlockStreamState } from '../model';
 import logger from '../logger';
 import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID } from '../env';
 import { DynamoDB } from 'aws-sdk';
+import { BlockWithTransactionHashes } from '../../client/model';
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -26,11 +27,16 @@ export async function getBlockStreamState(): Promise<BlockStreamState | null> {
   }
 }
 
-export async function saveBlockStreamState(prevState: BlockStreamState | null, nextState: BlockStreamState): Promise<void> {
+export async function saveBlockStreamState(prevState: BlockStreamState | null, reconciledBlock: BlockWithTransactionHashes): Promise<void> {
   // build the input parameters
   let input: DynamoDB.DocumentClient.PutItemInput = {
     TableName: BLOCKSTREAM_STATE_TABLE,
-    Item: nextState
+    Item: {
+      network_id: NETWORK_ID,
+      blockHash: reconciledBlock.hash,
+      blockNumber: new BigNumber(reconciledBlock.number).valueOf(),
+      timestamp: (new Date()).getTime()
+    }
   };
 
   // add conditions to the expression if there's a previous state

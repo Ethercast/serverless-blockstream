@@ -39,7 +39,7 @@ provider:
   name: aws
   runtime: nodejs6.10
   environment: # service wide environment variables
-    BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-bs-state # the table containing the state of blockstream
+    BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-blockstream-state # the table containing the state of blockstream
     BLOCKS_TABLE: ${self:custom.prefix}-blocks # the table containing full blocks and their logs (compressed)
     DRAIN_BLOCK_QUEUE_LAMBDA_NAME: ${self:custom.drainBlockQueueLambdaName} # The lambda triggered when blocks are added to the queue
     NEW_BLOCK_QUEUE_NAME: ${self:custom.newBlockQueueName}  # Queue that receives new blocks
@@ -88,7 +88,7 @@ provider:
 functions:
   poll-for-blocks:
     handler: src/poll.start
-    memorySize: 256 # optional, in MB, default is 1024
+    memorySize: 128 # optional, in MB, default is 1024
     timeout: 120
     events:
       - schedule:
@@ -98,7 +98,7 @@ functions:
   drain-queue:
     name: ${self:custom.drainBlockQueueLambdaName}
     handler: src/drain.start
-    memorySize: 256
+    memorySize: 128
     timeout: 120
 
 resources:
