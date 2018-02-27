@@ -1,9 +1,10 @@
 import { BlockStreamState } from '../model';
 import logger from '../logger';
-import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID } from '../env';
+import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID, STATE_HEIGHT_LIMIT } from '../env';
 import { DynamoDB } from 'aws-sdk';
 import { BlockWithTransactionHashes } from '../../client/model';
 import BigNumber from 'bignumber.js';
+import _ = require('underscore');
 
 const ddbClient = new DynamoDB.DocumentClient();
 
@@ -28,18 +29,20 @@ export async function getBlockStreamState(): Promise<BlockStreamState | null> {
   }
 }
 
-export async function saveBlockStreamState(prevState: BlockStreamState | null, reconciledBlock: Pick<BlockWithTransactionHashes, 'hash' | 'number'>, isRewind: boolean): Promise<void> {
-  // build the input parameters
+export async function saveBlockStreamState(prevState: BlockStreamState | null, reconciledBlock: Pick<BlockWithTransactionHashes, 'hash' | 'number'>): Promise<void> {
+  // Construct the new state from the target block metadata and the previous state
   const Item: BlockStreamState = {
     networkId: NETWORK_ID,
+    index: prevState ? prevState.index + 1 : 0,
     blockHash: reconciledBlock.hash,
     blockNumber: (new BigNumber(reconciledBlock.number)).valueOf(),
     timestamp: (new Date()).getTime(),
-    rewindCount: Math.max(
-      (prevState === null ? 0 : prevState.rewindCount) +
-      (isRewind ? 1 : -1),
-      0
-    )
+    stateHistory: (
+      prevState ? (
+        [_.pick(prevState, 'index', 'blockHash', 'blockNumber', 'timestamp')]
+          .concat(prevState.stateHistory)
+      ) : []
+    ).slice(0, STATE_HEIGHT_LIMIT)
   };
 
   let input: DynamoDB.DocumentClient.PutItemInput = {
@@ -51,16 +54,18 @@ export async function saveBlockStreamState(prevState: BlockStreamState | null, r
   if (prevState !== null) {
     input = {
       ...input,
-      ConditionExpression: '#networkId = :networkId AND #blockHash = :blockHash AND #blockNumber = :blockNumber',
+      ConditionExpression: '#networkId = :networkId AND #blockHash = :blockHash AND #blockNumber = :blockNumber and #index = :index',
       ExpressionAttributeNames: {
         '#networkId': 'networkId',
         '#blockHash': 'blockHash',
-        '#blockNumber': 'blockNumber'
+        '#blockNumber': 'blockNumber',
+        '#index': 'index'
       },
       ExpressionAttributeValues: {
         ':networkId': prevState.networkId,
         ':blockHash': prevState.blockHash,
-        ':blockNumber': prevState.blockNumber
+        ':blockNumber': prevState.blockNumber,
+        ':index': prevState.index
       }
     };
   }

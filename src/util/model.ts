@@ -5,7 +5,8 @@ export interface BlockStreamState {
   blockHash: string;
   blockNumber: string;
   timestamp: number;
-  rewindCount: number;
+  index: number;
+  history: Pick<BlockStreamState, 'blockHash' | 'blockNumber' | 'timestamp' | 'index'>[];
 }
 
 export interface BlockQueueMessage {

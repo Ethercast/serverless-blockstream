@@ -3,10 +3,8 @@ import { BlockMetadata, getBlockMetadata } from './ddb/block-data';
 import logger from './logger';
 import { saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockStreamState } from './model';
-import ValidatedEthClient from './validated-eth-client';
 import toHex from './to-hex';
 import { notifyQueueOfBlock } from './sqs/sqs-util';
-import { REWIND_BLOCK_LOOKBACK } from './env';
 
 /**
  * This function is called to rewind blocks when the last reconciled block hash doesn't match the hash of the fetched block.
@@ -16,13 +14,8 @@ import { REWIND_BLOCK_LOOKBACK } from './env';
  * This call branch should continue to be called into until the last reconciled block matches the parent hash of the
  * next valid block.
  */
-export default async function rewindOneBlock(client: ValidatedEthClient, state: BlockStreamState, metadata: any) {
-  if (state.rewindCount > REWIND_BLOCK_LOOKBACK) {
-    logger.fatal({ state, metadata }, 'rewindOneBlock: rewind count is too high, actual chain org is unlikely');
-    throw new Error('fatal error in rewind blocks: rewind count too high');
-  }
-
-  logger.info({ metadata, state }, 'rewindOneBlock: beginning rewind process');
+export default async function rewindOneBlock(state: BlockStreamState, metadata: any) {
+  logger.info({ metadata, state }, 'rewindOneBlock: begin');
 
   // get the block metadata for the last saved block
   let blockMetadata: BlockMetadata;
@@ -45,8 +38,7 @@ export default async function rewindOneBlock(client: ValidatedEthClient, state: 
       {
         hash: blockMetadata.parentHash,
         number: toHex(new BigNumber(blockMetadata.number).minus(1))
-      },
-      true
+      }
     );
   } catch (err) {
     logger.fatal({
@@ -58,7 +50,7 @@ export default async function rewindOneBlock(client: ValidatedEthClient, state: 
     return;
   }
 
-  // TODO: this operation should be transactionally bound to the above operation
+  // TODO: this operation should be transactionally bound to the above operation, potentially with ddb streams
   try {
     await notifyQueueOfBlock(blockMetadata, true);
   } catch (err) {
@@ -69,4 +61,6 @@ export default async function rewindOneBlock(client: ValidatedEthClient, state: 
     }, 'rewindOneBlock: failed to notify queue of removed block');
     return;
   }
+
+  logger.info({ metadata, state }, 'rewindOneBlock: successfully rewound a block');
 }

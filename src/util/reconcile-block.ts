@@ -131,7 +131,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
 
   try {
     // LAST step: save the blockstream state
-    await saveBlockStreamState(state, block, false);
+    await saveBlockStreamState(state, block);
   } catch (err) {
     // TODO: if this fails, should we retract the message we sent on the queue?
     // probably not, we guarantee at-least-once delivery but not only-once delivery (it doesn't exist)

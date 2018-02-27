@@ -43,10 +43,10 @@ export async function getBlockMetadata(hash: string, number: BlockNumber): Promi
     }
   }).promise();
 
-  const block = Item as DynamoBlock;
+  const block = Item as BlockMetadata;
 
   if (!block || block.hash !== hash || block.number !== toHex(number) || !block.parentHash) {
-    throw new Error(`getBlockMetadata: invalid block passed: ${hash} & ${number}`);
+    throw new Error(`getBlockMetadata: invalid block passed: hash ${hash} && #${new BigNumber(number).valueOf()}`);
   }
 
   return block;
