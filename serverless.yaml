@@ -27,8 +27,6 @@ custom:
   alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
   capacities:
     - table: BlocksTable  # DynamoDB Resource
-      index:              # List or single index name
-        - ByBlockNumber
       read:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum read capacity
         maximum: 100      # Maximum read capacity
