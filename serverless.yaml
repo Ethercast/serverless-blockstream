@@ -21,7 +21,9 @@ custom:
   logLevel: ${opt:logLevel, "info"} # log level of the lambdas
   rewindBlockLookback: ${opt:rewindBlockLookback, "25"} # log level of the lambdas
   stateHeightLimit: ${opt:stateHeightLimit, "100"} # log level of the lambdas
-  baseDynamoDDBCapacity: ${opt:baseDynamoDDBCapacity, "2"}
+  baseDynamoDDBCapacity: ${opt:baseDynamoDDBCapacity, "3"}
+  etherscanApiUrl: ${opt:etherscanApiUrl, "https://api.etherscan.io/api"}
+  etherscanApiKey: ${opt:etherscanApiKey, ""}
   alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
   capacities:
     - table: BlocksTable  # DynamoDB Resource
@@ -29,11 +31,21 @@ custom:
         - ByBlockNumber
       read:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum read capacity
-        maximum: 1000      # Maximum read capacity
+        maximum: 100      # Maximum read capacity
         usage: 0.8        # Targeted usage percentage
       write:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum write capacity
-        maximum: 1000      # Maximum write capacity
+        maximum: 100      # Maximum write capacity
+        usage: 0.8        # Targeted usage percentage
+  capacities:
+    - table: AbiTable  # DynamoDB Resource
+      read:
+        minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum read capacity
+        maximum: 100      # Maximum read capacity
+        usage: 0.8        # Targeted usage percentage
+      write:
+        minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum write capacity
+        maximum: 10      # Maximum write capacity
         usage: 0.8        # Targeted usage percentage
 
 provider:
@@ -42,6 +54,7 @@ provider:
   environment: # service wide environment variables
     BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-blockstream-state # the table containing the state of blockstream
     BLOCKS_TABLE: ${self:custom.prefix}-blocks # the table containing full blocks and their logs (compressed)
+    ABI_TABLE: ${self:custom.prefix}-abis # the table containing contract abis
     DRAIN_BLOCK_QUEUE_LAMBDA_NAME: ${self:custom.drainBlockQueueLambdaName} # The lambda triggered when blocks are added to the queue
     NEW_BLOCK_QUEUE_NAME: ${self:custom.newBlockQueueName}  # Queue that receives new blocks
     LOG_FIREHOSE_QUEUE_NAME: ${self:custom.logFirehoseQueue} # Queue that receives log events
@@ -52,6 +65,8 @@ provider:
     NETWORK_ID: ${self:custom.networkId}
     REWIND_BLOCK_LOOKBACK: ${self:custom.rewindBlockLookback}
     STATE_HEIGHT_LIMIT: ${self:custom.stateHeightLimit}
+    ETHERSCAN_API_URL: ${self:custom.etherscanApiUrl}
+    ETHERSCAN_API_KEY: ${self:custom.etherscanApiKey}
 
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow
@@ -65,7 +80,7 @@ provider:
       Resource:
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKSTREAM_STATE_TABLE}"
         - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKS_TABLE}"
-        - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.BLOCKS_TABLE}/*"
+        - "arn:aws:dynamodb:${self:custom.region}:#{AWS::AccountId}:table/${self:provider.environment.ABI_TABLE}"
     - Effect: Allow
       Action: # Gives permission to push logs to the SQS queue
         - sqs:SendMessage
@@ -151,17 +166,20 @@ resources:
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
-        GlobalSecondaryIndexes:
-          -
-            IndexName: ByBlockNumber
-            KeySchema:
-              - AttributeName: number
-                KeyType: HASH
-            Projection:
-              ProjectionType: KEYS_ONLY
-            ProvisionedThroughput:
-              ReadCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
-              WriteCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
+
+    AbiTable: # This table's autoscaling is to handle downtimes or node switching. When it needs to catch up, it costs more.
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.ABI_TABLE}
+        AttributeDefinitions:
+          - AttributeName: address
+            AttributeType: S
+        KeySchema:
+          - AttributeName: address
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
+          WriteCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
 
     NewBlockQueue:
       Type: AWS::SQS::Queue

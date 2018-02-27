@@ -9,6 +9,7 @@ import * as crypto from 'crypto';
 import { mustBeValidLog } from './joi-schema';
 import { Log } from '../client/model';
 import BigNumber from 'bignumber.js';
+import decodeLog from './abi/decode-log';
 import _ = require('underscore');
 
 async function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
@@ -86,7 +87,9 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
     .sortBy(({ logIndex }) => new BigNumber(logIndex).toNumber())
     .value();
 
-  await flushLogMessagesToQueue(removed ? validatedLogs.reverse() : validatedLogs);
+  const decodedLogs = await Promise.all(validatedLogs.map(decodeLog));
+
+  await flushLogMessagesToQueue(removed ? decodedLogs.reverse() : decodedLogs);
 
   logger.info({ message, count: validatedLogs.length }, 'flushed logs to queue');
 }

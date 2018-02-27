@@ -11,6 +11,8 @@ export const BLOCK_DATA_TTL_MS: number = env.get('BLOCK_DATA_TTL_MS').required()
 // OWNED RESOURCES
 export const BLOCKS_TABLE: string = env.get('BLOCKS_TABLE').required().asString();
 export const BLOCKSTREAM_STATE_TABLE: string = env.get('BLOCKSTREAM_STATE_TABLE').required().asString();
+export const ABI_TABLE: string = env.get('ABI_TABLE').required().asString();
+
 export const NEW_BLOCK_QUEUE_NAME: string = env.get('NEW_BLOCK_QUEUE_NAME').required().asString();
 export const LOG_FIREHOSE_QUEUE_NAME: string = env.get('LOG_FIREHOSE_QUEUE_NAME').required().asString();
 
@@ -21,3 +23,6 @@ export const NUM_BLOCKS_DELAY: number = env.get('NUM_BLOCKS_DELAY').required().a
 export const REWIND_BLOCK_LOOKBACK: number = env.get('REWIND_BLOCK_LOOKBACK').required().asIntPositive();
 
 export const STATE_HEIGHT_LIMIT: number = env.get('STATE_HEIGHT_LIMIT').required().asIntPositive();
+
+export const ETHERSCAN_API_URL: string = env.get('ETHERSCAN_API_URL').required().asUrlString();
+export const ETHERSCAN_API_KEY: string = env.get('ETHERSCAN_API_KEY').required().asString();

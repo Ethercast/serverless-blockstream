@@ -4,9 +4,8 @@ import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID, STATE_HEIGHT_LIMIT } from '../env'
 import { DynamoDB } from 'aws-sdk';
 import { BlockWithTransactionHashes } from '../../client/model';
 import BigNumber from 'bignumber.js';
+import { ddbClient } from './shared';
 import _ = require('underscore');
-
-const ddbClient = new DynamoDB.DocumentClient();
 
 export async function getBlockStreamState(): Promise<BlockStreamState | null> {
   try {

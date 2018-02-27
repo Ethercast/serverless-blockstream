@@ -1,16 +1,12 @@
 import { DecodedBlockPayload, DynamoBlock } from '../model';
 import logger from '../logger';
 import { BLOCK_DATA_TTL_MS, BLOCKS_TABLE } from '../env';
-import { DynamoDB } from 'aws-sdk';
 import toHex, { BlockNumber } from '../to-hex';
 import BigNumber from 'bignumber.js';
 import { deflatePayload, inflatePayload } from '../compress';
 import { mustBeValidBlockWithTransactionHashes, mustBeValidLog } from '../joi-schema';
 import { BlockWithTransactionHashes, Log } from '../../client/model';
-
-const ddbClient = new DynamoDB.DocumentClient();
-
-const BLOCK_TABLE_BLOCK_NUMBER_INDEX_NAME = 'ByBlockNumber';
+import { ddbClient } from './shared';
 
 export function getBlockDataTtl(): number {
   return (new Date()).getTime() + BLOCK_DATA_TTL_MS;
@@ -79,85 +75,6 @@ export async function getBlock(hash: string, number: string): Promise<DecodedBlo
     logger.error({ hash, number, err }, 'failed to get block from dynamo');
     throw err;
   }
-}
-
-
-export async function getBlocksMatchingNumber(number: BlockNumber): Promise<DecodedBlockPayload[]> {
-  logger.debug({ number }, 'getting blocks matching number');
-
-  let blockKeys;
-
-  try {
-    const { ConsumedCapacity, Count, Items } = await ddbClient.query({
-      TableName: BLOCKS_TABLE,
-      IndexName: BLOCK_TABLE_BLOCK_NUMBER_INDEX_NAME,
-      KeyConditionExpression: '#number = :number',
-      ExpressionAttributeNames: {
-        '#number': 'number'
-      },
-      ExpressionAttributeValues: {
-        ':number': toHex(number)
-      },
-      ReturnConsumedCapacity: 'TOTAL'
-    }).promise();
-    logger.debug({ ConsumedCapacity, Count, number }, 'got blocks matching number');
-
-    if (!Items) {
-      return [];
-    }
-
-    if (Items.length !== Count) {
-      throw new Error('getBlocksMatchingNumber does not support getting a paginated result set');
-    }
-
-    // now we need to get all the actual blocks from the table
-    blockKeys = Items;
-  } catch (err) {
-    logger.error({ err }, 'failed to get keys');
-    throw err;
-  }
-
-  const decodedBlocks: DecodedBlockPayload[] = [];
-
-  let requestItems: DynamoDB.DocumentClient.BatchGetRequestMap = {
-    [BLOCKS_TABLE]: {
-      Keys: blockKeys,
-      ProjectionExpression: '#payload',
-      ExpressionAttributeNames: {
-        '#payload': 'payload'
-      }
-    }
-  };
-
-  while (true) {
-    const { ConsumedCapacity, Responses, UnprocessedKeys } = await ddbClient.batchGet({
-      ReturnConsumedCapacity: 'TOTAL',
-      RequestItems: requestItems
-    }).promise();
-
-    logger.debug({ requestItems, ConsumedCapacity, UnprocessedKeys }, 'fetched payloads for blocks');
-
-    if (!Responses) {
-      throw new Error('no responses from the batch get!');
-    }
-
-    // process the blocks into the return array
-    for (let i = 0; i < Responses[BLOCKS_TABLE].length; i++) {
-      const { payload } = Responses[BLOCKS_TABLE][i];
-
-      const decoded: DecodedBlockPayload = await inflatePayload(payload);
-
-      decodedBlocks.push(decoded);
-    }
-
-    if (UnprocessedKeys && UnprocessedKeys[BLOCKS_TABLE] && UnprocessedKeys[BLOCKS_TABLE].Keys && UnprocessedKeys[BLOCKS_TABLE].Keys.length > 0) {
-      requestItems = UnprocessedKeys;
-    } else {
-      break;
-    }
-  }
-
-  return decodedBlocks;
 }
 
 async function putBlock(block: BlockWithTransactionHashes, logs: Log[]) {
