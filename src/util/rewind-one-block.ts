@@ -5,6 +5,8 @@ import { saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockStreamState } from './model';
 import toHex from './to-hex';
 import { notifyQueueOfBlock } from './sqs/sqs-util';
+import calculateNumRewinds from './state/calculate-num-rewinds';
+import { REWIND_BLOCK_LOOKBACK } from './env';
 
 /**
  * This function is called to rewind blocks when the last reconciled block hash doesn't match the hash of the fetched block.
@@ -15,6 +17,13 @@ import { notifyQueueOfBlock } from './sqs/sqs-util';
  * next valid block.
  */
 export default async function rewindOneBlock(state: BlockStreamState, metadata: any) {
+  const numRewinds = calculateNumRewinds(state);
+
+  if (numRewinds > REWIND_BLOCK_LOOKBACK) {
+    logger.fatal({ numRewinds, metadata, state }, 'rewindOneBlock: too many rewinds!');
+    throw new Error('rewindOneBlock: rewinding for too many blocks');
+  }
+
   logger.info({ metadata, state }, 'rewindOneBlock: begin');
 
   // get the block metadata for the last saved block
