@@ -134,7 +134,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     await saveBlockStreamState(state, block);
   } catch (err) {
     // TODO: if this fails, should we retract the message we sent on the queue?
-    // probably not, we guarantee at-least-once delivery but not only-once delivery (it doesn't exist)
+    // NO, we guarantee at-least-once delivery but not only-once delivery (it doesn't exist)
     // and this at worst causes the messages to be sent twice, which is not even a problem if it happens
     // within 5 minutes thanks to deduplication
     logger.error({ err, metadata }, 'failed to update blockstream state');

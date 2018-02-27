@@ -59,7 +59,8 @@ export default async function rewindOneBlock(state: BlockStreamState, metadata: 
     return;
   }
 
-  // TODO: this operation should be transactionally bound to the above operation, potentially with ddb streams
+  // TODO: this is a dangerous error case, because if the block is removed and we don't successfully send to the queue,
+  // we need to revert the state
   try {
     await notifyQueueOfBlock(blockMetadata, true);
   } catch (err) {

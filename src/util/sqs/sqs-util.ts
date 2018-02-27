@@ -91,7 +91,7 @@ export async function drainQueue(QueueUrl: string,
   }
 }
 
-export async function notifyQueueOfBlock(metadata: Pick<BlockWithTransactionHashes, 'hash' | 'number'>, removed: boolean) {
+export async function notifyQueueOfBlock(metadata: Pick<BlockWithTransactionHashes, 'hash' | 'number'>, removed: boolean): Promise<string> {
   let QueueUrl: string;
   try {
     QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
@@ -110,7 +110,13 @@ export async function notifyQueueOfBlock(metadata: Pick<BlockWithTransactionHash
       MessageBody: JSON.stringify(queueMessage)
     }).promise();
 
+    if (typeof MessageId !== 'string') {
+      throw new Error('message id not received after placing message in queue');
+    }
+
     logger.info({ queueMessage, MessageId }, 'placed message in queue');
+
+    return MessageId;
   } catch (err) {
     logger.error({
       QueueName: NEW_BLOCK_QUEUE_NAME,
