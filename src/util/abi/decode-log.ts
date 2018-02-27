@@ -20,7 +20,7 @@ export default async function decodeLog(log: Log): Promise<DecodedLog> {
 
     return { ...log, ethercast: {} };
   } catch (err) {
-    logger.debug({ err }, `no abi for address: ${log.address}`);
+    logger.debug({ err, address: log.address }, `error getting abi`);
     return log;
   }
 }

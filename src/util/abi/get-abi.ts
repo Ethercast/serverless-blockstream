@@ -30,13 +30,13 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
       return null;
     }
   } catch (err) {
-    logger.debug({ err }, `abi not yet in dynamo: ${address}`);
+    logger.info({ err }, `abi not yet in dynamo: ${address}`);
   }
 
   try {
     abi = await getEtherscanAbi(address, ETHERSCAN_API_URL, ETHERSCAN_API_KEY);
   } catch (err) {
-    logger.debug({ err }, `abi not available in etherscan`);
+    logger.info({ err }, `abi not available in etherscan`);
 
     await markAbiNotAvailable(address);
 
@@ -46,7 +46,7 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
   try {
     await saveAbi(address, abi);
   } catch (err) {
-    logger.debug({ err }, `failed to save abi for address: ${address}`);
+    logger.info({ err }, `failed to save abi for address: ${address}`);
   }
 
   return abi;
