@@ -37,10 +37,10 @@ export async function saveBlockStreamState(prevState: BlockStreamState | null, r
     blockHash: reconciledBlock.hash,
     blockNumber: (new BigNumber(reconciledBlock.number)).valueOf(),
     timestamp: (new Date()).getTime(),
-    stateHistory: (
+    history: (
       prevState ? (
         [_.pick(prevState, 'index', 'blockHash', 'blockNumber', 'timestamp')]
-          .concat(prevState.stateHistory)
+          .concat(prevState.history)
       ) : []
     ).slice(0, STATE_HEIGHT_LIMIT)
   };

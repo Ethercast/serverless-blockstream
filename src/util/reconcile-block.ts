@@ -9,7 +9,7 @@ import { notifyQueueOfBlock } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithTransactionHashes, Log, TransactionReceipt } from '../client/model';
 import ValidatedEthClient from './validated-eth-client';
-import rewindBlocks from './rewind-one-block';
+import rewindOneBlock from './rewind-one-block';
 
 const lambda = new Lambda();
 
@@ -98,11 +98,11 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     );
 
     if (!parentBlockSaved) {
-      logger.warn({ metadata }, 'detected chain reorg, attempting to rewind blocks');
+      logger.warn({ metadata }, 'detected chain reorg, attempting to rewind');
 
       try {
-        await rewindBlocks(client, state, metadata);
-        logger.info({ metadata }, 'successfully reconciled chain reorg');
+        await rewindOneBlock(state, metadata);
+        logger.info({ metadata }, 'successfully rewound');
         return;
       } catch (err) {
         logger.fatal({ metadata, state, err }, 'failed to handle chain reorganization');
