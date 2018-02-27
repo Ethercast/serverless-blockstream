@@ -30,7 +30,7 @@ export default async function rewindOneBlock(state: BlockStreamState, metadata: 
   let blockMetadata: BlockMetadata;
 
   try {
-    blockMetadata = await getBlockMetadata(state.blockNumber, state.blockHash);
+    blockMetadata = await getBlockMetadata(state.blockHash, state.blockNumber);
   } catch (err) {
     logger.error({
       err,
