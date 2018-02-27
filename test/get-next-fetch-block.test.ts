@@ -4,10 +4,11 @@ import getNextFetchBlock from '../src/util/get-next-fetch-block';
 
 const atBlockNumber = (number: number): BlockStreamState => ({
   networkId: 1,
+  index: 0,
   blockHash: 'fake-hash',
   blockNumber: new BigNumber(number).valueOf(),
   timestamp: (new Date()).getTime(),
-  rewindCount: 0
+  history: []
 });
 
 describe('getNextFetchBlock', () => {
