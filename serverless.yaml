@@ -37,7 +37,6 @@ custom:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum write capacity
         maximum: 100      # Maximum write capacity
         usage: 0.8        # Targeted usage percentage
-  capacities:
     - table: AbiTable  # DynamoDB Resource
       read:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum read capacity
