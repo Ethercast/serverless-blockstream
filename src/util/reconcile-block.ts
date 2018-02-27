@@ -4,7 +4,7 @@ import * as _ from 'underscore';
 import { isBlockSaved, saveBlockData } from './ddb/block-data';
 import { DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
 import { Lambda } from 'aws-sdk';
-import getNextFetchBlock from './get-next-fetch-block';
+import getNextFetchBlock from './state/get-next-fetch-block';
 import { notifyQueueOfBlock } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithTransactionHashes, Log, TransactionReceipt } from '../client/model';
@@ -18,6 +18,7 @@ const lambda = new Lambda();
  */
 export default async function reconcileBlock(client: ValidatedEthClient): Promise<void> {
   const state = await getBlockStreamState();
+  const loggableState = _.omit(state, 'history');
 
   // we have a configurable block delay which lets us reduce the frequency fo chain reorgs
   // as well as other harmless errors due to delays in node data indexing
@@ -43,7 +44,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     logger.info('more than 10 blocks behind the network.');
   }
 
-  logger.debug({ currentBlockNo, nextFetchBlock }, 'fetching block');
+  logger.debug({ state: loggableState, currentBlockNo, nextFetchBlock }, 'fetching block');
 
   let block: BlockWithTransactionHashes;
   try {
@@ -66,7 +67,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   const logs: Log[] = _.flatten(transactionReceipts.map(receipt => receipt.logs), true);
 
   const metadata = {
-    state,
+    state: loggableState,
     blockHash: block.hash,
     blockNumber: block.number,
     logCount: logs.length,
@@ -105,7 +106,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
         logger.info({ metadata }, 'successfully rewound');
         return;
       } catch (err) {
-        logger.fatal({ metadata, state, err }, 'failed to handle chain reorganization');
+        logger.fatal({ metadata, state: loggableState, err }, 'failed to handle chain reorganization');
         throw new Error('failed to handle chain reorg');
       }
     }

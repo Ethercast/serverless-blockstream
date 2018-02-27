@@ -1,6 +1,6 @@
-import { BlockStreamState } from './model';
+import { BlockStreamState } from '../model';
 import BigNumber from 'bignumber.js';
-import { BlockNumber } from './to-hex';
+import { BlockNumber } from '../to-hex';
 
 /**
  * Get the number of the next block to fetch

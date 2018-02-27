@@ -1,6 +1,7 @@
+import BigNumber from 'bignumber.js';
 import { BlockStreamState } from '../src/util/model';
 import { expect } from 'chai';
-import getNextFetchBlock from '../src/util/get-next-fetch-block';
+import getNextFetchBlock from '../src/util/state/get-next-fetch-block';
 
 const atBlockNumber = (number: number): BlockStreamState => ({
   networkId: 1,
