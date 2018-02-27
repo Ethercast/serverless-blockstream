@@ -177,6 +177,9 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
           WriteCapacityUnits: ${self:custom.baseDynamoDDBCapacity}
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
 
     NewBlockQueue:
       Type: AWS::SQS::Queue

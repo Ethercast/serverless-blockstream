@@ -2,7 +2,7 @@ import { Abi, JoiAbi } from '../../etherscan/etherscan-model';
 import { ddbClient } from './shared';
 import { ABI_TABLE } from '../env';
 
-export async function getSavedAbi(address: string): Promise<Abi> {
+export async function getSavedAbi(address: string): Promise<Abi | null> {
   const { Item } = await ddbClient.get({
     TableName: ABI_TABLE,
     Key: {
@@ -14,24 +14,32 @@ export async function getSavedAbi(address: string): Promise<Abi> {
     throw new Error(`abi address not found in database: ${address}`);
   }
 
-  const { error, value } = JoiAbi.validate(Item);
-
-  if (error && error.details.length) {
-    throw new Error(`abi pulled out of db did not pass validation: ${JSON.stringify(error)}`);
-  }
-
-  return value as Abi;
+  return Item.abi;
 }
 
-export async function saveAbi(abi: Abi): Promise<void> {
+export async function markAbiNotAvailable(address: string): Promise<void> {
+  await ddbClient.put({
+    TableName: ABI_TABLE,
+    Item: {
+      address,
+      abi: null,
+      ttl: Date.now() + (3600 * 1000)
+    }
+  }).promise();
+}
+
+export async function saveAbi(address: string, abi: Abi): Promise<void> {
   const { value, error } = JoiAbi.validate(abi);
 
   if (error && error.details.length) {
-    throw new Error(`ABI did not pass validation: ${JSON.stringify(error.details)}`);
+    throw new Error(`ABI for address ${address} did not pass validation: ${JSON.stringify(error.details)}`);
   }
 
   await ddbClient.put({
     TableName: ABI_TABLE,
-    Item: value
+    Item: {
+      address,
+      abi: value
+    }
   }).promise();
 }

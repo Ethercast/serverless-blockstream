@@ -39,13 +39,16 @@ export const JoiOutput = object({
   type: string().required()
 });
 
-export const JoiAbi = object({
-  constant: boolean().required(),
-  inputs: array().items(JoiInput).required(),
-  name: string().required(),
-  outputs: array().items(JoiOutput).required(),
-  type: string().required(),
-  payable: boolean(),
-  stateMutability: string(),
-  anonymous: boolean()
-});
+export const JoiAbi = array()
+  .items(
+    object({
+      constant: boolean().required(),
+      inputs: array().items(JoiInput).required(),
+      name: string().required(),
+      outputs: array().items(JoiOutput).required(),
+      type: string().required(),
+      payable: boolean(),
+      stateMutability: string(),
+      anonymous: boolean()
+    })
+  );
