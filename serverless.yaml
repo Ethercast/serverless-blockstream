@@ -23,7 +23,7 @@ custom:
   stateHeightLimit: ${opt:stateHeightLimit, "100"} # log level of the lambdas
   baseDynamoDDBCapacity: ${opt:baseDynamoDDBCapacity, "3"}
   etherscanApiUrl: ${opt:etherscanApiUrl, "https://api.etherscan.io/api"}
-  etherscanApiKey: ${opt:etherscanApiKey, ""}
+  etherscanApiKey: ${opt:etherscanApiKey, "17CY9NYG5A77HWV1I8XP7U4IE9DB11KWT5"}
   alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
   capacities:
     - table: BlocksTable  # DynamoDB Resource
@@ -116,7 +116,7 @@ functions:
     handler: src/drain.start
     memorySize: 128
     reservedConcurrency: 1
-    timeout: 120
+    timeout: 240
 
 resources:
   Outputs:
