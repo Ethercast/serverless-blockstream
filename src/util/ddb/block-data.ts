@@ -9,7 +9,7 @@ import {
   Log,
   mustBeValidBlockWithTransactionHashes,
   mustBeValidLog
-} from 'ethercast-model';
+} from '@ethercast/model';
 import { ddbClient } from './shared';
 
 export function getBlockDataTtl(): number {

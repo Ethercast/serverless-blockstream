@@ -1,4 +1,4 @@
-import { BlockWithTransactionHashes, Log } from 'ethercast-model';
+import { BlockWithTransactionHashes, Log } from '@ethercast/model';
 
 export interface BlockStreamState {
   networkId: number;

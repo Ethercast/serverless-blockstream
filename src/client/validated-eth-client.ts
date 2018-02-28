@@ -9,7 +9,7 @@ import {
   mustBeValidLog,
   mustBeValidTransactionReceipt,
   TransactionReceipt
-} from 'ethercast-model';
+} from '@ethercast/model';
 
 export default class ValidatedEthClient implements EthClient {
   client: EthClient;

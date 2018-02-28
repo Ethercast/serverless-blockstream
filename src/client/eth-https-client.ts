@@ -5,7 +5,7 @@ import {
   Log,
   LogFilter,
   TransactionReceipt
-} from 'ethercast-model';
+} from '@ethercast/model';
 import { buildRequest, MethodParameter } from './util';
 import BigNumber from 'bignumber.js';
 import logger from '../util/logger';

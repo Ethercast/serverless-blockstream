@@ -7,7 +7,7 @@ import { Lambda } from 'aws-sdk';
 import getNextFetchBlock from './state/get-next-fetch-block';
 import { notifyQueueOfBlock } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
-import { BlockWithTransactionHashes, Log, TransactionReceipt } from 'ethercast-model';
+import { BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
 import ValidatedEthClient from '../client/validated-eth-client';
 import rewindOneBlock from './rewind-one-block';
 

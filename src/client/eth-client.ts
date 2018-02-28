@@ -5,7 +5,7 @@ import {
   Log,
   LogFilter,
   TransactionReceipt
-} from 'ethercast-model';
+} from '@ethercast/model';
 
 export enum Method {
   web3_clientVersion = 'web3_clientVersion',

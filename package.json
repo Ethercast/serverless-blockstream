@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "description": "a web3 ws client for ts",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ethercast/serverless-blockstream"
+  },
   "dependencies": {
+    "@ethercast/model": "0.0.1",
     "@types/isomorphic-fetch": "0.0.34",
     "bignumber.js": "^6.0.0",
     "bunyan": "^1.8.12",
     "env-var": "^3.2.0",
-    "ethercast-model": "0.0.1",
     "isomorphic-fetch": "^2.2.1",
     "joi": "^13.1.2",
     "source-map-support": "^0.5.3",
