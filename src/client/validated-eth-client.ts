@@ -1,17 +1,15 @@
-import EthClient, { BlockParameter } from '../client/eth-client';
+import EthClient, { BlockParameter } from './eth-client';
 import {
   BlockWithFullTransactions,
   BlockWithTransactionHashes,
   Log,
   LogFilter,
-  TransactionReceipt
-} from '../client/model';
-import {
   mustBeValidBlockWithFullTransactions,
   mustBeValidBlockWithTransactionHashes,
   mustBeValidLog,
-  mustBeValidTransactionReceipt
-} from './joi-schema';
+  mustBeValidTransactionReceipt,
+  TransactionReceipt
+} from 'ethercast-model';
 
 export default class ValidatedEthClient implements EthClient {
   client: EthClient;

@@ -2,7 +2,7 @@ import { BlockStreamState } from '../model';
 import logger from '../logger';
 import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID, STATE_HEIGHT_LIMIT } from '../env';
 import { DynamoDB } from 'aws-sdk';
-import { BlockWithTransactionHashes } from '../../client/model';
+import { BlockWithTransactionHashes } from 'ethercast-model';
 import BigNumber from 'bignumber.js';
 import { ddbClient } from './shared';
 import _ = require('underscore');

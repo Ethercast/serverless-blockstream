@@ -1,5 +1,11 @@
-import { BlockWithFullTransactions, BlockWithTransactionHashes, Log, LogFilter, TransactionReceipt } from './model';
 import BigNumber from 'bignumber.js';
+import {
+  BlockWithFullTransactions,
+  BlockWithTransactionHashes,
+  Log,
+  LogFilter,
+  TransactionReceipt
+} from 'ethercast-model';
 
 export enum Method {
   web3_clientVersion = 'web3_clientVersion',

@@ -1,4 +1,4 @@
-import { Log } from '../../client/model';
+import { Log } from 'ethercast-model';
 import getAbi from './get-abi';
 import logger from '../logger';
 import { decodeLog as decodeWithAbi, encodeEventSignature } from 'web3-eth-abi';

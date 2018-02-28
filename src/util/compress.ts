@@ -1,6 +1,6 @@
 import * as zlib from 'zlib';
 import { DecodedBlockPayload } from './model';
-import { BlockWithTransactionHashes, Log } from '../client/model';
+import { BlockWithTransactionHashes, Log } from 'ethercast-model';
 
 export async function deflatePayload(block: BlockWithTransactionHashes, logs: Log[]): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {

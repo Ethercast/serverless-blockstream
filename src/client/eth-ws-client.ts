@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws';
-import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter, TransactionReceipt } from './model';
+import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter, TransactionReceipt } from 'ethercast-model';
 import BigNumber from 'bignumber.js';
 import logger from '../util/logger';
 import { buildRequest, MethodParameter } from './util';

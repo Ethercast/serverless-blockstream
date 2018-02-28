@@ -1,7 +1,7 @@
 import { SQS } from 'aws-sdk';
 import { Message, MessageList } from 'aws-sdk/clients/sqs';
 import logger from '../logger';
-import { BlockWithTransactionHashes } from '../../client/model';
+import { BlockWithTransactionHashes } from 'ethercast-model';
 import { NETWORK_ID, NEW_BLOCK_QUEUE_NAME } from '../env';
 import { BlockQueueMessage } from '../model';
 
