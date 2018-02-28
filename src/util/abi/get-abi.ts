@@ -29,18 +29,18 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
     abi = await getSavedAbi(address);
 
     if (abi === null) {
-      logger.debug({ address }, 'abi does not exist in dynamo');
+      logger.debug({ address }, 'dynamo indicates the address does not have an abi');
       return null;
     }
   } catch (err) {
-    logger.info({ err, address }, `abi not yet in dynamo`);
+    logger.debug({ err, address }, `abi not yet in dynamo`);
   }
 
   try {
     abi = await getEtherscanAbi(address, ETHERSCAN_API_URL, ETHERSCAN_API_KEY);
 
     if (abi === null) {
-      logger.info({ address }, `abi not available in etherscan, marking unavailable`);
+      logger.debug({ address }, `abi not available in etherscan, marking unavailable`);
 
       try {
         await markAbiNotAvailable(address);
@@ -51,6 +51,7 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
       return null;
     }
   } catch (err) {
+    // This indicates that etherscan gaves us a bad status code.
     logger.error({ err, address }, 'failed to get abi from etherscan');
     return null;
   }
