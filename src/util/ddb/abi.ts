@@ -14,7 +14,7 @@ export async function getSavedAbi(address: string): Promise<Abi | null> {
     throw new Error(`abi address not found in database: ${address}`);
   }
 
-  return Item.abi;
+  return JSON.parse(Item.abi);
 }
 
 export async function markAbiNotAvailable(address: string): Promise<void> {
@@ -40,7 +40,7 @@ export async function saveAbi(address: string, abi: Abi): Promise<void> {
     TableName: ABI_TABLE,
     Item: {
       address,
-      abi: value
+      abi: JSON.stringify(value)
     }
   }).promise();
 }

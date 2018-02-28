@@ -39,10 +39,11 @@ export default async function decodeLog(log: Log): Promise<DecodedLog> {
       return log;
     }
 
-    return {
-      ...log,
-      ethercast: decodeWithAbi(matchingSignature.inputs, log.data, log.topics)
-    };
+    const ethercast = decodeWithAbi(matchingSignature.inputs, log.data, log.topics);
+
+    logger.debug({ ethercast, log }, 'successfully decoded log');
+
+    return { ...log, ethercast };
   } catch (err) {
     logger.debug({ err, address: log.address }, `error getting abi`);
     return log;
