@@ -9,7 +9,7 @@ import { BlockWithTransactionHashes, Log } from '../../client/model';
 import { ddbClient } from './shared';
 
 export function getBlockDataTtl(): number {
-  return (new Date()).getTime() + BLOCK_DATA_TTL_MS;
+  return ((new Date()).getTime() + BLOCK_DATA_TTL_MS) / 1000;
 }
 
 export async function isBlockSaved(hash: string, number: BlockNumber): Promise<boolean> {
