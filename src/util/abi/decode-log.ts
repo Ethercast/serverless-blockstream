@@ -1,16 +1,10 @@
-import { Log } from '@ethercast/model';
+import { DecodedLog, Log } from '@ethercast/model';
 import getAbi from './get-abi';
 import logger from '../logger';
 import { decodeLog as decodeWithAbi, encodeEventSignature } from 'web3-eth-abi';
 import _ = require('underscore');
 
-export interface DecodedLog extends Log {
-  ethercast?: {
-    [parameter: string]: string | number
-  }
-}
-
-export default async function decodeLog(log: Log): Promise<DecodedLog> {
+export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
   try {
     const abi = await getAbi(log.address);
 
