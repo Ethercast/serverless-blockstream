@@ -10,11 +10,13 @@ export async function getSavedAbi(address: string): Promise<Abi | null> {
     }
   }).promise();
 
-  if (!Item || !Item.address || Item.address !== address) {
+  if (!Item || Item.address !== address) {
     throw new Error(`abi address not found in database: ${address}`);
   }
 
-  return JSON.parse(Item.abi);
+  return Item.abi === null ?
+    null :
+    JSON.parse(Item.abi);
 }
 
 export async function markAbiNotAvailable(address: string): Promise<void> {
@@ -23,7 +25,7 @@ export async function markAbiNotAvailable(address: string): Promise<void> {
     Item: {
       address,
       abi: null,
-      // Cache ABIs for one day.
+      // Cache missing ABIs for one day.
       ttl: Date.now() + (86400 * 1000)
     }
   }).promise();
