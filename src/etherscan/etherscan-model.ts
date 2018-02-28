@@ -31,22 +31,22 @@ interface ContractMember {
 export type Abi = ContractMember[];
 
 export const JoiInput = object({
-  name: string().required().allow(''),
-  type: string().required(),
+  name: string().allow(''),
+  type: string(),
   indexed: boolean()
 });
 
 export const JoiOutput = object({
-  name: string().required().allow(''),
-  type: string().required()
+  name: string().allow(''),
+  type: string()
 });
 
 export const JoiContractMember = object({
   constant: boolean(),
-  inputs: array().items(JoiInput).required(),
+  inputs: array().items(JoiInput),
   name: string().allow(''),
   outputs: array().items(JoiOutput),
-  type: string().required(),
+  type: string(),
   payable: boolean(),
   stateMutability: string(),
   anonymous: boolean()
