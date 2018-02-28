@@ -45,7 +45,7 @@ export const JoiContractMember = object({
   constant: boolean(),
   inputs: array().items(JoiInput).required(),
   name: string().allow(''),
-  outputs: array().items(JoiOutput).required(),
+  outputs: array().items(JoiOutput),
   type: string().required(),
   payable: boolean(),
   stateMutability: string(),
