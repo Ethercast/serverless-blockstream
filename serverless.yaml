@@ -116,7 +116,7 @@ functions:
     handler: src/drain.start
     memorySize: 128
     reservedConcurrency: 1
-    timeout: 240
+    timeout: 300
 
 resources:
   Outputs:

@@ -14,6 +14,7 @@
     "ts-loader": "^3.5.0",
     "typescript": "^2.7.2",
     "underscore": "^1.8.3",
+    "web3-eth-abi": "^1.0.0-beta.30",
     "ws": "^4.0.0"
   },
   "scripts": {

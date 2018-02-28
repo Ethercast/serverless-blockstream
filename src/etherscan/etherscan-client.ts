@@ -10,7 +10,7 @@ const BASE_GET_ABI_PARAMS = {
 
 export const getEtherscanAbi = throttle(
   200,
-  async function (address: string, apiUrl: string, apiKey: string): Promise<Abi> {
+  async function (address: string, apiUrl: string, apiKey: string): Promise<Abi | null> {
     const response =
       await fetch(`${apiUrl}?${stringify({ ...BASE_GET_ABI_PARAMS, address, apikey: apiKey })}`);
 
@@ -32,13 +32,10 @@ export const getEtherscanAbi = throttle(
       throw new Error(`failed to parse json in response body: ${err.message}`);
     }
 
-    // etherscan gives us 'NOTOK' and '0' if this fails
-    if (responseJson.message !== 'OK') {
-      throw new Error(`json message was not 'OK': ${responseJson.message}`);
-    }
-
-    if (responseJson.status !== '1') {
-      throw new Error(`json status was not '1': ${responseJson.status}`);
+    // etherscan gives us 'NOTOK' and '0' if the abi is not available. IF and ONLY IF this happens, we return null.
+    // this indicates the user should not retry
+    if (responseJson.message === 'NOTOK' && responseJson.status === '0' && responseJson.result === '') {
+      return null;
     }
 
     let abi: Abi;

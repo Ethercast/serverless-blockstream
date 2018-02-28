@@ -17,8 +17,8 @@ export interface Output {
   type: string;
 }
 
-export interface Abi {
-  constant: boolean;
+interface ContractMember {
+  constant?: boolean;
   inputs: Input[];
   name: string;
   outputs: Output[];
@@ -28,27 +28,28 @@ export interface Abi {
   anonymous?: boolean;
 }
 
+export type Abi = ContractMember[];
+
 export const JoiInput = object({
-  name: string().required(),
+  name: string().required().allow(''),
   type: string().required(),
   indexed: boolean()
 });
 
 export const JoiOutput = object({
-  name: string().required(),
+  name: string().required().allow(''),
   type: string().required()
 });
 
-export const JoiAbi = array()
-  .items(
-    object({
-      constant: boolean().required(),
-      inputs: array().items(JoiInput).required(),
-      name: string().required(),
-      outputs: array().items(JoiOutput).required(),
-      type: string().required(),
-      payable: boolean(),
-      stateMutability: string(),
-      anonymous: boolean()
-    })
-  );
+export const JoiContractMember = object({
+  constant: boolean(),
+  inputs: array().items(JoiInput).required(),
+  name: string().required().allow(''),
+  outputs: array().items(JoiOutput).required(),
+  type: string().required(),
+  payable: boolean(),
+  stateMutability: string(),
+  anonymous: boolean()
+});
+
+export const JoiAbi = array().items(JoiContractMember);
