@@ -1,4 +1,3 @@
-import 'source-map-support/register';
 import logger from './logger';
 import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { Message, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
