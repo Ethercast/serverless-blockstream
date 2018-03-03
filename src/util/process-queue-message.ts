@@ -47,7 +47,7 @@ async function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
       logger.warn({ Failed }, 'some messages failed to send');
       throw new Error('some messages failed to send to the downstream queue');
     } else {
-      logger.info({ count: Successful.length }, 'successfully flushed chunk to queue');
+      logger.debug({ count: Successful.length }, 'successfully flushed chunk to queue');
     }
   }
 }
