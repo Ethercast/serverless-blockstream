@@ -80,7 +80,7 @@ export async function drainQueue(QueueUrl: string,
         }
 
         if (!shouldContinue()) {
-          logger.info('drainQueue: not fetching next block since shouldContinue returned false');
+          logger.info('drainQueue: exiting');
           break;
         }
       }
