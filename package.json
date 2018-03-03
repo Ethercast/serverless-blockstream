@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@ethercast/model": "0.0.1",
+    "@ethercast/queue-drainer": "0.0.2",
     "@types/isomorphic-fetch": "0.0.34",
     "bignumber.js": "^6.0.0",
     "bunyan": "^1.8.12",
@@ -28,7 +29,6 @@
   "author": "Moody Salem",
   "license": "ISC",
   "devDependencies": {
-    "@ethercast/queue-drainer": "0.0.2",
     "@types/aws-lambda": "0.0.32",
     "@types/bunyan": "^1.8.4",
     "@types/chai": "^4.1.2",

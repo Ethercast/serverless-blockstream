@@ -6,7 +6,7 @@ import processQueueMessage from './util/process-queue-message';
 import getQueueUrl, { sqs } from './util/sqs/get-queue-url';
 import QueueDrainer from '@ethercast/queue-drainer';
 
-export const start: Handler = async (event, context, callback) => {
+export const start: Handler = async (event, context) => {
   let QueueUrl: string;
   try {
     QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
