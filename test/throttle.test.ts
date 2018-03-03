@@ -22,7 +22,7 @@ describe('throttle', () => {
     const after = Date.now();
 
     // take less than THROTTLE_TIME ms
-    expect(after - time).to.be.lt(THROTTLE_TIME);
+    expect(after - time).to.be.lt(THROTTLE_TIME / 2);
 
     expect(i).to.eq(1);
     expect(num).to.eq(1);
@@ -33,6 +33,6 @@ describe('throttle', () => {
 
     expect(i).to.eq(2);
     expect(again).to.eq(2);
-    expect(then - now).to.be.gte(THROTTLE_TIME);
+    expect(then - now).to.be.gte(THROTTLE_TIME - 10);
   });
 });
