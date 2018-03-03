@@ -1,9 +1,10 @@
 import 'source-map-support/register';
 import { Handler } from 'aws-lambda';
 import logger from './util/logger';
-import { drainQueue, getQueueUrl } from './util/sqs/sqs-util';
 import { NEW_BLOCK_QUEUE_NAME } from './util/env';
 import processQueueMessage from './util/process-queue-message';
+import getQueueUrl, { sqs } from './util/sqs/get-queue-url';
+import QueueDrainer from '@ethercast/queue-drainer';
 
 export const start: Handler = async (event, context, callback) => {
   let QueueUrl: string;
@@ -16,10 +17,15 @@ export const start: Handler = async (event, context, callback) => {
   }
 
   try {
-    // whether we should continue draining the queue
-    const shouldContinue = () => context.getRemainingTimeInMillis() > 3000;
+    const drainer = new QueueDrainer({
+      sqs,
+      queueUrl: QueueUrl,
+      handleMessage: processQueueMessage,
+      logger,
+      getRemainingTime: () => context.getRemainingTimeInMillis()
+    });
 
-    await drainQueue(QueueUrl, processQueueMessage, shouldContinue);
+    await drainer.drain();
   } catch (err) {
     logger.fatal({ err }, 'error while draining the queue');
     context.done(err);

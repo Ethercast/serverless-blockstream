@@ -1,5 +1,4 @@
 import logger from './logger';
-import { getQueueUrl, sqs } from './sqs/sqs-util';
 import { Message, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage } from './model';
 import { getBlock } from './ddb/block-data';
@@ -8,6 +7,7 @@ import * as crypto from 'crypto';
 import { Log, mustBeValidLog } from '@ethercast/model';
 import BigNumber from 'bignumber.js';
 import decodeLog from './abi/decode-log';
+import getQueueUrl, { sqs } from './sqs/get-queue-url';
 import _ = require('underscore');
 
 async function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
@@ -52,7 +52,7 @@ async function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
   }
 }
 
-export default async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message) {
+export default async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message): Promise<void> {
   if (!ReceiptHandle || !Body) {
     logger.error({ MessageId, ReceiptHandle, Body }, 'message received with no body/receipt handle');
     throw new Error('No receipt handle/body!');

@@ -4,7 +4,7 @@ import * as _ from 'underscore';
 import { isBlockSaved, saveBlockData } from './ddb/block-data';
 import { NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
 import getNextFetchBlock from './state/get-next-fetch-block';
-import { notifyQueueOfBlock } from './sqs/sqs-util';
+import notifyQueueOfBlock from './sqs/notify-queue-of-block';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
 import ValidatedEthClient from '../client/validated-eth-client';

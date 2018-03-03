@@ -28,6 +28,7 @@
   "author": "Moody Salem",
   "license": "ISC",
   "devDependencies": {
+    "@ethercast/queue-drainer": "0.0.2",
     "@types/aws-lambda": "0.0.32",
     "@types/bunyan": "^1.8.4",
     "@types/chai": "^4.1.2",
@@ -38,7 +39,7 @@
     "@types/ws": "^4.0.1",
     "aws-sdk": "^2.200.0",
     "chai": "^4.1.2",
-    "mocha": "^5.0.1",
+    "mocha": "^4.1.0",
     "serverless-dynamodb-autoscaling": "^0.6.2",
     "serverless-pseudo-parameters": "^1.4.1",
     "serverless-webpack": "^4.3.0",

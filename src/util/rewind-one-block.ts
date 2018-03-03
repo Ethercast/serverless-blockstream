@@ -4,7 +4,7 @@ import logger from './logger';
 import { saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockStreamState } from './model';
 import toHex from './to-hex';
-import { notifyQueueOfBlock } from './sqs/sqs-util';
+import notifyQueueOfBlock from './sqs/notify-queue-of-block';
 import calculateNumRewinds from './state/calculate-num-rewinds';
 import { REWIND_BLOCK_LOOKBACK } from './env';
 
