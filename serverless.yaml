@@ -89,11 +89,6 @@ provider:
       Resource:
         - "arn:aws:sqs:${self:custom.region}:#{AWS::AccountId}:${self:custom.newBlockQueueName}"
     - Effect: Allow
-      Action: # Gives the poller permission to execute the drain q lambda
-        - lambda:InvokeFunction
-      Resource:
-        - "arn:aws:lambda:${self:custom.region}:#{AWS::AccountId}:function:${self:custom.drainBlockQueueLambdaName}"
-    - Effect: Allow
       Action: # Gives permission to push logs to the SQS queue
         - sqs:SendMessage
         - sqs:SendMessageBatch
@@ -117,7 +112,9 @@ functions:
     handler: src/drain.start
     memorySize: 128
     reservedConcurrency: 1
-    timeout: 300
+    timeout: 60
+    events:
+      - schedule: rate(1 minute)
 
 resources:
   Outputs:

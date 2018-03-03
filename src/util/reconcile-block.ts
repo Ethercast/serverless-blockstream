@@ -2,16 +2,13 @@ import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { isBlockSaved, saveBlockData } from './ddb/block-data';
-import { DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
-import { Lambda } from 'aws-sdk';
+import { NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
 import getNextFetchBlock from './state/get-next-fetch-block';
 import { notifyQueueOfBlock } from './sqs/sqs-util';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
 import ValidatedEthClient from '../client/validated-eth-client';
 import rewindOneBlock from './rewind-one-block';
-
-const lambda = new Lambda();
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
@@ -138,25 +135,6 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     // and this at worst causes the messages to be sent twice, which is not even a problem if it happens
     // within 5 minutes thanks to deduplication
     logger.error({ err, metadata }, 'failed to update blockstream state');
-    return;
-  }
-
-  // now trigger a lambda to drain the queue
-  try {
-    logger.debug({ metadata, DRAIN_BLOCK_QUEUE_LAMBDA_NAME }, 'invoking lambda asynchronously to drain queue');
-
-    const { StatusCode } = await lambda.invoke({
-      FunctionName: DRAIN_BLOCK_QUEUE_LAMBDA_NAME,
-      InvocationType: 'Event'
-    }).promise();
-
-    if (StatusCode !== 202) {
-      throw new Error(`failed to invoke lambda to drain the queue: StatusCode ${StatusCode}`);
-    }
-
-    logger.info({ metadata }, 'lambda successfully invoked');
-  } catch (err) {
-    logger.error({ DRAIN_BLOCK_QUEUE_LAMBDA_NAME, err, metadata }, 'failed to invoke lambda after pushing to queue');
     return;
   }
 }

@@ -41,7 +41,7 @@ export async function drainQueue(QueueUrl: string,
                                  handleMessage: (message: Message) => Promise<void>,
                                  shouldContinue: () => boolean,
                                  MaxNumberOfMessages: number = 10,
-                                 WaitTimeSeconds: number = 0) {
+                                 WaitTimeSeconds: number = 1) {
   let Messages: MessageList | undefined;
 
   // while we can fetch messages
@@ -56,36 +56,33 @@ export async function drainQueue(QueueUrl: string,
     ) {
     logger.info({ QueueUrl, count: Messages.length }, 'fetched messages');
 
-    if (Messages.length === 0) {
-      logger.info('no messages, exiting');
-      return;
-    }
+    if (Messages.length > 0) {
+      for (let i = 0; i < Messages.length; i++) {
+        const { ReceiptHandle } = Messages[i];
 
-    for (let i = 0; i < Messages.length; i++) {
-      const { ReceiptHandle } = Messages[i];
+        if (!ReceiptHandle) {
+          logger.fatal({ Message: Messages[i] }, 'no receipt handle on receive!');
+          throw new Error('no receipt handle');
+        }
 
-      if (!ReceiptHandle) {
-        logger.fatal({ Message: Messages[i] }, 'no receipt handle on receive!');
-        throw new Error('no receipt handle');
-      }
+        try {
+          await handleMessage(Messages[i]);
 
-      try {
-        await handleMessage(Messages[i]);
+          await sqs.deleteMessage({
+            QueueUrl,
+            ReceiptHandle
+          }).promise();
 
-        await sqs.deleteMessage({
-          QueueUrl,
-          ReceiptHandle
-        }).promise();
+          logger.info({ MessageId: Messages[i].MessageId }, 'drainQueue: processed queue message');
+        } catch (err) {
+          logger.fatal({ err, Message: Messages[i] }, 'drainQueue: failed to process a queue message');
+          throw err;
+        }
 
-        logger.info({ MessageId: Messages[i].MessageId }, 'drainQueue: processed queue message');
-      } catch (err) {
-        logger.fatal({ err, Message: Messages[i] }, 'drainQueue: failed to process a queue message');
-        throw err;
-      }
-
-      if (!shouldContinue()) {
-        logger.info('drainQueue: not fetching next block since shouldContinue returned false');
-        break;
+        if (!shouldContinue()) {
+          logger.info('drainQueue: not fetching next block since shouldContinue returned false');
+          break;
+        }
       }
     }
   }
