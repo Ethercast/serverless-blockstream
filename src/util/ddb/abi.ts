@@ -26,7 +26,7 @@ export async function markAbiNotAvailable(address: string): Promise<void> {
       address,
       abi: null,
       // Cache missing ABIs for one day.
-      ttl: (Date.now() + (86400 * 1000)) / 1000
+      ttl: Math.round((Date.now() + (86400 * 1000)) / 1000)
     }
   }).promise();
 }
