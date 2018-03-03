@@ -47,6 +47,7 @@ custom:
 
 provider:
   name: aws
+  logRetentionInDays: 7
   runtime: nodejs6.10
   environment: # service wide environment variables
     BLOCKSTREAM_STATE_TABLE: ${self:custom.prefix}-blockstream-state # the table containing the state of blockstream
