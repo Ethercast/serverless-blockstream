@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@ethercast/model": "0.0.2",
-    "@ethercast/queue-drainer": "0.0.2",
+    "@ethercast/queue-drainer": "0.0.3",
     "@types/isomorphic-fetch": "0.0.34",
     "bignumber.js": "^6.0.0",
     "bunyan": "^1.8.12",
