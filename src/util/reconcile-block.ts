@@ -10,7 +10,7 @@ import { BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/
 import ValidatedEthClient from '../client/validated-eth-client';
 import rewindOneBlock from './rewind-one-block';
 import tryInvoke from './lambda/try-invoke';
-import { Lambda } from 'aws-sdk';
+import * as Lambda from 'aws-sdk/clients/lambda';
 
 const lambda = new Lambda();
 

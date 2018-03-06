@@ -1,4 +1,4 @@
-import { Lambda } from 'aws-sdk';
+import * as Lambda from 'aws-sdk/clients/lambda';
 
 const ALREADY_RUNNING_ERROR = 'ReservedFunctionConcurrentInvocationLimitExceeded';
 

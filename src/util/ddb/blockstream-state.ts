@@ -1,10 +1,10 @@
 import { BlockStreamState } from '../model';
 import logger from '../logger';
 import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID, STATE_HEIGHT_LIMIT } from '../env';
-import { DynamoDB } from 'aws-sdk';
 import { BlockWithTransactionHashes } from '@ethercast/model';
 import BigNumber from 'bignumber.js';
 import { ddbClient } from './shared';
+import * as DynamoDB from 'aws-sdk/clients/dynamodb';
 import _ = require('underscore');
 
 export async function getBlockStreamState(): Promise<BlockStreamState | null> {

@@ -1,5 +1,5 @@
-import { SQS } from 'aws-sdk';
 import logger from '../logger';
+import * as SQS from 'aws-sdk/clients/sqs';
 
 export const sqs = new SQS();
 
