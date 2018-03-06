@@ -15,6 +15,7 @@ export const ABI_TABLE: string = env.get('ABI_TABLE').required().asString();
 
 export const NEW_BLOCK_QUEUE_NAME: string = env.get('NEW_BLOCK_QUEUE_NAME').required().asString();
 export const LOG_FIREHOSE_QUEUE_NAME: string = env.get('LOG_FIREHOSE_QUEUE_NAME').required().asString();
+export const TRANSACTION_FIREHOSE_QUEUE_NAME: string = env.get('TRANSACTION_FIREHOSE_QUEUE_NAME').required().asString();
 
 export const DRAIN_BLOCK_QUEUE_LAMBDA_NAME: string = env.get('DRAIN_BLOCK_QUEUE_LAMBDA_NAME').required().asString();
 

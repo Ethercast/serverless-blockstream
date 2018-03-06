@@ -2,13 +2,17 @@ import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { isBlockSaved, saveBlockData } from './ddb/block-data';
-import { NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
+import { DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
 import getNextFetchBlock from './state/get-next-fetch-block';
 import notifyQueueOfBlock from './sqs/notify-queue-of-block';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
 import ValidatedEthClient from '../client/validated-eth-client';
 import rewindOneBlock from './rewind-one-block';
+import tryInvoke from './lambda/try-invoke';
+import { Lambda } from 'aws-sdk';
+
+const lambda = new Lambda();
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
@@ -130,11 +134,17 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     // LAST step: save the blockstream state
     await saveBlockStreamState(state, block);
   } catch (err) {
-    // TODO: if this fails, should we retract the message we sent on the queue?
-    // NO, we guarantee at-least-once delivery but not only-once delivery (it doesn't exist)
-    // and this at worst causes the messages to be sent twice, which is not even a problem if it happens
-    // within 5 minutes thanks to deduplication
+    // If this fails, we get duplicate messages in the queue
     logger.error({ err, metadata }, 'failed to update blockstream state');
+    return;
+  }
+
+  // try invoking the queue drain lambda
+  try {
+    await tryInvoke(lambda, DRAIN_BLOCK_QUEUE_LAMBDA_NAME);
+    logger.info('invoked drain block queue lambda');
+  } catch (err) {
+    logger.error({ err, lambdaName: DRAIN_BLOCK_QUEUE_LAMBDA_NAME }, 'failed to invoke lambda');
     return;
   }
 }
