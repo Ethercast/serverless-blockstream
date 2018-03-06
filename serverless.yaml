@@ -1,6 +1,9 @@
 service:
   name: serverless-blockstream
 
+package:
+  individually: true
+
 plugins:
   - serverless-pseudo-parameters
   - serverless-dynamodb-autoscaling
