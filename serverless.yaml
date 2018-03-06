@@ -15,8 +15,8 @@ custom:
   newBlockQueueName: ${self:custom.prefix}-new-blocks.fifo
   logFirehoseQueue: ${self:custom.prefix}-log-firehose.fifo
   transactionFirehoseQueue: ${self:custom.prefix}-tx-firehose.fifo
-  srcNodeUrl: ${opt:nodeUrl, "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"}
-  networkId: ${opt:logLevel, "1"} # id of the network from which the stack pulls data, validated against the node
+  srcNodeUrl: ${opt:srcNodeUrl, "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"}
+  networkId: ${opt:networkId, "1"} # id of the network from which the stack pulls data, validated against the node
   numBlocksDelay: ${opt:numBlocksDelay, "0"}
   blockDataTtlMs: ${opt:blockDataTtlMs, "604800000"} # how long the data stays in dynamo before being removed
   logLevel: ${opt:logLevel, "info"} # log level of the lambdas
