@@ -8,7 +8,7 @@
     "url": "https://github.com/Ethercast/serverless-blockstream"
   },
   "dependencies": {
-    "@ethercast/model": "0.0.1",
+    "@ethercast/model": "0.0.2",
     "@ethercast/queue-drainer": "0.0.2",
     "@types/isomorphic-fetch": "0.0.34",
     "bignumber.js": "^6.0.0",
