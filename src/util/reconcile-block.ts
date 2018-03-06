@@ -24,33 +24,37 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   // as well as other harmless errors due to delays in node data indexing
   const currentBlockNo: BigNumber = (await client.eth_blockNumber()).minus(NUM_BLOCKS_DELAY);
 
-  const nextFetchBlock: BigNumber = await getNextFetchBlock(state, currentBlockNo, REWIND_BLOCK_LOOKBACK);
+  const nextFetchBlockNo: BigNumber = await getNextFetchBlock(state, currentBlockNo, REWIND_BLOCK_LOOKBACK);
 
-  if (currentBlockNo.lt(nextFetchBlock)) {
-    logger.debug({ currentBlockNo, nextFetchBlock }, 'next fetch block is not yet available');
+  if (currentBlockNo.lt(nextFetchBlockNo)) {
+    logger.debug({ currentBlockNo, nextFetchBlockNo }, 'next fetch block is not yet available');
     return;
   }
 
-  const blocksToCurrent = currentBlockNo.minus(nextFetchBlock);
+  {
+    const blocksToCurrent = currentBlockNo.minus(nextFetchBlockNo);
 
-  if (blocksToCurrent.gt(10000)) {
-    logger.fatal('MORE THAN 10K BLOCKS BEHIND THE NETWORK. WILL NEVER CATCH UP');
-    return;
-  } else if (blocksToCurrent.gt(1000)) {
-    logger.error('more than 1000 blocks behind the network! it could take a while to catch up!');
-  } else if (blocksToCurrent.gt(100)) {
-    logger.warn('more than 100 blocks behind the network!');
-  } else if (blocksToCurrent.gt(10)) {
-    logger.info('more than 10 blocks behind the network.');
+    const meta = { currentBlockNo, nextFetchBlockNo };
+
+    if (blocksToCurrent.gt(10000)) {
+      logger.fatal({ meta }, 'more than 10k blocks behind the network');
+      return;
+    } else if (blocksToCurrent.gt(1000)) {
+      logger.error({ meta }, 'more than 1000 blocks behind the network! it could take a while to catch up!');
+    } else if (blocksToCurrent.gt(100)) {
+      logger.warn({ meta }, 'more than 100 blocks behind the network!');
+    } else if (blocksToCurrent.gt(10)) {
+      logger.info({ meta }, 'more than 10 blocks behind the network.');
+    }
   }
 
-  logger.debug({ state, currentBlockNo, nextFetchBlock }, 'fetching block');
+  logger.debug({ state, currentBlockNo, nextFetchBlock: nextFetchBlockNo }, 'fetching block');
 
   let block: BlockWithTransactionHashes;
   try {
-    block = await client.eth_getBlockByNumber(nextFetchBlock, false);
+    block = await client.eth_getBlockByNumber(nextFetchBlockNo, false);
   } catch (err) {
-    logger.debug({ err, currentBlockNo }, 'failed to get current block by number');
+    logger.warn({ err, currentBlockNo }, 'failed to get current block by number');
     return;
   }
 
@@ -60,7 +64,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   try {
     transactionReceipts = await client.eth_getTransactionReceipts(block.transactions);
   } catch (err) {
-    logger.debug({ blockNumber: block.number, blockHash: block.hash, err }, 'failed to get receipts');
+    logger.warn({ blockNumber: block.number, blockHash: block.hash, err }, 'failed to get receipts');
     return;
   }
 
