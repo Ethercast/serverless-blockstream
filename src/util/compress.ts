@@ -1,10 +1,16 @@
 import * as zlib from 'zlib';
 import { DecodedBlockPayload } from './model';
-import { BlockWithTransactionHashes, Log } from '@ethercast/model';
+import { BlockWithFullTransactions, TransactionReceipt } from '@ethercast/model';
 
-export async function deflatePayload(block: BlockWithTransactionHashes, logs: Log[]): Promise<Buffer> {
+export async function deflatePayload(block: BlockWithFullTransactions,
+                                     receipts: TransactionReceipt[]): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
-    zlib.deflate(JSON.stringify({ block, logs }), (err, buffer) => {
+    const payload: DecodedBlockPayload = {
+      block,
+      receipts
+    };
+
+    zlib.deflate(JSON.stringify(payload), (err, buffer) => {
       if (err) {
         reject(err);
       } else {

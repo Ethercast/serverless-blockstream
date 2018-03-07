@@ -75,11 +75,13 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
   logger.info({
     message,
     transactionCount: blockPayload.block.transactions.length,
-    logCount: blockPayload.logs.length
-  }, 'got block, processing block changes');
+    receiptCount: blockPayload.receipts.length
+  }, 'received block');
 
   // first send messages for all the logs that were in the blocks that are now overwritten
-  const validatedLogs: Log[] = _.chain(blockPayload.logs)
+  const validatedLogs: Log[] = _.chain(blockPayload.receipts)
+    .map(receipt => receipt.logs)
+    .flatten()
     .map(log => ({ ...log, removed }))
     .map(mustBeValidLog)
     .sortBy(({ logIndex }) => new BigNumber(logIndex).toNumber())

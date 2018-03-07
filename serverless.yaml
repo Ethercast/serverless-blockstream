@@ -118,8 +118,8 @@ provider:
 
 functions:
   poll-for-blocks:
-    handler: src/poll.start
-    memorySize: 128 # optional, in MB, default is 1024
+    handler: src/poll-for-blocks.start
+    memorySize: 128
     timeout: 120
     reservedConcurrency: 1
     events:
@@ -127,9 +127,9 @@ functions:
           rate: rate(2 minutes)
           enabled: true
 
-  drain-queue:
+  drain-block-queue:
     name: ${self:custom.drainBlockQueueLambdaName}
-    handler: src/drain.start
+    handler: src/drain-block-queue.start
     memorySize: 512
     reservedConcurrency: 1
     timeout: 300

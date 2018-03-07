@@ -2,11 +2,16 @@ import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { isBlockSaved, saveBlockData } from './ddb/block-data';
-import { DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
+import {
+  DRAIN_BLOCK_QUEUE_LAMBDA_NAME,
+  NEW_BLOCK_QUEUE_NAME,
+  NUM_BLOCKS_DELAY,
+  REWIND_BLOCK_LOOKBACK
+} from './env';
 import getNextFetchBlock from './state/get-next-fetch-block';
 import notifyQueueOfBlock from './sqs/notify-queue-of-block';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
-import { BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
+import { BlockWithFullTransactions, Log, TransactionReceipt } from '@ethercast/model';
 import ValidatedEthClient from '../client/validated-eth-client';
 import rewindOneBlock from './rewind-one-block';
 import tryInvoke from './lambda/try-invoke';
@@ -50,21 +55,30 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
 
   logger.debug({ state, currentBlockNo, nextFetchBlock: nextFetchBlockNo }, 'fetching block');
 
-  let block: BlockWithTransactionHashes;
+  let block: BlockWithFullTransactions;
   try {
-    block = await client.eth_getBlockByNumber(nextFetchBlockNo, false);
+    block = await client.eth_getBlockByNumber(nextFetchBlockNo, true);
   } catch (err) {
     logger.warn({ err, currentBlockNo }, 'failed to get current block by number');
     return;
   }
 
-  logger.debug({ blockHash: block.hash, transactionsCount: block.transactions.length }, 'fetching tx receipts');
+  logger.debug({
+    blockHash: block.hash,
+    transactionsCount: block.transactions.length
+  }, 'fetching tx receipts');
 
   let transactionReceipts: TransactionReceipt[];
   try {
-    transactionReceipts = await client.eth_getTransactionReceipts(block.transactions);
+    transactionReceipts = await client.eth_getTransactionReceipts(
+      block.transactions.map(transaction => transaction.hash)
+    );
   } catch (err) {
-    logger.warn({ blockNumber: block.number, blockHash: block.hash, err }, 'failed to get receipts');
+    logger.warn({
+      blockNumber: block.number,
+      blockHash: block.hash,
+      err
+    }, 'failed to get receipts');
     return;
   }
 
@@ -117,7 +131,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   }
 
   try {
-    await saveBlockData(block, logs, state !== null);
+    await saveBlockData(block, transactionReceipts, state !== null);
   } catch (err) {
     logger.error({ err, metadata }, 'failed to save block data');
     return;

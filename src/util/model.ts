@@ -1,4 +1,4 @@
-import { BlockWithTransactionHashes, Log } from '@ethercast/model';
+import { BlockWithFullTransactions, TransactionReceipt } from '@ethercast/model';
 
 export interface BlockStreamState {
   networkId: number;
@@ -25,6 +25,6 @@ export interface DynamoBlock {
 }
 
 export interface DecodedBlockPayload {
-  block: BlockWithTransactionHashes;
-  logs: Log[];
+  block: BlockWithFullTransactions;
+  receipts: TransactionReceipt[];
 }

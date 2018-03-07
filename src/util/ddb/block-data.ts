@@ -5,10 +5,10 @@ import toHex, { BlockNumber } from '../to-hex';
 import BigNumber from 'bignumber.js';
 import { deflatePayload, inflatePayload } from '../compress';
 import {
-  BlockWithTransactionHashes,
-  Log,
-  mustBeValidBlockWithTransactionHashes,
-  mustBeValidLog
+  BlockWithFullTransactions,
+  mustBeValidBlockWithFullTransactions,
+  mustBeValidTransactionReceipt,
+  TransactionReceipt
 } from '@ethercast/model';
 import { ddbClient } from './shared';
 
@@ -81,9 +81,9 @@ export async function getBlock(hash: string, number: string): Promise<DecodedBlo
   }
 }
 
-async function putBlock(block: BlockWithTransactionHashes, logs: Log[]) {
+async function putBlock(block: BlockWithFullTransactions, receipts: TransactionReceipt[]) {
   logger.debug({ hash: block.hash, number: block.number }, 'compressing block and logs');
-  const payload = await deflatePayload(block, logs);
+  const payload = await deflatePayload(block, receipts);
 
   logger.debug({
     hash: block.hash,
@@ -112,15 +112,15 @@ async function putBlock(block: BlockWithTransactionHashes, logs: Log[]) {
   ).promise();
 }
 
-export async function saveBlockData(notValidatedBlock: BlockWithTransactionHashes, notValidatedLogs: Log[], checkParentExists: boolean): Promise<void> {
-  const block = mustBeValidBlockWithTransactionHashes(notValidatedBlock);
-  const logs = notValidatedLogs.map(mustBeValidLog);
+export async function saveBlockData(notValidatedBlock: BlockWithFullTransactions, notValidatedReceipts: TransactionReceipt[], checkParentExists: boolean): Promise<void> {
+  const block = mustBeValidBlockWithFullTransactions(notValidatedBlock);
+  const receipts = notValidatedReceipts.map(mustBeValidTransactionReceipt);
 
   const metadata = {
     blockHash: block.hash,
     blockNumber: block.number,
     txCount: block.transactions.length,
-    logCount: logs.length,
+    receiptCount: receipts.length,
     parentHash: block.parentHash
   };
 
@@ -140,7 +140,7 @@ export async function saveBlockData(notValidatedBlock: BlockWithTransactionHashe
 
   try {
     // save the individual block
-    const { ConsumedCapacity } = await putBlock(block, logs);
+    const { ConsumedCapacity } = await putBlock(block, receipts);
 
     logger.info({ metadata, ConsumedCapacity }, 'completed block save operation');
   } catch (err) {
