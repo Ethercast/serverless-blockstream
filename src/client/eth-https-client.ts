@@ -70,6 +70,10 @@ export default class EthHttpsClient implements EthClient {
   }
 
   public async eth_getTransactionReceipts(hashes: string[]): Promise<TransactionReceipt[]> {
+    if (hashes.length === 0) {
+      return [];
+    }
+
     const results = await this.rpc<any>(
       hashes.map(
         hash => buildRequest(Method.eth_getTransactionReceipt, [hash])
@@ -146,6 +150,8 @@ export default class EthHttpsClient implements EthClient {
       this.logger.error({ err, bodyText }, 'body was not valid json');
       throw err;
     }
+
+    this.logger.debug({ response: json }, 'finished request');
 
     return json;
   }
