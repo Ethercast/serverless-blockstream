@@ -2,14 +2,15 @@ import * as WebSocket from 'ws';
 import EthClient from './eth-client';
 import EthWsClient from './eth-ws-client';
 import EthHttpsClient from './eth-https-client';
+import * as Logger from 'bunyan';
 
-export default async function getClient(nodeUrl: string): Promise<EthClient> {
+export default async function getClient(logger: Logger, nodeUrl: string): Promise<EthClient> {
   if (!nodeUrl) {
     throw new Error('missing node url');
   }
 
   if (nodeUrl.toLowerCase().indexOf('https:/') === 0) {
-    return new EthHttpsClient({ endpointUrl: nodeUrl });
+    return new EthHttpsClient({ logger, endpointUrl: nodeUrl });
   } else if (nodeUrl.toLowerCase().indexOf('wss:/') === 0) {
     const ws = new WebSocket(nodeUrl);
 
@@ -18,7 +19,7 @@ export default async function getClient(nodeUrl: string): Promise<EthClient> {
 
       ws.on('open', () => {
         opened = true;
-        resolve(new EthWsClient({ ws }));
+        resolve(new EthWsClient({ logger, ws }));
       });
 
       setTimeout(

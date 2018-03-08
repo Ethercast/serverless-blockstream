@@ -2,14 +2,16 @@ import EthClient, { BlockParameter, LogFilter, Method } from './eth-client';
 import { BlockWithFullTransactions, BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
 import { buildRequest, MethodParameter } from './util';
 import BigNumber from 'bignumber.js';
-import logger from '../util/logger';
 import * as fetch from 'isomorphic-fetch';
+import * as Logger from 'bunyan';
 
 export default class EthHttpsClient implements EthClient {
   endpointUrl: string;
+  logger: Logger;
 
-  constructor({ endpointUrl }: { endpointUrl: string }) {
+  constructor({ endpointUrl, logger }: { logger: Logger, endpointUrl: string }) {
     this.endpointUrl = endpointUrl;
+    this.logger = logger;
   }
 
   public eth_getBlockByHash(hash: string, includeFullTransactions: false): Promise<BlockWithTransactionHashes>;
@@ -77,7 +79,7 @@ export default class EthHttpsClient implements EthClient {
     return results.map(
       ({ result }: { result: any }) => {
         if (typeof result === 'undefined') {
-          throw new Error('inavlid response: ' + JSON.stringify(result));
+          throw new Error('invalid response: ' + JSON.stringify(result));
         }
 
         if (result === null) {
@@ -95,7 +97,7 @@ export default class EthHttpsClient implements EthClient {
     const json = await this.rpc<any>(request);
 
     if (typeof json.result === 'undefined') {
-      logger.error({ request, responseBody: json }, 'no `result` key in the body');
+      this.logger.error({ request, responseBody: json }, 'no `result` key in the body');
       throw new Error(`failed to fetch: no result in the body`);
     }
 
@@ -105,7 +107,7 @@ export default class EthHttpsClient implements EthClient {
   private async rpc<TResponse>(body: any): Promise<TResponse> {
     const { endpointUrl } = this;
 
-    logger.debug({ body }, 'sending request');
+    this.logger.debug({ body }, 'sending request');
 
     const response = await fetch(
       endpointUrl,
@@ -123,12 +125,12 @@ export default class EthHttpsClient implements EthClient {
     try {
       bodyText = await response.text();
     } catch (err) {
-      logger.error({ err }, 'body text couldnt be extracted');
+      this.logger.error({ err }, 'body text couldnt be extracted');
       throw err;
     }
 
     if (response.status !== 200) {
-      logger.error({
+      this.logger.error({
         requestBody: body,
         responseStatus: response.status,
         responseBody: bodyText
@@ -141,7 +143,7 @@ export default class EthHttpsClient implements EthClient {
     try {
       json = JSON.parse(bodyText);
     } catch (err) {
-      logger.error({ err, bodyText }, 'body was not valid json');
+      this.logger.error({ err, bodyText }, 'body was not valid json');
       throw err;
     }
 

@@ -8,7 +8,7 @@ import * as _ from 'underscore';
 import ValidatedClient from './client/validated-eth-client';
 
 export const start: Handler = async (event: any, context: Context, cb: Callback) => {
-  const unvalidatedClient = await getClient(SRC_NODE_URL);
+  const unvalidatedClient = await getClient(logger, SRC_NODE_URL);
   // validate everything coming out of the ethereum node
   const client = new ValidatedClient(unvalidatedClient);
 

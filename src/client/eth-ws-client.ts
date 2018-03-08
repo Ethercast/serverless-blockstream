@@ -1,15 +1,17 @@
 import * as WebSocket from 'ws';
 import { BlockWithFullTransactions, BlockWithTransactionHashes, TransactionReceipt } from '@ethercast/model';
 import BigNumber from 'bignumber.js';
-import logger from '../util/logger';
 import { buildRequest, MethodParameter } from './util';
 import EthClient, { BlockParameter, LogFilter, Method } from './eth-client';
+import * as Logger from 'bunyan';
 
 export default class EthWSClient implements EthClient {
   ws: WebSocket;
+  logger: Logger;
 
-  constructor({ ws }: { ws: WebSocket }) {
+  constructor({ ws, logger }: { ws: WebSocket, logger: Logger }) {
     this.ws = ws;
+    this.logger = logger;
   }
 
   web3_clientVersion = () => this.cmd<string>(Method.web3_clientVersion);
@@ -75,8 +77,8 @@ export default class EthWSClient implements EthClient {
 
       let resolved = false;
 
-      const listener = function (event: { data: any; type: string; target: WebSocket }): void {
-        logger.debug({ type: event.type, data: event.data }, 'received event');
+      const listener = (event: { data: any; type: string; target: WebSocket }) => {
+        this.logger.debug({ type: event.type, data: event.data }, 'received event');
 
         if (event.type === 'message') {
           try {
@@ -95,7 +97,7 @@ export default class EthWSClient implements EthClient {
 
       ws.addEventListener('message', listener);
 
-      logger.debug({ method, request }, 'sending request');
+      this.logger.debug({ method, request }, 'sending request');
 
       ws.send(JSON.stringify(request));
 
