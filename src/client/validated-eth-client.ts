@@ -1,9 +1,8 @@
-import EthClient, { BlockParameter } from './eth-client';
+import EthClient, { BlockParameter, LogFilter } from './eth-client';
 import {
   BlockWithFullTransactions,
   BlockWithTransactionHashes,
   Log,
-  LogFilter,
   mustBeValidBlockWithFullTransactions,
   mustBeValidBlockWithTransactionHashes,
   mustBeValidLog,

@@ -1,11 +1,5 @@
 import BigNumber from 'bignumber.js';
-import {
-  BlockWithFullTransactions,
-  BlockWithTransactionHashes,
-  Log,
-  LogFilter,
-  TransactionReceipt
-} from '@ethercast/model';
+import { BlockWithFullTransactions, BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
 
 export enum Method {
   web3_clientVersion = 'web3_clientVersion',
@@ -18,6 +12,13 @@ export enum Method {
 }
 
 export type BlockParameter = string | number | BigNumber | 'earliest' | 'latest' | 'pending'
+
+export interface LogFilter {
+  topics?: (string | string[])[];
+  fromBlock: string | BigNumber | number | 'latest' | 'earliest' | 'pending';
+  toBlock: string | BigNumber | number | 'latest' | 'earliest' | 'pending';
+  address?: string;
+}
 
 export default interface EthClient {
   net_version(): Promise<number>;

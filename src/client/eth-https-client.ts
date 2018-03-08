@@ -1,11 +1,5 @@
-import EthClient, { BlockParameter, Method } from './eth-client';
-import {
-  BlockWithFullTransactions,
-  BlockWithTransactionHashes,
-  Log,
-  LogFilter,
-  TransactionReceipt
-} from '@ethercast/model';
+import EthClient, { BlockParameter, LogFilter, Method } from './eth-client';
+import { BlockWithFullTransactions, BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
 import { buildRequest, MethodParameter } from './util';
 import BigNumber from 'bignumber.js';
 import logger from '../util/logger';

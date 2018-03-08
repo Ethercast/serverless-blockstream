@@ -1,9 +1,9 @@
 import * as WebSocket from 'ws';
-import { BlockWithFullTransactions, BlockWithTransactionHashes, LogFilter, TransactionReceipt } from '@ethercast/model';
+import { BlockWithFullTransactions, BlockWithTransactionHashes, TransactionReceipt } from '@ethercast/model';
 import BigNumber from 'bignumber.js';
 import logger from '../util/logger';
 import { buildRequest, MethodParameter } from './util';
-import EthClient, { BlockParameter, Method } from './eth-client';
+import EthClient, { BlockParameter, LogFilter, Method } from './eth-client';
 
 export default class EthWSClient implements EthClient {
   ws: WebSocket;
