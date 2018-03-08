@@ -1,7 +1,7 @@
-import * as fetch from 'isomorphic-fetch';
 import { stringify } from 'querystring';
 import { Abi, EtherscanResponse, JoiAbi } from './etherscan-model';
 import { throttle } from '../util/throttle';
+import fetch from 'node-fetch';
 
 const BASE_GET_ABI_PARAMS = {
   module: 'contract',

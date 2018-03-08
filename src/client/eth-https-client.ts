@@ -2,7 +2,7 @@ import EthClient, { BlockParameter, LogFilter, Method } from './eth-client';
 import { BlockWithFullTransactions, BlockWithTransactionHashes, Log, TransactionReceipt } from '@ethercast/model';
 import { buildRequest, MethodParameter } from './util';
 import BigNumber from 'bignumber.js';
-import * as fetch from 'isomorphic-fetch';
+import fetch from 'node-fetch';
 import * as Logger from 'bunyan';
 
 export default class EthHttpsClient implements EthClient {
