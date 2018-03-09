@@ -309,7 +309,7 @@ resources:
           - Ref: AlarmTopic
         TreatMissingData: breaching
 
-    LogFirehoseQueueDepthAlarm:
+    TransactionFirehoseQueueDepthAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
         AlarmDescription: "Alarm if new txs are not being removed from the queue"
@@ -329,7 +329,7 @@ resources:
           - Ref: AlarmTopic
         TreatMissingData: missing
 
-    LogFirehoseQueueActiveAlarm:
+    TransactionFirehoseQueueActiveAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
         AlarmDescription: "Alarm if txs have not been added to queue in five minutes"
