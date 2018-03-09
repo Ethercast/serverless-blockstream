@@ -12,8 +12,6 @@ import flushMessagesToQueue from './sqs/flush-to-queue';
 import decodeTransaction from './abi/decode-transaction';
 import _ = require('underscore');
 
-const sqs = new SQS();
-
 function logMessageId(log: Log) {
   return crypto.createHash('sha256')
     .update(log.blockHash)
@@ -23,7 +21,7 @@ function logMessageId(log: Log) {
     .digest('hex');
 }
 
-function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
+function flushLogMessagesToQueue(sqs: SQS, validatedLogs: Log[]): Promise<void> {
   return flushMessagesToQueue(sqs, LOG_FIREHOSE_QUEUE_NAME, validatedLogs, logMessageId);
 }
 
@@ -36,11 +34,11 @@ function transactionMessageId(transaction: TransactionMessage) {
   return `${transaction.hash}-${transaction.removed}`;
 }
 
-function flushTransactionMessagesToQueue(validatedTransactions: TransactionMessage[]): Promise<void> {
+function flushTransactionMessagesToQueue(sqs: SQS, validatedTransactions: TransactionMessage[]): Promise<void> {
   return flushMessagesToQueue(sqs, TRANSACTION_FIREHOSE_QUEUE_NAME, validatedTransactions, transactionMessageId);
 }
 
-export default async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message): Promise<void> {
+export default async function processQueueMessage(sqs: SQS, { Body, MessageId, ReceiptHandle }: Message): Promise<void> {
   if (!ReceiptHandle || !Body) {
     logger.error({ MessageId, ReceiptHandle, Body }, 'message received with no body/receipt handle');
     throw new Error('No receipt handle/body!');
@@ -90,8 +88,8 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
   }));
 
   await Promise.all([
-    flushLogMessagesToQueue(removed ? decodedLogs.reverse() : decodedLogs),
-    flushTransactionMessagesToQueue(removed ? transactionMessages.reverse() : transactionMessages)
+    flushLogMessagesToQueue(sqs, removed ? decodedLogs.reverse() : decodedLogs),
+    flushTransactionMessagesToQueue(sqs, removed ? transactionMessages.reverse() : transactionMessages)
   ]);
 
   logger.info({ message, count: validatedLogs.length }, 'flushed logs to queue');

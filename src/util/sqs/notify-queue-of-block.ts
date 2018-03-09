@@ -2,12 +2,13 @@ import { BlockWithTransactionHashes } from '@ethercast/model';
 import { NETWORK_ID, NEW_BLOCK_QUEUE_NAME } from '../env';
 import logger from '../logger';
 import { BlockQueueMessage } from '../model';
-import getQueueUrl, { sqs } from './get-queue-url';
+import getQueueUrl from './get-queue-url';
+import * as SQS from 'aws-sdk/clients/sqs';
 
-export default async function notifyQueueOfBlock(metadata: Pick<BlockWithTransactionHashes, 'hash' | 'number'>, removed: boolean): Promise<string> {
+export default async function notifyQueueOfBlock(sqs: SQS, metadata: Pick<BlockWithTransactionHashes, 'hash' | 'number'>, removed: boolean): Promise<string> {
   let QueueUrl: string;
   try {
-    QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
+    QueueUrl = await getQueueUrl(sqs, NEW_BLOCK_QUEUE_NAME);
   } catch (err) {
     logger.error({ err, metadata, removed }, 'could not find queue url: ' + NEW_BLOCK_QUEUE_NAME);
     throw err;

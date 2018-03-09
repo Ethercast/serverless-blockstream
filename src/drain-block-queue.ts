@@ -3,13 +3,16 @@ import { Handler } from 'aws-lambda';
 import logger from './util/logger';
 import { NEW_BLOCK_QUEUE_NAME } from './util/env';
 import processQueueMessage from './util/process-queue-message';
-import getQueueUrl, { sqs } from './util/sqs/get-queue-url';
+import getQueueUrl from './util/sqs/get-queue-url';
 import QueueDrainer from '@ethercast/queue-drainer';
+import * as SQS from 'aws-sdk/clients/sqs';
+
+const sqs = new SQS();
 
 export const start: Handler = async (event, context) => {
   let QueueUrl: string;
   try {
-    QueueUrl = await getQueueUrl(NEW_BLOCK_QUEUE_NAME);
+    QueueUrl = await getQueueUrl(sqs, NEW_BLOCK_QUEUE_NAME);
   } catch (err) {
     logger.fatal({ err, QueueName: NEW_BLOCK_QUEUE_NAME }, 'failed to get queue url');
     context.done(err);
@@ -20,7 +23,7 @@ export const start: Handler = async (event, context) => {
     const drainer = new QueueDrainer({
       sqs,
       queueUrl: QueueUrl,
-      handleMessage: processQueueMessage,
+      handleMessage: processQueueMessage.bind(null, sqs),
       logger,
       getRemainingTime: () => context.getRemainingTimeInMillis()
     });

@@ -11,13 +11,12 @@ import ValidatedEthClient from '../client/validated-eth-client';
 import rewindOneBlock from './rewind-one-block';
 import tryInvoke from './lambda/try-invoke';
 import * as Lambda from 'aws-sdk/clients/lambda';
-
-const lambda = new Lambda();
+import * as SQS from 'aws-sdk/clients/sqs';
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
  */
-export default async function reconcileBlock(client: ValidatedEthClient): Promise<void> {
+export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: ValidatedEthClient): Promise<void> {
   const state = await getBlockStreamState();
 
   // we have a configurable block delay which lets us reduce the frequency fo chain reorgs
@@ -133,7 +132,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
   }
 
   try {
-    await notifyQueueOfBlock(block, false);
+    await notifyQueueOfBlock(sqs, block, false);
   } catch (err) {
     logger.error({
       QueueName: NEW_BLOCK_QUEUE_NAME,
