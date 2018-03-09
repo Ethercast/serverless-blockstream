@@ -6,7 +6,8 @@ import _ = require('underscore');
 
 export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
   try {
-    const abi = await getAbi(log.address);
+    const abi = await
+      getAbi(log.address);
 
     if (abi === null) {
       return log;
@@ -15,13 +16,10 @@ export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
     // first find the matching signature
     const matchingSignature = _.find(
       abi,
-      ({ name, inputs, type, anonymous }) =>
-        // TODO: We can't support anonymous events!
-        !anonymous &&
-        type === 'event' &&
-        encodeEventSignature(
-          `${name}(${inputs.map(({ type }) => type).join(',')})`
-        ) === log.topics[0]
+      abiSignature =>
+        abiSignature.type === 'event' &&
+        !abiSignature.anonymous &&
+        encodeEventSignature(abiSignature) === log.topics[0]
     );
 
     if (!matchingSignature) {
@@ -33,13 +31,13 @@ export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
       return log;
     }
 
-    const ethercast = decodeWithAbi(matchingSignature.inputs, log.data, log.topics);
+    const parameters = decodeWithAbi(matchingSignature.inputs, log.data, log.topics);
 
-    logger.debug({ ethercast, log }, 'successfully decoded log');
+    logger.debug({ parameters, log }, 'successfully decoded log');
 
     return {
       ...log,
-      ethercast: { ...ethercast, __ethercastEventName: matchingSignature.name }
+      ethercast: { eventName: matchingSignature.name, parameters }
     };
   } catch (err) {
     logger.debug({ err, address: log.address }, `error getting abi`);

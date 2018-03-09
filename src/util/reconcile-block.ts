@@ -2,12 +2,7 @@ import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { isBlockSaved, saveBlockData } from './ddb/block-data';
-import {
-  DRAIN_BLOCK_QUEUE_LAMBDA_NAME,
-  NEW_BLOCK_QUEUE_NAME,
-  NUM_BLOCKS_DELAY,
-  REWIND_BLOCK_LOOKBACK
-} from './env';
+import { DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
 import getNextFetchBlock from './state/get-next-fetch-block';
 import notifyQueueOfBlock from './sqs/notify-queue-of-block';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
@@ -104,7 +99,7 @@ export default async function reconcileBlock(client: ValidatedEthClient): Promis
     return;
   }
 
-  if (_.any(logs, ({ removed }) => removed)) {
+  if (_.any(logs, ({ removed }) => Boolean(removed))) {
     logger.error({ metadata }, 'block received with a log already marked removed');
     return;
   }
