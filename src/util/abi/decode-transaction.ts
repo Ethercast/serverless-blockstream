@@ -11,6 +11,10 @@ export default async function decodeTransaction(transaction: Transaction): Promi
       return transaction;
     }
 
+    if (transaction.to === null) {
+      return transaction;
+    }
+
     const abi = await getAbi(transaction.to);
 
     if (abi === null) {
@@ -56,7 +60,7 @@ export default async function decodeTransaction(transaction: Transaction): Promi
       }
     };
   } catch (err) {
-    logger.debug({ err, address: transaction.to }, `error getting abi`);
+    logger.debug({ err, transaction }, `error decoding transaction`);
     return transaction;
   }
 }

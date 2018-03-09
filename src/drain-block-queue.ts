@@ -25,7 +25,7 @@ export const start: Handler = async (event, context) => {
       queueUrl: QueueUrl,
       handleMessage: processQueueMessage.bind(null, sqs),
       logger,
-      getRemainingTime: () => context.getRemainingTimeInMillis()
+      shouldContinue: () => context.getRemainingTimeInMillis() > 3000
     });
 
     await drainer.drain();

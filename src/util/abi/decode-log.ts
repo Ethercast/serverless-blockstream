@@ -39,7 +39,7 @@ export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
       ethercast: { eventName: matchingSignature.name, parameters }
     };
   } catch (err) {
-    logger.debug({ err, address: log.address }, `error getting abi`);
+    logger.warn({ err, log }, `error decoding log`);
     return log;
   }
 }
