@@ -41,6 +41,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
 
       // assume we cannot process a block in less than 3 seconds
       if (context.getRemainingTimeInMillis() < 3000) {
+        logger.info('times up, ending loop');
         context.succeed('times up');
         return;
       }

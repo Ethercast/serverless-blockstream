@@ -121,11 +121,11 @@ functions:
   poll-for-blocks:
     handler: src/poll-for-blocks.start
     memorySize: 128
-    timeout: 120
+    timeout: 60
     reservedConcurrency: 1
     events:
       - schedule:
-          rate: rate(2 minutes)
+          rate: rate(1 minute)
           enabled: true
 
   drain-block-queue:
