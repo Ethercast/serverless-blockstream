@@ -110,6 +110,7 @@ provider:
         - sqs:GetQueueUrl
       Resource:
         - "arn:aws:sqs:#{AWS::Region}:#{AWS::AccountId}:${self:custom.logFirehoseQueue}"
+        - "arn:aws:sqs:#{AWS::Region}:#{AWS::AccountId}:${self:custom.transactionFirehoseQueue}"
     - Effect: Allow
       Action: # Gives permission to push logs to the SQS queue
         - lambda:InvokeFunction
