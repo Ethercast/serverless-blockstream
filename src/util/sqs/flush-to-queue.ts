@@ -4,6 +4,9 @@ import { SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
 import { NETWORK_ID } from '../env';
 import logger from '../logger';
 
+const MAX_SQS_BATCH_SIZE = 262144;
+const MAX_SQS_BATCH_COUNT = 10;
+
 export default async function flushMessagesToQueue<T>(sqs: SQS, queueName: string, messages: T[], getMessageId: (item: T) => string): Promise<void> {
   if (messages.length === 0) {
     return;
@@ -11,27 +14,50 @@ export default async function flushMessagesToQueue<T>(sqs: SQS, queueName: strin
 
   const QueueUrl = await getQueueUrl(sqs, queueName);
 
-  for (let i = 0; i < messages.length; i += 10) {
-    const chunk = messages.slice(i, i + 10);
+  // copy the message array
+  let pending = messages.slice();
 
-    const entries: SendMessageBatchRequestEntryList = chunk.map((message) => {
+  // while we still have pending messages...
+  while (pending.length > 0) {
+    const entryChunk: SendMessageBatchRequestEntryList = [];
+
+    let chunkSize = 0;
+    let itemCount = 0;
+
+    while (itemCount < MAX_SQS_BATCH_COUNT && itemCount < pending.length) {
+      const message = pending[itemCount];
+
       const Id: string = getMessageId(message);
 
-      return {
+      const MessageBody = JSON.stringify(message);
+
+      // do not add if it exceeds the max chunk size, with a buffer of roughly 20kb
+      if (chunkSize + MessageBody.length > MAX_SQS_BATCH_SIZE - 20000) {
+        break;
+      }
+
+      itemCount++;
+      chunkSize += MessageBody.length;
+
+      entryChunk.push({
         Id,
-        MessageBody: JSON.stringify(message),
+        MessageBody,
         MessageDeduplicationId: Id,
         MessageGroupId: `net-${NETWORK_ID}`
-      };
-    });
+      });
+    }
 
-    const { Successful, Failed } = await sqs.sendMessageBatch({ QueueUrl, Entries: entries }).promise();
+    pending = pending.slice(itemCount);
+
+    const { Successful, Failed } = await sqs.sendMessageBatch({ QueueUrl, Entries: entryChunk }).promise();
 
     if (Failed.length > 0) {
-      logger.warn({ Failed }, 'some messages failed to send');
-      throw new Error('some messages failed to send to the downstream queue');
+      logger.fatal({ QueueUrl, Failed }, 'some messages failed to send');
+      throw new Error('some messages failed to flush to the queue');
     } else {
-      logger.debug({ count: Successful.length }, 'successfully flushed chunk to queue');
+      logger.debug({ QueueUrl, count: Successful.length }, 'successfully flushed chunk to queue');
     }
   }
+
+  logger.info({ queueName, count: messages.length }, 'flushed messages to queue');
 }

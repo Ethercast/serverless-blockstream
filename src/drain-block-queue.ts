@@ -25,7 +25,9 @@ export const start: Handler = async (event, context) => {
       queueUrl: QueueUrl,
       handleMessage: processQueueMessage.bind(null, sqs),
       logger,
-      shouldContinue: () => context.getRemainingTimeInMillis() > 3000
+      // we think it shouldn't take longer than 3 seconds per block
+      shouldContinue: () => context.getRemainingTimeInMillis() > 3000,
+      batchSize: 1
     });
 
     await drainer.drain();
