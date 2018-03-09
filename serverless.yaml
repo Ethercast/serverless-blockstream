@@ -136,6 +136,7 @@ functions:
     timeout: 300
 
 resources:
+  Description: The block streaming stack that populates the log and transaction queues
   Outputs:
     LogFirehoseQueueName:
       Description: The name of the log firehose SQS queue to which all incoming logs events are sent
