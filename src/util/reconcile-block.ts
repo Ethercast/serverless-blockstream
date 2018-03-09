@@ -15,8 +15,10 @@ import * as SQS from 'aws-sdk/clients/sqs';
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
+ *
+ * Returns true if we should halt
  */
-export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: ValidatedEthClient): Promise<void> {
+export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: ValidatedEthClient): Promise<boolean> {
   const state = await getBlockStreamState();
 
   // we have a configurable block delay which lets us reduce the frequency fo chain reorgs
@@ -27,7 +29,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
 
   if (currentBlockNo.lt(nextFetchBlockNo)) {
     logger.debug({ currentBlockNo, nextFetchBlockNo }, 'next fetch block is not yet available');
-    return;
+    return true;
   }
 
   {
@@ -37,7 +39,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
 
     if (blocksToCurrent.gt(10000)) {
       logger.fatal({ meta }, 'more than 10k blocks behind the network');
-      return;
+      return false;
     } else if (blocksToCurrent.gt(1000)) {
       logger.error({ meta }, 'more than 1000 blocks behind the network! it could take a while to catch up!');
     } else if (blocksToCurrent.gt(100)) {
@@ -54,7 +56,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
     block = await client.eth_getBlockByNumber(nextFetchBlockNo, true);
   } catch (err) {
     logger.warn({ err, currentBlockNo }, 'failed to get current block by number');
-    return;
+    return false;
   }
 
   logger.debug({
@@ -73,7 +75,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
       blockHash: block.hash,
       err
     }, 'failed to get receipts');
-    return;
+    return false;
   }
 
   const logs: Log[] = _.flatten(transactionReceipts.map(receipt => receipt.logs), true);
@@ -95,12 +97,12 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
   if (_.any(logs, ({ blockHash }) => blockHash !== block.hash)) {
     logger.warn({ metadata }, 'inconsistent logs: not all logs matched the block');
     logger.debug({ block, transactionReceipts, logs }, 'inconsistent logs');
-    return;
+    return false;
   }
 
   if (_.any(logs, ({ removed }) => Boolean(removed))) {
     logger.error({ metadata }, 'block received with a log already marked removed');
-    return;
+    return false;
   }
 
   //  detect chain reorganizations
@@ -116,7 +118,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
       try {
         await rewindOneBlock(sqs, state, metadata);
         logger.info({ metadata }, 'successfully rewound');
-        return;
+        return false;
       } catch (err) {
         logger.fatal({ metadata, state, err }, 'failed to handle chain reorganization');
         throw new Error('failed to handle chain reorg');
@@ -128,7 +130,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
     await saveBlockData(block, transactionReceipts, state !== null);
   } catch (err) {
     logger.error({ err, metadata }, 'failed to save block data');
-    return;
+    return false;
   }
 
   try {
@@ -139,7 +141,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
       err,
       metadata
     }, 'failed to deliver block notification message to queue');
-    return;
+    return false;
   }
 
   try {
@@ -148,7 +150,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
   } catch (err) {
     // If this fails, we get duplicate messages in the queue
     logger.error({ err, metadata }, 'failed to update blockstream state');
-    return;
+    return false;
   }
 
   // try invoking the queue drain lambda
@@ -157,6 +159,8 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
     logger.info('invoked drain block queue lambda');
   } catch (err) {
     logger.error({ err, lambdaName: DRAIN_BLOCK_QUEUE_LAMBDA_NAME }, 'failed to invoke lambda');
-    return;
+    return false;
   }
+
+  return false;
 }

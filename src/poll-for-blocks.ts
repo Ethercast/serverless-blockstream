@@ -25,7 +25,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
 
   if (netVersion !== NETWORK_ID) {
     logger.fatal({ netVersion, NETWORK_ID }, 'NETWORK_ID and netVersion do not match');
-    context.done(new Error('invalid network ID'));
+    context.fail(new Error('invalid network ID'));
     return;
   }
 
@@ -41,7 +41,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
 
       // assume we cannot process a block in less than 3 seconds
       if (context.getRemainingTimeInMillis() < 3000) {
-        context.done();
+        context.succeed('times up');
         return;
       }
 
@@ -49,16 +49,20 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
 
       reconcileBlock(lambda, sqs, client)
         .then(
-          () => {
-            locked = false;
-            _.defer(loop);
+          (shouldHalt) => {
+            if (shouldHalt) {
+              context.succeed('received halt signal');
+            } else {
+              locked = false;
+              _.defer(loop);
+            }
           }
         )
         .catch(
           err => {
             logger.fatal({ err }, 'unexpected error encountered');
 
-            context.done(err);
+            context.fail(err);
           }
         );
     },
