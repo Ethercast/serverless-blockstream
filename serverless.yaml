@@ -308,3 +308,43 @@ resources:
         OKActions:
           - Ref: AlarmTopic
         TreatMissingData: breaching
+
+    LogFirehoseQueueDepthAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: "Alarm if new txs are not being removed from the queue"
+        Namespace: "AWS/SQS"
+        MetricName: ApproximateNumberOfMessagesVisible
+        Dimensions:
+          - Name: QueueName
+            Value: ${self:custom.transactionFirehoseQueue}
+        Statistic: Maximum
+        Period: 60
+        Threshold: 500
+        EvaluationPeriods: 3
+        ComparisonOperator: GreaterThanThreshold
+        AlarmActions:
+          - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
+        TreatMissingData: missing
+
+    LogFirehoseQueueActiveAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: "Alarm if txs have not been added to queue in five minutes"
+        Namespace: "AWS/SQS"
+        MetricName: NumberOfMessagesSent
+        Dimensions:
+          - Name: QueueName
+            Value: ${self:custom.transactionFirehoseQueue}
+        Statistic: Sum
+        Period: 300
+        Threshold: 0
+        EvaluationPeriods: 3
+        ComparisonOperator: LessThanOrEqualToThreshold
+        AlarmActions:
+          - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
+        TreatMissingData: breaching
