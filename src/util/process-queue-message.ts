@@ -1,55 +1,43 @@
 import logger from './logger';
-import { Message, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
+import * as SQS from 'aws-sdk/clients/sqs';
+import { Message } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage } from './model';
 import { getBlock } from './ddb/block-data';
-import { LOG_FIREHOSE_QUEUE_NAME, NETWORK_ID } from './env';
+import { LOG_FIREHOSE_QUEUE_NAME, TRANSACTION_FIREHOSE_QUEUE_NAME } from './env';
 import * as crypto from 'crypto';
-import { Log, mustBeValidLog } from '@ethercast/model';
+import { Log, mustBeValidLog, mustBeValidTransaction, Transaction } from '@ethercast/model';
 import BigNumber from 'bignumber.js';
 import decodeLog from './abi/decode-log';
-import getQueueUrl, { sqs } from './sqs/get-queue-url';
+import flushMessagesToQueue from './sqs/flush-to-queue';
+import decodeTransaction from './abi/decode-transaction';
 import _ = require('underscore');
 
-async function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
-  if (validatedLogs.length === 0) {
-    return;
-  }
+const sqs = new SQS();
 
-  let QueueUrl: string;
-  try {
-    QueueUrl = await getQueueUrl(LOG_FIREHOSE_QUEUE_NAME);
-  } catch (err) {
-    logger.error({ err }, `failed to get queue url: ${LOG_FIREHOSE_QUEUE_NAME}`);
-    throw err;
-  }
+function logMessageId(log: Log) {
+  return crypto.createHash('sha256')
+    .update(log.blockHash)
+    .update(log.transactionHash)
+    .update(log.logIndex)
+    .update(log.removed ? 'removed' : 'new')
+    .digest('hex');
+}
 
-  for (let i = 0; i < validatedLogs.length; i += 10) {
-    const chunk = validatedLogs.slice(i, i + 10);
+function flushLogMessagesToQueue(validatedLogs: Log[]): Promise<void> {
+  return flushMessagesToQueue(sqs, LOG_FIREHOSE_QUEUE_NAME, validatedLogs, logMessageId);
+}
 
-    const entries: SendMessageBatchRequestEntryList = chunk.map((log) => {
-      const Id: string = crypto.createHash('sha256')
-        .update(log.blockHash)
-        .update(log.transactionHash)
-        .update(log.logIndex)
-        .digest('hex');
+// includes the flag for whether it was removed or added
+interface TransactionMessage extends Transaction {
+  removed: boolean;
+}
 
-      return {
-        Id,
-        MessageBody: JSON.stringify(log),
-        MessageDeduplicationId: Id,
-        MessageGroupId: `net-${NETWORK_ID}`
-      };
-    });
+function transactionMessageId(transaction: TransactionMessage) {
+  return `${transaction.hash}-${transaction.removed}`;
+}
 
-    const { Successful, Failed } = await sqs.sendMessageBatch({ QueueUrl, Entries: entries }).promise();
-
-    if (Failed.length > 0) {
-      logger.warn({ Failed }, 'some messages failed to send');
-      throw new Error('some messages failed to send to the downstream queue');
-    } else {
-      logger.debug({ count: Successful.length }, 'successfully flushed chunk to queue');
-    }
-  }
+function flushTransactionMessagesToQueue(validatedTransactions: TransactionMessage[]): Promise<void> {
+  return flushMessagesToQueue(sqs, TRANSACTION_FIREHOSE_QUEUE_NAME, validatedTransactions, transactionMessageId);
 }
 
 export default async function processQueueMessage({ Body, MessageId, ReceiptHandle }: Message): Promise<void> {
@@ -69,7 +57,7 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
   const blockPayload = await getBlock(hash, number);
 
   if (!blockPayload) {
-    throw new Error(`block not found with hash ${hash} and number ${hash}`);
+    throw new Error(`block not found with hash ${hash} and number ${number}`);
   }
 
   logger.info({
@@ -87,9 +75,24 @@ export default async function processQueueMessage({ Body, MessageId, ReceiptHand
     .sortBy(({ logIndex }) => new BigNumber(logIndex).toNumber())
     .value();
 
-  const decodedLogs = await Promise.all(validatedLogs.map(decodeLog));
+  const validatedTransactions: Transaction[] = _.chain(blockPayload.block.transactions)
+    .map(mustBeValidTransaction)
+    .value();
 
-  await flushLogMessagesToQueue(removed ? decodedLogs.reverse() : decodedLogs);
+  const [decodedLogs, decodedTransactions] = await Promise.all([
+    Promise.all(validatedLogs.map(decodeLog)),
+    Promise.all(validatedTransactions.map(decodeTransaction))
+  ]);
+
+  const transactionMessages: TransactionMessage[] = decodedTransactions.map(transaction => ({
+    ...transaction,
+    removed
+  }));
+
+  await Promise.all([
+    flushLogMessagesToQueue(removed ? decodedLogs.reverse() : decodedLogs),
+    flushTransactionMessagesToQueue(removed ? transactionMessages.reverse() : transactionMessages)
+  ]);
 
   logger.info({ message, count: validatedLogs.length }, 'flushed logs to queue');
 }

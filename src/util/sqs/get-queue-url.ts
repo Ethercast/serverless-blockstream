@@ -1,23 +1,21 @@
 import logger from '../logger';
 import * as SQS from 'aws-sdk/clients/sqs';
 
-export const sqs = new SQS();
-
 const QUEUE_URL_CACHE: { [queueName: string]: Promise<string> } = {};
 
-const getQueueUrl: (QueueName: string) => Promise<string> =
-  async function (QueueName: string) {
-    if (QUEUE_URL_CACHE[QueueName]) {
-      return QUEUE_URL_CACHE[QueueName];
+const getQueueUrl: (sqs: SQS, queueName: string) => Promise<string> =
+  async function (sqs, queueName) {
+    if (QUEUE_URL_CACHE[queueName]) {
+      return QUEUE_URL_CACHE[queueName];
     }
 
     return (
-      QUEUE_URL_CACHE[QueueName] =
-        sqs.getQueueUrl({ QueueName }).promise()
+      QUEUE_URL_CACHE[queueName] =
+        sqs.getQueueUrl({ QueueName: queueName }).promise()
           .then(
             ({ QueueUrl }) => {
               if (!QueueUrl) {
-                throw new Error('could not find queue url: ' + QueueName);
+                throw new Error('could not find queue url: ' + queueName);
               }
 
               return QueueUrl;
@@ -25,7 +23,7 @@ const getQueueUrl: (QueueName: string) => Promise<string> =
           )
           .catch(
             err => {
-              logger.error({ err, QueueName }, 'failed to get queue');
+              logger.error({ err, QueueName: queueName }, 'failed to get queue');
               throw err;
             }
           )
