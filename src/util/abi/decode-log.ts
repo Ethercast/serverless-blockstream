@@ -6,8 +6,7 @@ import _ = require('underscore');
 
 export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
   try {
-    const abi = await
-      getAbi(log.address);
+    const abi = await getAbi(log.address);
 
     if (abi === null) {
       return log;
