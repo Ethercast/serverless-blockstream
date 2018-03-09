@@ -36,7 +36,10 @@ export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
 
     return {
       ...log,
-      ethercast: { eventName: matchingSignature.name, parameters }
+      ethercast: {
+        eventName: matchingSignature.name,
+        parameters
+      }
     };
   } catch (err) {
     logger.warn({ err, log }, `error decoding log`);

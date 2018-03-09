@@ -56,7 +56,7 @@ export default async function decodeTransaction(transaction: Transaction): Promi
       ...transaction,
       ethercast: {
         methodName: matchingSignature.name,
-        parameters: parameters
+        parameters
       }
     };
   } catch (err) {
