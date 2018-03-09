@@ -114,7 +114,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
       logger.warn({ metadata }, 'detected chain reorg, attempting to rewind');
 
       try {
-        await rewindOneBlock(state, metadata);
+        await rewindOneBlock(sqs, state, metadata);
         logger.info({ metadata }, 'successfully rewound');
         return;
       } catch (err) {
