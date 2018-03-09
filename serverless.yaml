@@ -131,7 +131,7 @@ functions:
   drain-block-queue:
     name: ${self:custom.drainBlockQueueLambdaName}
     handler: src/drain-block-queue.start
-    memorySize: 512
+    memorySize: 192
     reservedConcurrency: 1
     timeout: 300
 
