@@ -51,6 +51,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
         .then(
           (shouldHalt) => {
             if (shouldHalt) {
+              logger.info('ending early due to halt signal received');
               context.succeed('received halt signal');
             } else {
               locked = false;

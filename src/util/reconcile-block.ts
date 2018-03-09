@@ -27,39 +27,43 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
 
   const nextFetchBlockNo: BigNumber = await getNextFetchBlock(state, currentBlockNo, REWIND_BLOCK_LOOKBACK);
 
+  const blockNumbers = {
+    currentBlockNo: currentBlockNo.valueOf(),
+    nextFetchBlockNo: nextFetchBlockNo.valueOf()
+  };
+
   if (currentBlockNo.lt(nextFetchBlockNo)) {
-    logger.debug({ currentBlockNo, nextFetchBlockNo }, 'next fetch block is not yet available');
+    logger.info({ blockNumbers }, 'next fetch block is not yet available');
     return true;
   }
 
   {
     const blocksToCurrent = currentBlockNo.minus(nextFetchBlockNo);
 
-    const meta = { currentBlockNo, nextFetchBlockNo };
-
     if (blocksToCurrent.gt(10000)) {
-      logger.fatal({ meta }, 'more than 10k blocks behind the network');
+      logger.fatal({ blockNumbers }, 'more than 10k blocks behind the network');
       return false;
     } else if (blocksToCurrent.gt(1000)) {
-      logger.error({ meta }, 'more than 1000 blocks behind the network! it could take a while to catch up!');
+      logger.error({ blockNumbers }, 'more than 1000 blocks behind the network! it could take a while to catch up!');
     } else if (blocksToCurrent.gt(100)) {
-      logger.warn({ meta }, 'more than 100 blocks behind the network!');
+      logger.warn({ blockNumbers }, 'more than 100 blocks behind the network!');
     } else if (blocksToCurrent.gt(10)) {
-      logger.info({ meta }, 'more than 10 blocks behind the network.');
+      logger.info({ blockNumbers }, 'more than 10 blocks behind the network.');
     }
   }
 
-  logger.debug({ state, currentBlockNo, nextFetchBlock: nextFetchBlockNo }, 'fetching block');
+  logger.debug({ state, blockNumbers }, 'fetching block');
 
   let block: BlockWithFullTransactions;
   try {
     block = await client.eth_getBlockByNumber(nextFetchBlockNo, true);
   } catch (err) {
-    logger.warn({ err, currentBlockNo }, 'failed to get current block by number');
+    logger.warn({ err, blockNumbers }, 'failed to get current block by number');
     return false;
   }
 
   logger.debug({
+    blockNumbers,
     blockHash: block.hash,
     transactionsCount: block.transactions.length
   }, 'fetching tx receipts');
@@ -82,6 +86,7 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
 
   const metadata = {
     state,
+    blockNumbers,
     blockHash: block.hash,
     blockNumber: block.number,
     logCount: logs.length,
