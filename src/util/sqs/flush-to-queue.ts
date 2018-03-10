@@ -12,7 +12,7 @@ export default async function flushMessagesToQueue<T>(sqs: SQS, logger: Logger, 
 
   const QueueUrl = await getQueueUrl(sqs, queueName);
 
-  const flushLogger = logger.child({ queueName, QueueUrl });
+  const flushLogger = logger.child({ queueInfo: { name: queueName, url: QueueUrl } });
 
   for (let start = 0; start < messages.length; start += 10) {
     const chunk = messages.slice(start, start + 10);
@@ -55,5 +55,5 @@ export default async function flushMessagesToQueue<T>(sqs: SQS, logger: Logger, 
     }
   }
 
-  flushLogger.info({ count: messages.length }, 'flushed messages to queue');
+  flushLogger.debug({ count: messages.length }, 'flushed messages to queue');
 }
