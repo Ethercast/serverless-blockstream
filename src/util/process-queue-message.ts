@@ -1,4 +1,3 @@
-import logger from './logger';
 import * as SQS from 'aws-sdk/clients/sqs';
 import { Message } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage } from './model';
@@ -10,6 +9,7 @@ import BigNumber from 'bignumber.js';
 import decodeLog from './abi/decode-log';
 import flushMessagesToQueue from './sqs/flush-to-queue';
 import decodeTransaction from './abi/decode-transaction';
+import * as Logger from 'bunyan';
 import _ = require('underscore');
 
 function logMessageId(log: Log) {
@@ -21,8 +21,8 @@ function logMessageId(log: Log) {
     .digest('hex');
 }
 
-function flushLogMessagesToQueue(sqs: SQS, validatedLogs: Log[]): Promise<void> {
-  return flushMessagesToQueue(sqs, LOG_FIREHOSE_QUEUE_NAME, validatedLogs, logMessageId);
+function flushLogMessagesToQueue(sqs: SQS, logger: Logger, validatedLogs: Log[]): Promise<void> {
+  return flushMessagesToQueue(sqs, logger, LOG_FIREHOSE_QUEUE_NAME, validatedLogs, logMessageId);
 }
 
 // includes the flag for whether it was removed or added
@@ -34,32 +34,35 @@ function transactionMessageId(transaction: TransactionMessage) {
   return `${transaction.hash}-${transaction.removed}`;
 }
 
-function flushTransactionMessagesToQueue(sqs: SQS, validatedTransactions: TransactionMessage[]): Promise<void> {
-  return flushMessagesToQueue(sqs, TRANSACTION_FIREHOSE_QUEUE_NAME, validatedTransactions, transactionMessageId);
+function flushTransactionMessagesToQueue(sqs: SQS, logger: Logger, validatedTransactions: TransactionMessage[]): Promise<void> {
+  return flushMessagesToQueue(sqs, logger, TRANSACTION_FIREHOSE_QUEUE_NAME, validatedTransactions, transactionMessageId);
 }
 
-export default async function processQueueMessage(sqs: SQS, { Body, MessageId, ReceiptHandle }: Message): Promise<void> {
+export default async function processQueueMessage(sqs: SQS, logger: Logger, { Body, MessageId, ReceiptHandle }: Message): Promise<void> {
   if (!ReceiptHandle || !Body) {
     logger.error({ MessageId, ReceiptHandle, Body }, 'message received with no body/receipt handle');
     throw new Error('No receipt handle/body!');
   }
 
-  logger.debug({ MessageId, Body }, 'processing message');
+  logger.debug({ Body }, 'processing message');
 
   const message = JSON.parse(Body) as BlockQueueMessage;
   const { hash, number, removed } = message;
 
-  logger.info({ MessageId, message }, 'processing message');
+  // create a logger for this message
+  const msgLogger = logger.child({ MessageId, message });
+
+  msgLogger.info('processing message');
 
   // first get all the blocks that have this number
   const blockPayload = await getBlock(hash, number);
 
   if (!blockPayload) {
+    msgLogger.error('block not found');
     throw new Error(`block not found with hash ${hash} and number ${number}`);
   }
 
-  logger.info({
-    message,
+  msgLogger.info({
     transactionCount: blockPayload.block.transactions.length,
     receiptCount: blockPayload.receipts.length
   }, 'received block');
@@ -73,24 +76,32 @@ export default async function processQueueMessage(sqs: SQS, { Body, MessageId, R
     .sortBy(({ logIndex }) => new BigNumber(logIndex).toNumber())
     .value();
 
+  msgLogger.info({ logCount: validatedLogs.length }, 'validated logs');
+
   const validatedTransactions: Transaction[] = _.chain(blockPayload.block.transactions)
     .map(mustBeValidTransaction)
     .value();
 
-  const [decodedLogs, decodedTransactions] = await Promise.all([
+  msgLogger.info({ transactionCount: validatedTransactions.length }, 'validated transactions');
+
+  const [ decodedLogs, decodedTransactions ] = await Promise.all([
     Promise.all(validatedLogs.map(decodeLog)),
     Promise.all(validatedTransactions.map(decodeTransaction))
   ]);
+
+  msgLogger.info('decoded transactions and logs');
 
   const transactionMessages: TransactionMessage[] = decodedTransactions.map(transaction => ({
     ...transaction,
     removed
   }));
 
+  msgLogger.info('flushing messages to queue');
+
   await Promise.all([
-    flushLogMessagesToQueue(sqs, removed ? decodedLogs.reverse() : decodedLogs),
-    flushTransactionMessagesToQueue(sqs, removed ? transactionMessages.reverse() : transactionMessages)
+    flushLogMessagesToQueue(sqs, logger, removed ? decodedLogs.reverse() : decodedLogs),
+    flushTransactionMessagesToQueue(sqs, logger, removed ? transactionMessages.reverse() : transactionMessages)
   ]);
 
-  logger.info({ message, count: validatedLogs.length }, 'flushed logs to queue');
+  msgLogger.info({ message, count: validatedLogs.length }, 'flushed logs to queue');
 }

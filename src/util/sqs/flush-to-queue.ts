@@ -1,63 +1,59 @@
 import getQueueUrl from './get-queue-url';
 import * as SQS from 'aws-sdk/clients/sqs';
-import { SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
+import { SendMessageBatchRequestEntry, SendMessageBatchRequestEntryList } from 'aws-sdk/clients/sqs';
 import { NETWORK_ID } from '../env';
-import logger from '../logger';
+import * as zlib from 'zlib';
+import * as Logger from 'bunyan';
 
-const MAX_SQS_BATCH_SIZE = 262144;
-const MAX_SQS_BATCH_COUNT = 10;
-
-export default async function flushMessagesToQueue<T>(sqs: SQS, queueName: string, messages: T[], getMessageId: (item: T) => string): Promise<void> {
+export default async function flushMessagesToQueue<T>(sqs: SQS, logger: Logger, queueName: string, messages: T[], getMessageId: (item: T) => string): Promise<void> {
   if (messages.length === 0) {
     return;
   }
 
   const QueueUrl = await getQueueUrl(sqs, queueName);
 
-  // copy the message array
-  let pending = messages.slice();
+  const flushLogger = logger.child({ queueName, QueueUrl });
 
-  // while we still have pending messages...
-  while (pending.length > 0) {
-    const entryChunk: SendMessageBatchRequestEntryList = [];
+  for (let start = 0; start < messages.length; start += 10) {
+    const chunk = messages.slice(start, start + 10);
 
-    let chunkSize = 0;
-    let itemCount = 0;
+    const entryList: SendMessageBatchRequestEntryList =
+      await Promise.all(
+        chunk.map(
+          message => {
+            return new Promise<SendMessageBatchRequestEntry>((resolve, reject) => {
+              const Id: string = getMessageId(message);
+              const MessageBody = JSON.stringify(message);
 
-    while (itemCount < MAX_SQS_BATCH_COUNT && itemCount < pending.length) {
-      const message = pending[itemCount];
+              // we have to do this because some logs are really big... :(
+              zlib.deflate(MessageBody, (err, buffer) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve({
+                    Id,
+                    MessageBody: buffer.toString('base64'),
+                    MessageDeduplicationId: Id,
+                    MessageGroupId: `net-${NETWORK_ID}`
+                  });
+                }
+              });
+            });
+          }
+        )
+      );
 
-      const Id: string = getMessageId(message);
+    const params: SQS.Types.SendMessageBatchRequest = { QueueUrl, Entries: entryList };
 
-      const MessageBody = JSON.stringify(message);
-
-      // do not add if it exceeds the max chunk size, with a buffer of roughly 20kb
-      if (chunkSize + MessageBody.length > MAX_SQS_BATCH_SIZE - 20000) {
-        break;
-      }
-
-      itemCount++;
-      chunkSize += MessageBody.length;
-
-      entryChunk.push({
-        Id,
-        MessageBody,
-        MessageDeduplicationId: Id,
-        MessageGroupId: `net-${NETWORK_ID}`
-      });
-    }
-
-    pending = pending.slice(itemCount);
-
-    const { Successful, Failed } = await sqs.sendMessageBatch({ QueueUrl, Entries: entryChunk }).promise();
+    const { Successful, Failed } = await sqs.sendMessageBatch(params).promise();
 
     if (Failed.length > 0) {
-      logger.fatal({ QueueUrl, Failed }, 'some messages failed to send');
+      flushLogger.fatal({ Failed }, 'some messages failed to send');
       throw new Error('some messages failed to flush to the queue');
     } else {
-      logger.debug({ QueueUrl, count: Successful.length }, 'successfully flushed chunk to queue');
+      flushLogger.debug({ count: Successful.length }, 'successfully flushed chunk to queue');
     }
   }
 
-  logger.info({ queueName, count: messages.length }, 'flushed messages to queue');
+  flushLogger.info({ count: messages.length }, 'flushed messages to queue');
 }

@@ -23,7 +23,7 @@ export const start: Handler = async (event, context) => {
     const drainer = new QueueDrainer({
       sqs,
       queueUrl: QueueUrl,
-      handleMessage: processQueueMessage.bind(null, sqs),
+      handleMessage: processQueueMessage.bind(null, sqs, logger.child({ handlerName: 'processQueueMessage' })),
       logger,
       // we think it shouldn't take longer than 3 seconds per block
       shouldContinue: () => context.getRemainingTimeInMillis() > 3000,

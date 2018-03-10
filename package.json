@@ -7,6 +7,11 @@
     "type": "git",
     "url": "https://github.com/Ethercast/serverless-blockstream"
   },
+  "scripts": {
+    "test": "ts-mocha test/**/*.test.ts",
+    "deploy:mainnet": "sls deploy",
+    "deploy:kovan": "sls deploy --stage kovan --srcNodeUrl \"https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy\" --networkId 42 --etherscanApiUrl \"https://api-kovan.etherscan.io/api\" --etherscanApiKey \"Y3475S46DWWF4TEIT67ISNSG71B22WYJS9\""
+  },
   "dependencies": {
     "@ethercast/model": "0.0.13",
     "@ethercast/queue-drainer": "0.0.4",
@@ -21,9 +26,6 @@
     "underscore": "^1.8.3",
     "web3-eth-abi": "^1.0.0-beta.30",
     "ws": "^4.0.0"
-  },
-  "scripts": {
-    "test": "ts-mocha test/**/*.test.ts"
   },
   "author": "Moody Salem",
   "license": "ISC",
@@ -40,6 +42,7 @@
     "aws-sdk": "^2.200.0",
     "chai": "^4.1.2",
     "mocha": "^4.1.0",
+    "serverless": "^1.26.1",
     "serverless-dynamodb-autoscaling": "^0.6.2",
     "serverless-pseudo-parameters": "^1.4.1",
     "serverless-webpack": "^4.3.0",
