@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "ts-mocha test/**/*.test.ts",
-    "deploy:mainnet": "sls deploy",
+    "deploy:dev": "sls deploy",
+    "deploy:mainnet": "sls deploy --stage mainnet",
     "deploy:kovan": "sls deploy --stage kovan --srcNodeUrl \"https://kovan.infura.io/0eep3H3CSiqitPXv0aOy\" --networkId 42 --etherscanApiUrl \"https://api-kovan.etherscan.io/api\" --etherscanApiKey \"Y3475S46DWWF4TEIT67ISNSG71B22WYJS9\""
   },
   "dependencies": {
