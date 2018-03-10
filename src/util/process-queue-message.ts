@@ -62,7 +62,7 @@ export default async function processQueueMessage(sqs: SQS, logger: Logger, { Bo
     throw new Error(`block not found with hash ${hash} and number ${number}`);
   }
 
-  msgLogger.info({
+  msgLogger.debug({
     transactionCount: blockPayload.block.transactions.length,
     receiptCount: blockPayload.receipts.length
   }, 'received block');
@@ -76,32 +76,35 @@ export default async function processQueueMessage(sqs: SQS, logger: Logger, { Bo
     .sortBy(({ logIndex }) => new BigNumber(logIndex).toNumber())
     .value();
 
-  msgLogger.info({ logCount: validatedLogs.length }, 'validated logs');
+  msgLogger.debug({ logCount: validatedLogs.length }, 'validated logs');
 
   const validatedTransactions: Transaction[] = _.chain(blockPayload.block.transactions)
     .map(mustBeValidTransaction)
     .value();
 
-  msgLogger.info({ transactionCount: validatedTransactions.length }, 'validated transactions');
+  msgLogger.debug({ transactionCount: validatedTransactions.length }, 'validated transactions');
 
   const [ decodedLogs, decodedTransactions ] = await Promise.all([
     Promise.all(validatedLogs.map(decodeLog)),
     Promise.all(validatedTransactions.map(decodeTransaction))
   ]);
 
-  msgLogger.info('decoded transactions and logs');
+  msgLogger.debug('decoded transactions and logs');
 
   const transactionMessages: TransactionMessage[] = decodedTransactions.map(transaction => ({
     ...transaction,
     removed
   }));
 
-  msgLogger.info('flushing messages to queue');
+  msgLogger.debug('flushing messages to queue');
 
   await Promise.all([
     flushLogMessagesToQueue(sqs, logger, removed ? decodedLogs.reverse() : decodedLogs),
     flushTransactionMessagesToQueue(sqs, logger, removed ? transactionMessages.reverse() : transactionMessages)
   ]);
 
-  msgLogger.info({ message, count: validatedLogs.length }, 'flushed logs to queue');
+  msgLogger.info({
+    transactionCount: transactionMessages.length,
+    logCount: decodedLogs.length
+  }, 'flushed logs to queue');
 }

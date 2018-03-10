@@ -1,6 +1,6 @@
 import { BlockStreamState } from '../model';
 import logger from '../logger';
-import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID, STATE_HEIGHT_LIMIT } from '../env';
+import { BLOCKSTREAM_STATE_TABLE, NETWORK_ID, REWIND_BLOCK_LOOKBACK } from '../env';
 import { BlockWithTransactionHashes } from '@ethercast/model';
 import BigNumber from 'bignumber.js';
 import { ddbClient } from './shared';
@@ -41,7 +41,7 @@ export async function saveBlockStreamState(prevState: BlockStreamState | null, r
         [_.pick(prevState, 'index', 'blockHash', 'blockNumber', 'timestamp')]
           .concat(prevState.history)
       ) : []
-    ).slice(0, STATE_HEIGHT_LIMIT)
+    ).slice(0, REWIND_BLOCK_LOOKBACK)
   };
 
   let input: DynamoDB.DocumentClient.PutItemInput = {

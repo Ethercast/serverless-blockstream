@@ -23,7 +23,5 @@ export const NUM_BLOCKS_DELAY: number = env.get('NUM_BLOCKS_DELAY').required().a
 
 export const REWIND_BLOCK_LOOKBACK: number = env.get('REWIND_BLOCK_LOOKBACK').required().asIntPositive();
 
-export const STATE_HEIGHT_LIMIT: number = env.get('STATE_HEIGHT_LIMIT').required().asIntPositive();
-
 export const ETHERSCAN_API_URL: string = env.get('ETHERSCAN_API_URL').required().asUrlString();
 export const ETHERSCAN_API_KEY: string = env.get('ETHERSCAN_API_KEY').required().asString();
