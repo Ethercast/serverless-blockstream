@@ -10,7 +10,7 @@
   "scripts": {
     "test": "ts-mocha test/**/*.test.ts",
     "deploy:mainnet": "sls deploy",
-    "deploy:kovan": "sls deploy --stage kovan --srcNodeUrl \"https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy\" --networkId 42 --etherscanApiUrl \"https://api-kovan.etherscan.io/api\" --etherscanApiKey \"Y3475S46DWWF4TEIT67ISNSG71B22WYJS9\""
+    "deploy:kovan": "sls deploy --stage kovan --srcNodeUrl \"https://kovan.infura.io/0eep3H3CSiqitPXv0aOy\" --networkId 42 --etherscanApiUrl \"https://api-kovan.etherscan.io/api\" --etherscanApiKey \"Y3475S46DWWF4TEIT67ISNSG71B22WYJS9\""
   },
   "dependencies": {
     "@ethercast/model": "0.0.13",
