@@ -1,4 +1,3 @@
-import 'source-map-support/register';
 import logger from './util/logger';
 import reconcileBlock from './util/reconcile-block';
 import { Callback, Context, Handler } from 'aws-lambda';

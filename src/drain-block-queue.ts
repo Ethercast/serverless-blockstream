@@ -1,4 +1,3 @@
-import 'source-map-support/register';
 import { Handler } from 'aws-lambda';
 import logger from './util/logger';
 import { NEW_BLOCK_QUEUE_NAME } from './util/env';
