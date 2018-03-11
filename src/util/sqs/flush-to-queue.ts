@@ -4,6 +4,7 @@ import { SendMessageBatchRequestEntry, SendMessageBatchRequestEntryList } from '
 import { NETWORK_ID } from '../env';
 import * as zlib from 'zlib';
 import * as Logger from 'bunyan';
+import { createMessage } from '@ethercast/message-compressor';
 
 export default async function flushMessagesToQueue<T>(sqs: SQS, logger: Logger, queueName: string, messages: T[], getMessageId: (item: T) => string): Promise<void> {
   if (messages.length === 0) {
@@ -17,31 +18,19 @@ export default async function flushMessagesToQueue<T>(sqs: SQS, logger: Logger, 
   for (let start = 0; start < messages.length; start += 10) {
     const chunk = messages.slice(start, start + 10);
 
-    const entryList: SendMessageBatchRequestEntryList =
-      await Promise.all(
-        chunk.map(
-          message => {
-            return new Promise<SendMessageBatchRequestEntry>((resolve, reject) => {
-              const Id: string = getMessageId(message);
-              const MessageBody = JSON.stringify(message);
+    const entryList: SendMessageBatchRequestEntryList = chunk.map(
+      message => {
+        const Id: string = getMessageId(message);
+        const MessageBody = createMessage(message);
 
-              // we have to do this because some logs are really big... :(
-              zlib.deflate(MessageBody, (err, buffer) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve({
-                    Id,
-                    MessageBody: buffer.toString('base64'),
-                    MessageDeduplicationId: Id,
-                    MessageGroupId: `net-${NETWORK_ID}`
-                  });
-                }
-              });
-            });
-          }
-        )
-      );
+        return {
+          Id,
+          MessageBody,
+          MessageDeduplicationId: Id,
+          MessageGroupId: `net-${NETWORK_ID}`
+        };
+      }
+    );
 
     const params: SQS.Types.SendMessageBatchRequest = { QueueUrl, Entries: entryList };
 

@@ -14,6 +14,7 @@
     "deploy:kovan": "sls deploy --stage kovan --srcNodeUrl \"https://kovan.infura.io/0eep3H3CSiqitPXv0aOy\" --networkId 42 --etherscanApiUrl \"https://api-kovan.etherscan.io/api\" --etherscanApiKey \"Y3475S46DWWF4TEIT67ISNSG71B22WYJS9\""
   },
   "dependencies": {
+    "@ethercast/message-compressor": "0.0.0",
     "@ethercast/model": "0.0.13",
     "@ethercast/queue-drainer": "0.0.4",
     "bignumber.js": "^6.0.0",
