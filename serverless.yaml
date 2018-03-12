@@ -111,7 +111,7 @@ provider:
     - Effect: Allow
       Action: # Gives permission to notify and find these topic arns
         - sns:Publish
-        - sqs:CreateTopic
+        - sns:CreateTopic
       Resource:
         - "arn:aws:sns:#{AWS::Region}:#{AWS::AccountId}:${self:custom.blockReadyTopicName}"
         - "arn:aws:sns:#{AWS::Region}:#{AWS::AccountId}:${self:custom.blockProcessedTopicName}"
