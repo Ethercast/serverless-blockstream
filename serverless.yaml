@@ -152,7 +152,7 @@ resources:
       Export:
         Name: ${self:custom.prefix}-log-firehose-queue-name
     TransactionFirehoseQueueName:
-      Description: The name of the log firehose SQS queue to which all incoming logs events are sent
+      Description: The name of the transaction firehose SQS queue to which all incoming transactions are sent
       Value:
         Fn::GetAtt:
           - "TransactionFirehoseQueue"
