@@ -18,12 +18,12 @@ custom:
   blockProcessedTopicName: ${self:custom.prefix}-block-processed
   srcNodeUrl: ${opt:srcNodeUrl, env:srcNodeUrl}
   networkId: ${opt:networkId, env:networkId} # id of the network from which the stack pulls data, validated against the node
-  numBlocksDelay: ${opt:numBlocksDelay, "0"} # how many blocks we wait to send an event
-  blockDataTtlMs: ${opt:blockDataTtlMs, "604800000"} # how long the data stays in dynamo before being removed
-  logLevel: ${opt:logLevel, "info"} # log level of the lambdas
-  rewindBlockLookback: ${opt:rewindBlockLookback, "25"} # log level of the lambdas
-  baseDynamoDDBCapacity: ${opt:baseDynamoDDBCapacity, "1"}
-  maxDynamoDDBCapacity: ${opt:maxDynamoDDBCapacity, "100"}
+  numBlocksDelay: ${opt:numBlocksDelay, env:numBlocksDelay, "0"} # how many blocks we wait to send an event
+  blockDataTtlMs: ${opt:blockDataTtlMs, env:blockDataTtlMs, "604800000"} # how long the data stays in dynamo before being removed
+  logLevel: ${opt:logLevel, env:logLevel, "info"} # log level of the lambdas
+  rewindBlockLookback: ${opt:rewindBlockLookback, env:rewindBlockLookback, "25"} # log level of the lambdas
+  baseDynamoDDBCapacity: ${opt:baseDynamoDDBCapacity, env:baseDynamoDDBCapacity, "1"}
+  maxDynamoDDBCapacity: ${opt:maxDynamoDDBCapacity, env:maxDynamoDDBCapacity, "100"}
   etherscanApiUrl: ${opt:etherscanApiUrl, env:etherscanApiUrl}
   etherscanApiKey: ${opt:etherscanApiKey, env:etherscanApiKey}
   alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
