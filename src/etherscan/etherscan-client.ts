@@ -50,7 +50,7 @@ export const getEtherscanAbi = throttle(
       throw new Error(`failed to parse the ABI json for address ${address}: ${err.message}`);
     }
 
-    const { error, value } = JoiAbi.validate(abi);
+    const { error, value } = JoiAbi.validate(abi, { allowUnknown: true });
 
     if (error && error.details && error.details.length) {
       throw new Error(`ABI received from etherscan did not match expected schema for address ${address}: ${JSON.stringify(error.details)}`);
