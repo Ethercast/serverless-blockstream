@@ -136,7 +136,7 @@ functions:
     events:
       - sns:
           arn:
-            Ref: "BlockProcessedTopic"
+            Ref: "BlockReadyTopic"
           topicName: ${self:custom.blockReadyTopicName}
 
 
