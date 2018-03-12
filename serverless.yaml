@@ -136,9 +136,7 @@ functions:
     events:
       - sns:
           arn:
-            Fn::GetAtt:
-              - "BlockProcessedTopic"
-              - "Arn"
+            Ref: "BlockProcessedTopic"
           topicName: ${self:custom.blockReadyTopicName}
 
 
@@ -164,9 +162,7 @@ resources:
     BlockProcessedTopicArn:
       Description: Arn of the topic notified when a block is ready
       Value:
-        Fn::GetAtt:
-          - "BlockProcessedTopic"
-          - "Arn"
+        Ref: "BlockProcessedTopic"
       Export:
         Name: ${self:custom.prefix}-block-processed-topic-arn
 
