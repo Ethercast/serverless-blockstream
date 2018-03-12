@@ -14,6 +14,11 @@ export const getEtherscanAbi = throttle(
     const response =
       await fetch(`${apiUrl}?${stringify({ ...BASE_GET_ABI_PARAMS, address, apikey: apiKey })}`);
 
+    // they respond with 403 if the contract is not verified
+    if (response.status === 403) {
+      return null;
+    }
+
     if (response.status !== 200) {
       throw new Error(`status code not 200 when getting ABI for address ${address}: ${response.status}`);
     }
