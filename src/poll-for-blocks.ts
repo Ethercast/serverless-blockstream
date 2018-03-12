@@ -7,9 +7,11 @@ import * as _ from 'underscore';
 import ValidatedClient from './client/validated-eth-client';
 import * as Lambda from 'aws-sdk/clients/lambda';
 import * as SQS from 'aws-sdk/clients/sqs';
+import * as SNS from 'aws-sdk/clients/sns';
 
 const lambda = new Lambda();
 const sqs = new SQS();
+const sns = new SNS();
 
 export const start: Handler = async (event: any, context: Context, cb: Callback) => {
   const unvalidatedClient = await getClient(logger, SRC_NODE_URL);
@@ -47,7 +49,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
 
       locked = true;
 
-      reconcileBlock(lambda, sqs, client)
+      reconcileBlock(lambda, sqs, client, sns)
         .then(
           (shouldHalt) => {
             if (shouldHalt) {
