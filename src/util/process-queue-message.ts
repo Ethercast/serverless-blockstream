@@ -2,7 +2,7 @@ import * as SQS from 'aws-sdk/clients/sqs';
 import { Message } from 'aws-sdk/clients/sqs';
 import { BlockQueueMessage } from './model';
 import { getBlock } from './ddb/block-data';
-import { LOG_FIREHOSE_QUEUE_NAME, TRANSACTION_FIREHOSE_QUEUE_NAME } from './env';
+import { BLOCK_PROCESSED_TOPIC_NAME, LOG_FIREHOSE_QUEUE_NAME, TRANSACTION_FIREHOSE_QUEUE_NAME } from './env';
 import * as crypto from 'crypto';
 import { Log, mustBeValidLog, mustBeValidTransaction, Transaction } from '@ethercast/model';
 import BigNumber from 'bignumber.js';
@@ -11,6 +11,8 @@ import flushMessagesToQueue from './sqs/flush-to-queue';
 import decodeTransaction from './abi/decode-transaction';
 import * as Logger from 'bunyan';
 import _ = require('underscore');
+import getTopicArn from './sns/get-topic-arn';
+import * as SNS from 'aws-sdk/clients/sns';
 
 function logMessageId(log: Log) {
   return crypto.createHash('sha256')
@@ -38,7 +40,7 @@ function flushTransactionMessagesToQueue(sqs: SQS, logger: Logger, validatedTran
   return flushMessagesToQueue(sqs, logger, TRANSACTION_FIREHOSE_QUEUE_NAME, validatedTransactions, transactionMessageId);
 }
 
-export default async function processQueueMessage(sqs: SQS, logger: Logger, { Body, MessageId, ReceiptHandle }: Message): Promise<void> {
+export default async function processQueueMessage(sqs: SQS, sns: SNS, logger: Logger, { Body, MessageId, ReceiptHandle }: Message): Promise<void> {
   if (!ReceiptHandle || !Body) {
     logger.error({ MessageId, ReceiptHandle, Body }, 'message received with no body/receipt handle');
     throw new Error('No receipt handle/body!');
@@ -107,4 +109,7 @@ export default async function processQueueMessage(sqs: SQS, logger: Logger, { Bo
     transactionCount: transactionMessages.length,
     logCount: decodedLogs.length
   }, 'flushed logs to queue');
+
+  const TopicArn = await getTopicArn(sns, BLOCK_PROCESSED_TOPIC_NAME);
+  await sns.publish({ TopicArn, Message: JSON.stringify(message) }).promise();
 }

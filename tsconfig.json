@@ -7,7 +7,8 @@
     "target": "es3",
     "lib": [
       "es5",
-      "es2015.promise"
+      "es6",
+      "es7"
     ]
   }
 }

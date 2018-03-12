@@ -5,8 +5,10 @@ import processQueueMessage from './util/process-queue-message';
 import getQueueUrl from './util/sqs/get-queue-url';
 import QueueDrainer from '@ethercast/queue-drainer';
 import * as SQS from 'aws-sdk/clients/sqs';
+import * as SNS from 'aws-sdk/clients/sns';
 
 const sqs = new SQS();
+const sns = new SNS();
 
 export const start: Handler = async (event, context) => {
   let QueueUrl: string;
@@ -22,7 +24,7 @@ export const start: Handler = async (event, context) => {
     const drainer = new QueueDrainer({
       sqs,
       queueUrl: QueueUrl,
-      handleMessage: processQueueMessage.bind(null, sqs, logger.child({ handlerName: 'processQueueMessage' })),
+      handleMessage: processQueueMessage.bind(null, sqs, sns, logger),
       logger,
       // we think it shouldn't take longer than 3 seconds per block
       shouldContinue: () => context.getRemainingTimeInMillis() > 3000,

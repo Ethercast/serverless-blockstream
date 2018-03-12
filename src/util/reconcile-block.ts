@@ -2,23 +2,24 @@ import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
 import { isBlockSaved, saveBlockData } from './ddb/block-data';
-import { DRAIN_BLOCK_QUEUE_LAMBDA_NAME, NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
+import { BLOCK_READY_TOPIC_NAME, NEW_BLOCK_QUEUE_NAME, NUM_BLOCKS_DELAY, REWIND_BLOCK_LOOKBACK } from './env';
 import getNextFetchBlock from './state/get-next-fetch-block';
 import notifyQueueOfBlock from './sqs/notify-queue-of-block';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithFullTransactions, Log, TransactionReceipt } from '@ethercast/model';
 import ValidatedEthClient from '../client/validated-eth-client';
 import rewindOneBlock from './rewind-one-block';
-import tryInvoke from './lambda/try-invoke';
 import * as Lambda from 'aws-sdk/clients/lambda';
 import * as SQS from 'aws-sdk/clients/sqs';
+import * as SNS from 'aws-sdk/clients/sns';
+import getTopicArn from './sns/get-topic-arn';
 
 /**
  * This function is executed on a loop and reconciles one block worth of data
  *
  * Returns true if we should halt
  */
-export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: ValidatedEthClient): Promise<boolean> {
+export default async function reconcileBlock(lambda: Lambda, sqs: SQS, sns: SNS, client: ValidatedEthClient): Promise<boolean> {
   const state = await getBlockStreamState();
 
   // we have a configurable block delay which lets us reduce the frequency fo chain reorgs
@@ -160,10 +161,11 @@ export default async function reconcileBlock(lambda: Lambda, sqs: SQS, client: V
 
   // try invoking the queue drain lambda
   try {
-    await tryInvoke(lambda, DRAIN_BLOCK_QUEUE_LAMBDA_NAME);
-    logger.info('invoked drain block queue lambda');
+    const TopicArn = await getTopicArn(sns, BLOCK_READY_TOPIC_NAME);
+    await sns.publish({ Message: JSON.stringify(metadata), TopicArn }).promise();
+    logger.info('notified block ready topic');
   } catch (err) {
-    logger.error({ err, lambdaName: DRAIN_BLOCK_QUEUE_LAMBDA_NAME }, 'failed to invoke lambda');
+    logger.error({ err, topicName: BLOCK_READY_TOPIC_NAME }, 'failed to notify topic');
     return false;
   }
 
