@@ -49,7 +49,7 @@ export const start: Handler = async (event: any, context: Context, cb: Callback)
 
       locked = true;
 
-      reconcileBlock(lambda, sqs, client, sns)
+      reconcileBlock(lambda, sqs, sns, client)
         .then(
           (shouldHalt) => {
             if (shouldHalt) {
