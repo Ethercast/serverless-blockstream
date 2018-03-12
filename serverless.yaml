@@ -16,16 +16,16 @@ custom:
   transactionFirehoseQueue: ${self:custom.prefix}-tx-firehose.fifo
   blockReadyTopicName: ${self:custom.prefix}-block-ready
   blockProcessedTopicName: ${self:custom.prefix}-block-processed
-  srcNodeUrl: ${opt:srcNodeUrl, "https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy"}
-  networkId: ${opt:networkId, "1"} # id of the network from which the stack pulls data, validated against the node
-  numBlocksDelay: ${opt:numBlocksDelay, "0"}
+  srcNodeUrl: ${opt:srcNodeUrl, env:srcNodeUrl}
+  networkId: ${opt:networkId, env:networkId} # id of the network from which the stack pulls data, validated against the node
+  numBlocksDelay: ${opt:numBlocksDelay, "0"} # how many blocks we wait to send an event
   blockDataTtlMs: ${opt:blockDataTtlMs, "604800000"} # how long the data stays in dynamo before being removed
   logLevel: ${opt:logLevel, "info"} # log level of the lambdas
   rewindBlockLookback: ${opt:rewindBlockLookback, "25"} # log level of the lambdas
   baseDynamoDDBCapacity: ${opt:baseDynamoDDBCapacity, "1"}
   maxDynamoDDBCapacity: ${opt:maxDynamoDDBCapacity, "100"}
-  etherscanApiUrl: ${opt:etherscanApiUrl, "https://api.etherscan.io/api"}
-  etherscanApiKey: ${opt:etherscanApiKey, "17CY9NYG5A77HWV1I8XP7U4IE9DB11KWT5"}
+  etherscanApiUrl: ${opt:etherscanApiUrl, env:etherscanApiUrl}
+  etherscanApiKey: ${opt:etherscanApiKey, env:etherscanApiKey}
   alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
   capacities:
     - table: BlocksTable  # DynamoDB Resource
