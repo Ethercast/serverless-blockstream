@@ -263,30 +263,28 @@ resources:
           - Endpoint: ${self:custom.alertNotificationEmail}
             Protocol: email
 
-    NewBlockQueueDepthAlarm:
+    ProcessBlocksAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmDescription: "Alarm if new blocks are not being removed from the queue"
+        AlarmDescription: "Blocks are not being removed from the queue in < 3 minutes"
         Namespace: "AWS/SQS"
-        MetricName: ApproximateNumberOfMessagesVisible
+        MetricName: ApproximateAgeOfOldestMessage
         Dimensions:
           - Name: QueueName
             Value: ${self:custom.newBlockQueueName}
         Statistic: Maximum
         Period: 60
-        Threshold: 5
+        Threshold: 180
         EvaluationPeriods: 3
         ComparisonOperator: GreaterThanThreshold
         AlarmActions:
           - Ref: AlarmTopic
-        OKActions:
-          - Ref: AlarmTopic
         TreatMissingData: missing
 
-    NewBlockQueueActiveAlarm:
+    GenerateBlocksAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmDescription: "Alarm if new blocks have not been entered into queue in five minutes"
+        AlarmDescription: "New blocks are not being reported"
         Namespace: "AWS/SQS"
         MetricName: NumberOfMessagesSent
         Dimensions:
@@ -299,34 +297,30 @@ resources:
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
           - Ref: AlarmTopic
-        OKActions:
-          - Ref: AlarmTopic
         TreatMissingData: breaching
 
-    LogFirehoseQueueDepthAlarm:
+    ProcessLogsAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmDescription: "Alarm if new logs are not being removed from the queue"
+        AlarmDescription: "Logs are not being removed from the queue in < 3 minutes"
         Namespace: "AWS/SQS"
-        MetricName: ApproximateNumberOfMessagesVisible
+        MetricName: ApproximateAgeOfOldestMessage
         Dimensions:
           - Name: QueueName
             Value: ${self:custom.logFirehoseQueue}
         Statistic: Maximum
         Period: 60
-        Threshold: 500
+        Threshold: 180
         EvaluationPeriods: 3
-        ComparisonOperator: GreaterThanThreshold
+        ComparisonOperator: GreaterThanOrEqualToThreshold
         AlarmActions:
-          - Ref: AlarmTopic
-        OKActions:
           - Ref: AlarmTopic
         TreatMissingData: missing
 
-    LogFirehoseQueueActiveAlarm:
+    GenerateLogsAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmDescription: "Alarm if logs have not been added to queue in five minutes"
+        AlarmDescription: "Logs are not being added to the queue"
         Namespace: "AWS/SQS"
         MetricName: NumberOfMessagesSent
         Dimensions:
@@ -339,34 +333,30 @@ resources:
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
           - Ref: AlarmTopic
-        OKActions:
-          - Ref: AlarmTopic
         TreatMissingData: breaching
 
-    TransactionFirehoseQueueDepthAlarm:
+    ProcessTransactionsAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmDescription: "Alarm if new txs are not being removed from the queue"
+        AlarmDescription: "Transactions are not being removed from the queue in < 3 minutes"
         Namespace: "AWS/SQS"
-        MetricName: ApproximateNumberOfMessagesVisible
+        MetricName: ApproximateAgeOfOldestMessage
         Dimensions:
           - Name: QueueName
             Value: ${self:custom.transactionFirehoseQueue}
         Statistic: Maximum
         Period: 60
-        Threshold: 500
+        Threshold: 180
         EvaluationPeriods: 3
-        ComparisonOperator: GreaterThanThreshold
+        ComparisonOperator: GreaterThanOrEqualToThreshold
         AlarmActions:
-          - Ref: AlarmTopic
-        OKActions:
           - Ref: AlarmTopic
         TreatMissingData: missing
 
-    TransactionFirehoseQueueActiveAlarm:
+    GenerateTransactionsAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmDescription: "Alarm if txs have not been added to queue in five minutes"
+        AlarmDescription: "Transactions are not being sent to the queue"
         Namespace: "AWS/SQS"
         MetricName: NumberOfMessagesSent
         Dimensions:
@@ -378,7 +368,5 @@ resources:
         EvaluationPeriods: 3
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
-          - Ref: AlarmTopic
-        OKActions:
           - Ref: AlarmTopic
         TreatMissingData: breaching
