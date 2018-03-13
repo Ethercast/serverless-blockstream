@@ -22,8 +22,9 @@ custom:
   blockDataTtlMs: ${opt:blockDataTtlMs, env:blockDataTtlMs, "604800000"} # how long the data stays in dynamo before being removed
   logLevel: ${opt:logLevel, env:logLevel, "info"} # log level of the lambdas
   rewindBlockLookback: ${opt:rewindBlockLookback, env:rewindBlockLookback, "25"} # log level of the lambdas
-  baseDynamoDDBCapacity: ${opt:baseDynamoDDBCapacity, env:baseDynamoDDBCapacity, "1"}
+  baseDynamoDDBCapacity: ${opt:baseDynamoDDBCapacity, env:baseDynamoDDBCapacity, "5"}
   maxDynamoDDBCapacity: ${opt:maxDynamoDDBCapacity, env:maxDynamoDDBCapacity, "100"}
+  dynamoTargetUtilitzation: ${opt:dynamoTargetUtilitzation, env:dynamoTargetUtilitzation, "0.7"}
   etherscanApiUrl: ${opt:etherscanApiUrl, env:etherscanApiUrl}
   etherscanApiKey: ${opt:etherscanApiKey, env:etherscanApiKey}
   alertNotificationEmail: "aws-alerts+${self:custom.prefix}@ethercast.io" # where cloudwatch alarms alert to
@@ -32,29 +33,29 @@ custom:
       read:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum read capacity
         maximum: ${self:custom.maxDynamoDDBCapacity}      # Maximum read capacity
-        usage: 0.8        # Targeted usage percentage
+        usage: ${self:custom.dynamoTargetUtilitzation}        # Targeted usage percentage
       write:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum write capacity
         maximum: ${self:custom.maxDynamoDDBCapacity}      # Maximum write capacity
-        usage: 0.8        # Targeted usage percentage
+        usage: ${self:custom.dynamoTargetUtilitzation}        # Targeted usage percentage
     - table: AbiTable  # DynamoDB Resource
       read:
         minimum: 10        # Minimum read capacity
         maximum: ${self:custom.maxDynamoDDBCapacity}      # Maximum read capacity
-        usage: 0.8        # Targeted usage percentage
+        usage: ${self:custom.dynamoTargetUtilitzation}        # Targeted usage percentage
       write:
         minimum: 10        # Minimum write capacity
         maximum: ${self:custom.maxDynamoDDBCapacity}      # Maximum write capacity
-        usage: 0.8        # Targeted usage percentage
+        usage: ${self:custom.dynamoTargetUtilitzation}        # Targeted usage percentage
     - table: BlockStreamStateTable  # DynamoDB Resource
       read:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum read capacity
         maximum: ${self:custom.maxDynamoDDBCapacity}      # Maximum read capacity
-        usage: 0.8        # Targeted usage percentage
+        usage: ${self:custom.dynamoTargetUtilitzation}        # Targeted usage percentage
       write:
         minimum: ${self:custom.baseDynamoDDBCapacity}        # Minimum write capacity
         maximum: ${self:custom.maxDynamoDDBCapacity}      # Maximum write capacity
-        usage: 0.8        # Targeted usage percentage
+        usage: ${self:custom.dynamoTargetUtilitzation}        # Targeted usage percentage
 
 provider:
   name: aws
