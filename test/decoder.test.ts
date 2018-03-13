@@ -66,7 +66,7 @@ describe('decodeLogParameters', () => {
         ABI_ARRAY,
         async (address: string) => {
           try {
-            ABIS[ address ] = await getEtherscanAbi(address, 'https://api.etherscan.io/api', '17CY9NYG5A77HWV1I8XP7U4IE9DB11KWT5');
+            ABIS[ address ] = await getEtherscanAbi(address, 'https://api.etherscan.io/api', process.env.ETHERSCAN_API_KEY);
           } catch (err) {
           }
         }
@@ -74,7 +74,7 @@ describe('decodeLogParameters', () => {
     );
 
     console.log(JSON.stringify(ABIS));
-  }).timeout(ABI_ARRAY.length * 500);
+  });
 });
 
 describe('decodeTransactionParameters', () => {
@@ -121,9 +121,11 @@ describe('decodeTransactionParameters', () => {
   _.each(
     example1.block.transactions,
     transaction => {
-      if (transaction && transaction.to && TRANSACTION_TO_ABIS[ transaction.to ]) {
+      const { to } = transaction;
+      const abi = to ? TRANSACTION_TO_ABIS[ to ] : null;
+      if (to && abi) {
         it(`can decode transaction ${transaction.hash}`, () => {
-          expect(decodeTransactionParameters(transaction, TRANSACTION_TO_ABIS[ transaction.to ]).ethercast).to.exist;
+          expect(decodeTransactionParameters(transaction, abi).ethercast).to.exist;
         });
       }
     }
