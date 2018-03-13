@@ -1,4 +1,5 @@
 import { DecodedBlockPayload } from '../../src/util/model';
+import { Abi } from '../../src/etherscan/etherscan-model';
 
 export const example1: DecodedBlockPayload = {
   'block': {
@@ -2277,7 +2278,7 @@ export const example1: DecodedBlockPayload = {
 };
 
 
-export const LOG_ABIS = {
+export const LOG_ADDRESS_ABIS: { [address: string]: Abi | null } = {
   '0x151202c9c18e495656f372281f493eb7698961d5': [ {
     'constant': true,
     'inputs': [],
@@ -4170,7 +4171,7 @@ export const LOG_ABIS = {
 };
 
 
-export const TRANSACTION_ABIS = {
+export const TRANSACTION_TO_ABIS: { [address: string]: Abi | null } = {
   '0x27067cf476998404d3aabb260a1ebb395df97c32': null,
   '0xedc502b12ced7e16ce21749e7161f9ed22bfca53': [ {
     'constant': true,

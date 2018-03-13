@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@ethercast/message-compressor": "0.0.0",
-    "@ethercast/model": "0.0.14",
+    "@ethercast/model": "0.0.15",
     "@ethercast/queue-drainer": "0.0.5",
     "abi-decoder": "^1.0.9",
     "bignumber.js": "^6.0.0",

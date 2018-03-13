@@ -1,6 +1,6 @@
 import { decodeLogParameters, decodeTransactionParameters } from '../src/util/abi/decoder';
 import { expect } from 'chai';
-import { example1, LOG_ABIS, TRANSACTION_ABIS } from './data/decode-block-example-1.json';
+import { example1, LOG_ADDRESS_ABIS, TRANSACTION_TO_ABIS } from './data/decode-block-example-1.json';
 import _ = require('underscore');
 import { Abi } from '../src/etherscan/etherscan-model';
 import { getEtherscanAbi } from '../src/etherscan/etherscan-client';
@@ -12,9 +12,10 @@ describe('decodeLogParameters', () => {
       _.each(
         logs,
         log => {
-          if (LOG_ABIS[ log.address ]) {
+          const abi = LOG_ADDRESS_ABIS[ log.address ];
+          if (abi) {
             it(`can decode log ${log.transactionHash}-${log.transactionIndex}`, () => {
-              expect(decodeLogParameters(log, LOG_ABIS[ log.address ]).ethercast).to.exist;
+              expect(decodeLogParameters(log, abi).ethercast).to.exist;
             });
           }
         }
@@ -35,7 +36,12 @@ describe('decodeLogParameters', () => {
       'removed': false
     };
 
-    expect(decodeLogParameters(log, LOG_ABIS[ log.address ]).ethercast)
+    const abi = LOG_ADDRESS_ABIS[ log.address ];
+    if (!abi) {
+      throw new Error('not expected null');
+    }
+
+    expect(decodeLogParameters(log, abi).ethercast)
       .to.deep.eq({
       'eventName': 'Transfer',
       'parameters': {
@@ -53,7 +59,7 @@ describe('decodeLogParameters', () => {
   const ABI_ARRAY: string[] = [];
 
   it.skip('fetch abis', async () => {
-    const ABIS: { [address: string]: Abi } = {};
+    const ABIS: { [address: string]: Abi | null } = {};
 
     await Promise.all(
       _.map(
@@ -73,6 +79,12 @@ describe('decodeLogParameters', () => {
 
 describe('decodeTransactionParameters', () => {
   it('produces expected structure', () => {
+    const abi = TRANSACTION_TO_ABIS[ '0x151202c9c18e495656f372281f493eb7698961d5' ];
+
+    if (!abi) {
+      throw new Error('missing abi');
+    }
+
     expect(
       decodeTransactionParameters(
         {
@@ -91,7 +103,7 @@ describe('decodeTransactionParameters', () => {
           'r': '0x94886563f86a67779beeda995fd55125bd3fbd3d7f7442d4279f3b2ce74505be',
           's': '0x70c2622be4f4e3769a4e260f6ffd52e18c1d5ade4fa52737c4791a7ac6610ef'
         },
-        TRANSACTION_ABIS[ '0x151202c9c18e495656f372281f493eb7698961d5' ]
+        abi
       ).ethercast
     ).to.deep.eq({
         'methodName': 'transfer',
@@ -109,9 +121,9 @@ describe('decodeTransactionParameters', () => {
   _.each(
     example1.block.transactions,
     transaction => {
-      if (transaction && transaction.to && TRANSACTION_ABIS[ transaction.to ]) {
+      if (transaction && transaction.to && TRANSACTION_TO_ABIS[ transaction.to ]) {
         it(`can decode transaction ${transaction.hash}`, () => {
-          expect(decodeTransactionParameters(transaction, TRANSACTION_ABIS[ transaction.to ]).ethercast).to.exist;
+          expect(decodeTransactionParameters(transaction, TRANSACTION_TO_ABIS[ transaction.to ]).ethercast).to.exist;
         });
       }
     }
