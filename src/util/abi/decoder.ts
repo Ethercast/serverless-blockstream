@@ -21,6 +21,9 @@ export function decodeTransactionParameters(transaction: Transaction, abi: Abi):
     throw new Error('found abi but failed to find matching function signature');
   }
 
+  if (_.any(matchingSignature.inputs || [], ({ type }) => type.toLowerCase() === 'uint8[]')) {
+    throw new Error('currently not supporting uint8[] decoding');
+  }
   const parameters = decodeParameters(matchingSignature.inputs || [], encodedParameters);
 
   return {
