@@ -4,19 +4,19 @@ import logger from '../logger';
 import { getEtherscanAbi } from '../../etherscan/etherscan-client';
 import { ETHERSCAN_API_KEY, ETHERSCAN_API_URL } from '../env';
 
-const abiCache: { [address: string]: Promise<Abi | null> } = {};
+const ABI_CACHE: { [address: string]: Promise<Abi | null> } = {};
 
 /**
  * This function does in-memory caching, then goes to dynamo, then goes to etherscan
  */
 export default function getAbi(address: string): Promise<Abi | null> {
-  if (abiCache[address]) {
+  if (ABI_CACHE[address]) {
     logger.debug({ address }, 'abi request cached, returning result');
-    return abiCache[address];
+    return ABI_CACHE[address];
   }
 
   return (
-    abiCache[address] = getAbiInternal(address)
+    ABI_CACHE[address] = getAbiInternal(address)
   );
 }
 
@@ -52,7 +52,7 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
     }
   } catch (err) {
     // This indicates that etherscan gaves us a bad status code.
-    logger.error({ err, address }, 'failed to get abi from etherscan');
+    logger.info({ err, address }, 'failed to get abi from etherscan');
     return null;
   }
 

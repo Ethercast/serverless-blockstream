@@ -8,7 +8,7 @@ import { Log, mustBeValidLog, mustBeValidTransaction, Transaction } from '@ether
 import BigNumber from 'bignumber.js';
 import decodeLog from './abi/decode-log';
 import flushMessagesToQueue from './sqs/flush-to-queue';
-import decodeTransaction from './abi/decode-transaction';
+import getAbiAndDecodeTransaction from './abi/decode-transaction';
 import * as Logger from 'bunyan';
 import _ = require('underscore');
 import getTopicArn from './sns/get-topic-arn';
@@ -88,7 +88,7 @@ export default async function processQueueMessage(sqs: SQS, sns: SNS, logger: Lo
 
   const [ decodedLogs, decodedTransactions ] = await Promise.all([
     Promise.all(validatedLogs.map(decodeLog)),
-    Promise.all(validatedTransactions.map(decodeTransaction))
+    Promise.all(validatedTransactions.map(getAbiAndDecodeTransaction))
   ]);
 
   msgLogger.debug('decoded transactions and logs');

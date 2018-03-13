@@ -5,16 +5,16 @@ declare module 'web3-eth-abi' {
   }
 
   export interface EncodeArgument {
-    name: string;
+    name?: string;
     type: string;
-    inputs: ParameterDescription[];
+    inputs?: ParameterDescription[];
   }
 
   function encodeFunctionSignature(signature: string | EncodeArgument): string;
 
   function encodeEventSignature(signature: string | EncodeArgument): string;
 
-  function decodeLog(inputs: ParameterDescription[], data: string, topics: string[]): any;
+  function decodeLog(inputs: ParameterDescription[] | undefined, data: string, topics: string[]): any;
 
-  function decodeParameters(outputs: ParameterDescription[], input: string): any;
+  function decodeParameters(inputs: ParameterDescription[], input: string): any;
 }

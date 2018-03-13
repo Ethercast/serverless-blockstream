@@ -19,9 +19,9 @@ export interface Output {
 
 interface ContractMember {
   constant?: boolean;
-  inputs: Input[];
-  name: string;
-  outputs: Output[];
+  inputs?: Input[];
+  name?: string;
+  outputs?: Output[];
   type: string;
   payable?: boolean;
   stateMutability?: string;
