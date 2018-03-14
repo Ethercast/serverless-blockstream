@@ -1,9 +1,10 @@
-import { decodeLogParameters, decodeTransactionParameters } from '../src/util/abi/decoder';
 import { expect } from 'chai';
-import { example1, LOG_ADDRESS_ABIS, TRANSACTION_TO_ABIS } from './data/decode-block-example-1.json';
-import _ = require('underscore');
-import { Abi } from '../src/etherscan/etherscan-model';
 import { getEtherscanAbi } from '../src/etherscan/etherscan-client';
+import { Abi } from '../src/etherscan/etherscan-model';
+import { decodeLogParameters, decodeTransactionParameters } from '../src/util/abi/decoder';
+import { example1, LOG_ADDRESS_ABIS, TRANSACTION_TO_ABIS } from './data/decode-block-example-1.json';
+import { KITTY_ABI, KITTY_OTHER_LOG, KITTY_TRANSFER_LOG } from './data/example-kitty-data';
+import _ = require('underscore');
 
 describe('decodeLogParameters', () => {
   _.each(
@@ -74,6 +75,45 @@ describe('decodeLogParameters', () => {
     );
 
     console.log(JSON.stringify(ABIS));
+  });
+});
+
+describe('decodeLogParameters', () => {
+  it('works for kitty log', () => {
+    expect(decodeLogParameters(KITTY_TRANSFER_LOG, KITTY_ABI).ethercast)
+      .to.deep
+      .eq({
+        'eventName': 'Transfer',
+        'parameters': {
+          '0': '0xfC624f8F58dB41BDb95aedee1dE3c1cF047105f1',
+          '1': '0xb1690C08E213a35Ed9bAb7B318DE14420FB57d8C',
+          '2': '619611',
+          '__length__': 3,
+          'from': '0xfC624f8F58dB41BDb95aedee1dE3c1cF047105f1',
+          'to': '0xb1690C08E213a35Ed9bAb7B318DE14420FB57d8C',
+          'tokenId': '619611'
+        }
+      });
+  });
+
+  it('works for other kitty log', () => {
+    console.log(JSON.stringify(decodeLogParameters(KITTY_OTHER_LOG, KITTY_ABI).ethercast));
+    expect(decodeLogParameters(KITTY_OTHER_LOG, KITTY_ABI).ethercast)
+      .to.deep
+      .eq({
+        'eventName': 'Pregnant',
+        'parameters': {
+          '0': '0x4EA5Ca0EB9552b00e130f51A7564F1B3D748DF74',
+          '1': '594713',
+          '2': '611508',
+          '3': '5256075',
+          '__length__': 4,
+          'owner': '0x4EA5Ca0EB9552b00e130f51A7564F1B3D748DF74',
+          'matronId': '594713',
+          'sireId': '611508',
+          'cooldownEndBlock': '5256075'
+        }
+      });
   });
 });
 
