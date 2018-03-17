@@ -2,7 +2,6 @@ import { JoiAddress } from '@ethercast/model';
 import { APIGatewayEvent, Callback, Context, Handler } from 'aws-lambda';
 import * as Joi from 'joi';
 import * as _ from 'underscore';
-import { Abi } from './etherscan/etherscan-model';
 import getAbi from './util/abi/get-abi';
 import logger from './util/logger';
 
@@ -11,6 +10,7 @@ const JoiRequestFormat = Joi.object({
     .items(JoiAddress)
     .min(1)
     .max(100)
+    .unique((s1, s2) => s1.toLowerCase() === s2.toLowerCase())
     .required()
 });
 
@@ -38,7 +38,7 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
       callback(null, {
         statusCode: 400,
         body: JSON.stringify({
-          error: `Invalid request: ${error.details.map(({ message }) => message).join('; ')}`
+          error: `Invalid request: ${error.details.map(({ message, path }) => `${path}: ${message}`).join('; ')}`
         })
       });
     }
@@ -53,19 +53,20 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
 
   const { addresses } = request;
 
-  const abis: { [address: string]: Abi | null } = {};
-
-  _.each(
-    addresses,
-    async address => {
-      try {
-        abis[ address ] = await getAbi(address);
-      } catch (err) {
-        logger.warn({ err }, 'failed to get an abi');
-        abis[ address ] = null;
+  const abisWithAddresses = await Promise.all(
+    _.map(
+      addresses,
+      async address => {
+        try {
+          const abi = await getAbi(address);
+          return { address, abi };
+        } catch (err) {
+          logger.warn({ err }, 'failed to get an abi');
+          return { address, abi: null };
+        }
       }
-    }
+    )
   );
 
-  callback(null, { statusCode: 200, body: JSON.stringify({ abis }) });
+  callback(null, { statusCode: 200, body: JSON.stringify({ abis: _.indexBy(abisWithAddresses, 'address') }) });
 };
