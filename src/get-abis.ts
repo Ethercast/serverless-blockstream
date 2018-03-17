@@ -7,7 +7,7 @@ import logger from './util/logger';
 
 const JoiRequestFormat = Joi.object({
   addresses: Joi.array()
-    .items(JoiAddress)
+    .items(JoiAddress.lowercase())
     .min(1)
     .max(100)
     .unique((s1, s2) => s1.toLowerCase() === s2.toLowerCase())
@@ -32,7 +32,7 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
 
   let request: Request;
   try {
-    const { value, error } = JoiRequestFormat.validate(JSON.parse(body));
+    const { value, error } = JoiRequestFormat.validate(JSON.parse(body), { convert: true });
 
     if (error) {
       callback(null, {

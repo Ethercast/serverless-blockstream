@@ -10,13 +10,15 @@ const ABI_CACHE: { [address: string]: Promise<Abi | null> } = {};
  * This function does in-memory caching, then goes to dynamo, then goes to etherscan
  */
 export default function getAbi(address: string): Promise<Abi | null> {
-  if (ABI_CACHE[ address ]) {
-    logger.debug({ address }, 'abi request cached, returning result');
-    return ABI_CACHE[ address ];
+  let addr = address.toLowerCase();
+
+  if (ABI_CACHE[ addr ]) {
+    logger.debug({ addr }, 'abi request cached, returning result');
+    return ABI_CACHE[ addr ];
   }
 
   return (
-    ABI_CACHE[ address ] = getAbiInternal(address)
+    ABI_CACHE[ addr ] = getAbiInternal(addr)
   );
 }
 
