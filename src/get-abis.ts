@@ -50,7 +50,6 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
     return;
   }
 
-
   const { addresses } = request;
 
   const abisWithAddresses = await Promise.all(
@@ -68,5 +67,10 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
     )
   );
 
-  callback(null, { statusCode: 200, body: JSON.stringify({ abis: _.indexBy(abisWithAddresses, 'address') }) });
+  const abis = _.chain(abisWithAddresses)
+    .indexBy('address')
+    .map(({ address, abi }) => abi)
+    .value();
+
+  callback(null, { statusCode: 200, body: JSON.stringify({ abis }) });
 };
