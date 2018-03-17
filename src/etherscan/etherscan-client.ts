@@ -1,7 +1,7 @@
-import { stringify } from 'querystring';
-import { Abi, EtherscanResponse, JoiAbi } from './etherscan-model';
-import { throttle } from '../util/throttle';
 import fetch from 'node-fetch';
+import { stringify } from 'querystring';
+import { throttle } from '../util/throttle';
+import { Abi, EtherscanResponse, JoiAbi } from './etherscan-model';
 
 const BASE_GET_ABI_PARAMS = {
   module: 'contract',
@@ -16,7 +16,7 @@ export const getEtherscanAbi = throttle(
 
     // they respond with 403 if the contract is not verified
     if (response.status === 403) {
-      return null;
+      throw new Error('unexpected response 403');
     }
 
     if (response.status !== 200) {
