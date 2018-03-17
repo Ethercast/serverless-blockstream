@@ -69,7 +69,7 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
 
   const abis = _.chain(abisWithAddresses)
     .indexBy('address')
-    .map(({ address, abi }) => abi)
+    .mapObject(({ address, abi }) => abi)
     .value();
 
   callback(null, { statusCode: 200, body: JSON.stringify({ abis }) });
