@@ -1,5 +1,5 @@
 import { JoiAddress } from '@ethercast/model';
-import { APIGatewayEvent, Callback, Context, Handler } from 'aws-lambda';
+import { Callback, Context, Handler } from 'aws-lambda';
 import * as Joi from 'joi';
 import * as _ from 'underscore';
 import getAbi from './util/abi/get-abi';
@@ -18,29 +18,18 @@ interface Request {
   addresses: string[];
 }
 
-export const handle: Handler = async (event: APIGatewayEvent, context: Context, callback?: Callback) => {
+export const handle: Handler = async (event: Request, context: Context, callback?: Callback) => {
   if (!callback) {
     throw new Error('missing callback');
   }
 
-  const { body } = event;
-
-  if (body === null) {
-    callback(null, { statusCode: 400, body: JSON.stringify({ error: 'Missing request body' }) });
-    return;
-  }
-
   let request: Request;
   try {
-    const { value, error } = JoiRequestFormat.validate(JSON.parse(body), { convert: true });
+    const { value, error } = JoiRequestFormat.validate(event, { convert: true });
 
     if (error) {
-      callback(null, {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: `Invalid request: ${error.details.map(({ message, path }) => `${path}: ${message}`).join('; ')}`
-        })
-      });
+      callback(new Error(`Invalid request: ${error.details.map(({ message, path }) => `${path}: ${message}`).join('; ')}`));
+      return;
     }
 
     request = value;
@@ -72,5 +61,5 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
     .mapObject(({ address, abi }) => abi)
     .value();
 
-  callback(null, { statusCode: 200, body: JSON.stringify({ abis }) });
+  callback(null, { abis });
 };

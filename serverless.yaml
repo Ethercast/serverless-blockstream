@@ -14,6 +14,7 @@ custom:
   newBlockQueueName: ${self:custom.prefix}-new-blocks.fifo
   logFirehoseQueue: ${self:custom.prefix}-log-firehose.fifo
   transactionFirehoseQueue: ${self:custom.prefix}-tx-firehose.fifo
+  getAbisLambdaName: ${self:custom.prefix}-get-abis
   blockReadyTopicName: ${self:custom.prefix}-block-ready
   blockProcessedTopicName: ${self:custom.prefix}-block-processed
   srcNodeUrl: ${opt:srcNodeUrl, env:srcNodeUrl}
@@ -59,8 +60,6 @@ custom:
 
 provider:
   name: aws
-  apiKeys:
-    - GET_ABIS_API_KEY
   logRetentionInDays: 7
   runtime: nodejs6.10
   environment: # service wide environment variables
@@ -144,11 +143,7 @@ functions:
 
   get-abis:
     handler: src/get-abis.handle
-    events:
-      - http:
-          method: post
-          path: get-abis
-          private: true
+    name: ${self:custom.getAbisLambdaName}
 
 resources:
   Description: The block streaming stack that populates the log and transaction queues
