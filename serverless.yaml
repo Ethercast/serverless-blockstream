@@ -59,6 +59,8 @@ custom:
 
 provider:
   name: aws
+  apiKeys:
+    - GET_ABIS_API_KEY
   logRetentionInDays: 7
   runtime: nodejs6.10
   environment: # service wide environment variables
@@ -140,6 +142,13 @@ functions:
             Ref: "BlockReadyTopic"
           topicName: ${self:custom.blockReadyTopicName}
 
+  get-abis:
+    handler: src/get-abis.handle
+    events:
+      - http:
+          method: post
+          path: get-abis
+          private: true
 
 resources:
   Description: The block streaming stack that populates the log and transaction queues

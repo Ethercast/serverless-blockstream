@@ -2,9 +2,11 @@
   "compilerOptions": {
     "strict": true,
     "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
     "allowSyntheticDefaultImports": false,
     "sourceMap": true,
-    "target": "es3",
+    "target": "es5",
     "lib": [
       "es5",
       "es6",
