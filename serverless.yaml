@@ -283,6 +283,8 @@ resources:
         ComparisonOperator: GreaterThanThreshold
         AlarmActions:
           - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
         TreatMissingData: missing
 
     GenerateBlocksAlarm:
@@ -300,6 +302,8 @@ resources:
         EvaluationPeriods: 3
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
+          - Ref: AlarmTopic
+        OKActions:
           - Ref: AlarmTopic
         TreatMissingData: breaching
 
@@ -319,6 +323,8 @@ resources:
         ComparisonOperator: GreaterThanOrEqualToThreshold
         AlarmActions:
           - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
         TreatMissingData: missing
 
     GenerateLogsAlarm:
@@ -336,6 +342,8 @@ resources:
         EvaluationPeriods: 3
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
+          - Ref: AlarmTopic
+        OKActions:
           - Ref: AlarmTopic
         TreatMissingData: breaching
 
@@ -355,6 +363,8 @@ resources:
         ComparisonOperator: GreaterThanOrEqualToThreshold
         AlarmActions:
           - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
         TreatMissingData: missing
 
     GenerateTransactionsAlarm:
@@ -372,5 +382,7 @@ resources:
         EvaluationPeriods: 3
         ComparisonOperator: LessThanOrEqualToThreshold
         AlarmActions:
+          - Ref: AlarmTopic
+        OKActions:
           - Ref: AlarmTopic
         TreatMissingData: breaching
