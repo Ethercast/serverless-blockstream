@@ -1,11 +1,15 @@
 import { DecodedLog, DecodedTransaction, Log, Transaction } from '@ethercast/model';
-import { decodeLog, decodeParameters, encodeEventSignature, encodeFunctionSignature } from 'web3-eth-abi';
 import * as _ from 'underscore';
+import { decodeLog, decodeParameters, encodeEventSignature, encodeFunctionSignature } from 'web3-eth-abi';
 import { Abi } from '../../etherscan/etherscan-model';
 
 export function decodeTransactionParameters(transaction: Transaction, abi: Abi): DecodedTransaction {
   const methodSignature = transaction.input.substr(0, 10).toLowerCase();
   const encodedParameters = `0x${transaction.input.substr(10).toLowerCase()}`;
+
+  if (methodSignature.length < 10) {
+    throw new Error(`no method signature in the transaction input data`);
+  }
 
   // first find the matching signature
   const matchingSignature = _.find(
@@ -13,8 +17,7 @@ export function decodeTransactionParameters(transaction: Transaction, abi: Abi):
     abiSignature =>
       abiSignature.type === 'function' &&
       !abiSignature.anonymous &&
-      encodeFunctionSignature(abiSignature)
-        .toLowerCase() === methodSignature
+      encodeFunctionSignature(abiSignature).toLowerCase() === methodSignature
   );
 
   if (!matchingSignature) {

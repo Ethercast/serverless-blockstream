@@ -161,9 +161,9 @@ describe('decodeTransactionParameters', () => {
   _.each(
     example1.block.transactions,
     transaction => {
-      const { to } = transaction;
+      const { to, input } = transaction;
       const abi = to ? TRANSACTION_TO_ABIS[ to ] : null;
-      if (to && abi) {
+      if (to && abi && input && input !== '0x') {
         it(`can decode transaction ${transaction.hash}`, () => {
           expect(decodeTransactionParameters(transaction, abi).ethercast).to.exist;
         });

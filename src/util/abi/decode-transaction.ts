@@ -1,12 +1,12 @@
 import { DecodedTransaction, Transaction } from '@ethercast/model';
-import getAbi from './get-abi';
 import logger from '../logger';
 import { decodeTransactionParameters } from './decoder';
+import getAbi from './get-abi';
 
 export default async function getAbiAndDecodeTransaction(transaction: Transaction): Promise<Transaction | DecodedTransaction> {
   try {
     // no data, not a method call with parameters we can parse
-    if (!transaction.input) {
+    if (!transaction.input || transaction.input === '0x') {
       return transaction;
     }
 
@@ -27,7 +27,8 @@ export default async function getAbiAndDecodeTransaction(transaction: Transactio
 
       return decoded;
     } catch (err) {
-      logger.error({ transaction, err }, 'failed to decode transaction');
+      logger.warn({ transaction, err }, 'failed to decode transaction');
+
       return transaction;
     }
   } catch (err) {
