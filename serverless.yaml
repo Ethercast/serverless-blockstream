@@ -132,7 +132,7 @@ functions:
 
   drain-block-queue:
     handler: src/drain-block-queue.start
-    memorySize: 256
+    memorySize: 1024 # we need the extra memory here because we store the abis in a memory cache
     reservedConcurrency: 1
     timeout: 300
     events:
