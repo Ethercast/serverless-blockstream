@@ -16,7 +16,15 @@ export const getEtherscanAbi = throttle(
 
     // they respond with 403 if the contract is not verified
     if (response.status === 403) {
-      throw new Error('unexpected response 403');
+      let msg: string;
+
+      try {
+        msg = await response.text();
+      } catch (err) {
+        throw new Error(`unexpected status code 403 and could not parse response body`);
+      }
+
+      throw new Error(`unexpected status code 403: ${msg}`);
     }
 
     if (response.status !== 200) {
