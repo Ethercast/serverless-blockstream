@@ -1,18 +1,18 @@
+import { Log, mustBeValidLog, mustBeValidTransaction, Transaction } from '@ethercast/model';
+import * as SNS from 'aws-sdk/clients/sns';
 import * as SQS from 'aws-sdk/clients/sqs';
 import { Message } from 'aws-sdk/clients/sqs';
-import { BlockQueueMessage } from './model';
+import BigNumber from 'bignumber.js';
+import * as Logger from 'bunyan';
+import * as crypto from 'crypto';
+import decodeLog from './abi/decode-log';
+import getAbiAndDecodeTransaction from './abi/decode-transaction';
 import { getBlock } from './ddb/block-data';
 import { BLOCK_PROCESSED_TOPIC_NAME, LOG_FIREHOSE_QUEUE_NAME, TRANSACTION_FIREHOSE_QUEUE_NAME } from './env';
-import * as crypto from 'crypto';
-import { Log, mustBeValidLog, mustBeValidTransaction, Transaction } from '@ethercast/model';
-import BigNumber from 'bignumber.js';
-import decodeLog from './abi/decode-log';
-import flushMessagesToQueue from './sqs/flush-to-queue';
-import getAbiAndDecodeTransaction from './abi/decode-transaction';
-import * as Logger from 'bunyan';
-import _ = require('underscore');
+import { BlockQueueMessage } from './model';
 import getTopicArn from './sns/get-topic-arn';
-import * as SNS from 'aws-sdk/clients/sns';
+import flushMessagesToQueue from './sqs/flush-to-queue';
+import _ = require('underscore');
 
 function logMessageId(log: Log) {
   return crypto.createHash('sha256')
@@ -108,8 +108,10 @@ export default async function processQueueMessage(sqs: SQS, sns: SNS, logger: Lo
   msgLogger.info({
     transactionCount: transactionMessages.length,
     logCount: decodedLogs.length
-  }, 'flushed logs to queue');
+  }, 'flushed messages to queues');
 
   const TopicArn = await getTopicArn(sns, BLOCK_PROCESSED_TOPIC_NAME);
   await sns.publish({ TopicArn, Message: JSON.stringify(message) }).promise();
+
+  msgLogger.info('completed message processing');
 }

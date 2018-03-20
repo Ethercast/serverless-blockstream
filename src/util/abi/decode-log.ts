@@ -1,8 +1,8 @@
 import { DecodedLog, Log } from '@ethercast/model';
-import getAbi from './get-abi';
+import { Abi } from '../../etherscan/etherscan-model';
 import logger from '../logger';
 import { decodeLogParameters } from './decoder';
-import { Abi } from '../../etherscan/etherscan-model';
+import getAbi from './get-abi';
 
 export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
   let abi: Abi | null;
@@ -12,7 +12,6 @@ export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
     if (abi === null) {
       return log;
     }
-
   } catch (err) {
     logger.info({ err, log }, `error fetching abi`);
     return log;
@@ -26,7 +25,7 @@ export default async function decodeLog(log: Log): Promise<Log | DecodedLog> {
 
     return decoded;
   } catch (err) {
-    logger.error({ err }, 'failed to decode log');
+    logger.warn({ err, log }, 'failed to decode log');
 
     return log;
   }
