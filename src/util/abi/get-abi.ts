@@ -48,7 +48,7 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
     abi = await getEtherscanAbi(address, ETHERSCAN_API_URL, ETHERSCAN_API_KEY);
 
     if (abi === null) {
-      logger.debug({ address }, `abi not available in etherscan, marking unavailable`);
+      logger.info({ address }, `abi not available in etherscan, marking unavailable`);
 
       try {
         await markAbiNotAvailable(address);
@@ -58,12 +58,13 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
 
       return null;
     } else {
-      logger.debug({ address }, 'saving abi');
+      logger.info({ address }, 'saving abi');
 
       try {
         await saveAbi(address, abi);
       } catch (err) {
         logger.error({ err, address }, `failed to save abi for address`);
+        return null;
       }
 
       return abi;

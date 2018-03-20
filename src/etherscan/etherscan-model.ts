@@ -35,29 +35,25 @@ interface ContractMember {
 
 export type Abi = ContractMember[];
 
-export const JoiInput = Joi.object({
+export const JoiParameter = Joi.object({
   name: Joi.string().allow(''),
   type: Joi.string(),
   indexed: Joi.boolean()
 });
 
-export const JoiOutput = Joi.object({
-  name: Joi.string().allow(''),
-  type: Joi.string()
+export const JoiTuple = JoiParameter.keys({
+  type: Joi.string().valid('tuple').required(),
+  components: Joi.array().items(JoiParameter).min(1).required()
 });
 
-export const JoiTuple = JoiOutput.keys({
-  type: Joi.string().valid('tuple').required(),
-  components: Joi.array().items(JoiOutput).min(1).required()
-});
+export const JoiContractMemberParameters = Joi.array()
+  .items(Joi.alternatives(JoiParameter, JoiTuple));
 
 export const JoiContractMember = Joi.object({
   constant: Joi.boolean(),
-  inputs: Joi.array().items(JoiInput),
+  inputs: JoiContractMemberParameters,
   name: Joi.string().allow(''),
-  outputs: Joi.array().items(
-    Joi.alternatives(JoiOutput, JoiTuple)
-  ),
+  outputs: JoiContractMemberParameters,
   type: Joi.string(),
   payable: Joi.boolean(),
   stateMutability: Joi.string(),
