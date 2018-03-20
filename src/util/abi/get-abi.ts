@@ -43,6 +43,8 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
 
   // now try from etherscan
   try {
+    logger.info({ address }, 'fetching abi from etherscan');
+
     abi = await getEtherscanAbi(address, ETHERSCAN_API_URL, ETHERSCAN_API_KEY);
 
     if (abi === null) {
@@ -57,6 +59,7 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
       return null;
     } else {
       logger.debug({ address }, 'saving abi');
+
       try {
         await saveAbi(address, abi);
       } catch (err) {
