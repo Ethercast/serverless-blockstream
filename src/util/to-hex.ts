@@ -12,6 +12,6 @@ export default function toHex(number: string | number | BigNumber): string {
   } else if (number instanceof BigNumber) {
     return `0x${number.toString(16)}`;
   } else {
-    throw new Error(`did not understand number type: ${number}`);
+    throw new Error(`toHex: did not understand number type: ${number}`);
   }
 }

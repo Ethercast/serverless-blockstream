@@ -68,8 +68,8 @@ export async function getBlock(hash: string, number: string): Promise<DecodedBlo
 
     const block = Item as DynamoBlock;
 
-    if (!block || block.hash !== hash || block.number !== number) {
-      throw new Error(`failed to get block, invalid/missing hash or invalid/missing number returned from dynamo`);
+    if (!block) {
+      throw new Error(`failed to get block with hash "${hash}" and number "${toHex(number)}" from dynamo`);
     }
 
     logger.debug({ hash, number, ConsumedCapacity }, 'got block');
