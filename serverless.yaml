@@ -132,7 +132,7 @@ functions:
 
   drain-block-queue:
     handler: src/drain-block-queue.start
-    memorySize: 384
+    memorySize: 1024
     reservedConcurrency: 1
     timeout: 300
     events:
