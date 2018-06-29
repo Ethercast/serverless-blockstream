@@ -24,8 +24,8 @@ export default async function notifyQueueOfBlock(sqs: SQS, metadata: Pick<BlockW
       MessageBody: JSON.stringify(queueMessage)
     }).promise();
 
-    if (typeof MessageId !== 'string') {
-      throw new Error('message id not received after placing message in queue');
+    if (typeof MessageId === 'undefined') {
+      throw new Error('message ID not received after placing message in queue');
     }
 
     logger.info({ queueMessage, MessageId }, 'placed message in queue');

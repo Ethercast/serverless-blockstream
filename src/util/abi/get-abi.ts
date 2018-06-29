@@ -43,7 +43,7 @@ async function getAbiInternal(address: string): Promise<Abi | null> {
 
   // now try from etherscan
   try {
-    logger.info({ address }, 'fetching abi from etherscan');
+    logger.debug({ address }, 'fetching abi from etherscan');
 
     abi = await getEtherscanAbi(address, ETHERSCAN_API_URL, ETHERSCAN_API_KEY);
 
