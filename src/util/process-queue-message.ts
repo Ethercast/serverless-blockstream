@@ -5,8 +5,6 @@ import { Message } from 'aws-sdk/clients/sqs';
 import BigNumber from 'bignumber.js';
 import * as Logger from 'bunyan';
 import * as crypto from 'crypto';
-import decodeLog from './abi/decode-log';
-import getAbiAndDecodeTransaction from './abi/decode-transaction';
 import { getBlock } from './ddb/block-data';
 import { BLOCK_PROCESSED_TOPIC_NAME, LOG_FIREHOSE_QUEUE_NAME, TRANSACTION_FIREHOSE_QUEUE_NAME } from './env';
 import { BlockQueueMessage } from './model';
@@ -86,10 +84,12 @@ export default async function processQueueMessage(sqs: SQS, sns: SNS, logger: Lo
 
   msgLogger.debug({ transactionCount: validatedTransactions.length }, 'validated transactions');
 
-  const [ decodedLogs, decodedTransactions ] = await Promise.all([
-    Promise.all(validatedLogs.map(decodeLog)),
-    Promise.all(validatedTransactions.map(getAbiAndDecodeTransaction))
-  ]);
+  const [ decodedLogs, decodedTransactions ] = [ validatedLogs, validatedTransactions ];
+  // this is disabled due to memory issues
+  // await Promise.all([
+  //   Promise.all(validatedLogs.map(decodeLog)),
+  //   Promise.all(validatedTransactions.map(getAbiAndDecodeTransaction))
+  // ]);
 
   msgLogger.debug('decoded transactions and logs');
 
