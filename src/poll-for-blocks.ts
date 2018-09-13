@@ -1,10 +1,9 @@
+import { getClient, ValidatedEthClient } from '@ethercast/eth-jsonrpc-client';
 import logger from './util/logger';
 import reconcileBlock from './util/reconcile-block';
 import { Callback, Context, Handler } from 'aws-lambda';
 import { NETWORK_ID, SRC_NODE_URL } from './util/env';
-import getClient from './client/get-client';
 import * as _ from 'underscore';
-import ValidatedClient from './client/validated-eth-client';
 import * as Lambda from 'aws-sdk/clients/lambda';
 import * as SQS from 'aws-sdk/clients/sqs';
 import * as SNS from 'aws-sdk/clients/sns';
@@ -14,9 +13,10 @@ const sqs = new SQS();
 const sns = new SNS();
 
 export const start: Handler = async (event: any, context: Context, cb: Callback) => {
-  const unvalidatedClient = await getClient(logger, SRC_NODE_URL);
+  const unvalidatedClient = await getClient(SRC_NODE_URL);
+
   // validate everything coming out of the ethereum node
-  const client = new ValidatedClient(unvalidatedClient);
+  const client = new ValidatedEthClient(unvalidatedClient);
 
   const clientVersion = await client.web3_clientVersion();
   const netVersion = await client.net_version();
