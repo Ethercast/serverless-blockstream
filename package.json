@@ -14,7 +14,7 @@
     "deploy:mainnet": "sls deploy --stage mainnet --srcNodeUrl \"https://mainnet.infura.io/0eep3H3CSiqitPXv0aOy\" --networkId 1 --etherscanApiUrl \"https://api.etherscan.io/api\" --etherscanApiKey \"17CY9NYG5A77HWV1I8XP7U4IE9DB11KWT5\""
   },
   "dependencies": {
-    "@ethercast/eth-jsonrpc-client": "^1.0.3",
+    "@ethercast/eth-jsonrpc-client": "^1.1.1",
     "@ethercast/message-compressor": "0.0.0",
     "@ethercast/model": "0.0.17",
     "@ethercast/queue-drainer": "0.0.5",
