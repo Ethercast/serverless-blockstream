@@ -1,3 +1,4 @@
+import { EthClient } from '@ethercast/eth-jsonrpc-client';
 import logger from './logger';
 import BigNumber from 'bignumber.js';
 import * as _ from 'underscore';
@@ -7,7 +8,6 @@ import getNextFetchBlock from './state/get-next-fetch-block';
 import notifyQueueOfBlock from './sqs/notify-queue-of-block';
 import { getBlockStreamState, saveBlockStreamState } from './ddb/blockstream-state';
 import { BlockWithFullTransactions, Log, TransactionReceipt } from '@ethercast/model';
-import ValidatedEthClient from '../client/validated-eth-client';
 import rewindOneBlock from './rewind-one-block';
 import * as Lambda from 'aws-sdk/clients/lambda';
 import * as SQS from 'aws-sdk/clients/sqs';
@@ -19,7 +19,7 @@ import getTopicArn from './sns/get-topic-arn';
  *
  * Returns true if we should halt
  */
-export default async function reconcileBlock(lambda: Lambda, sqs: SQS, sns: SNS, client: ValidatedEthClient): Promise<boolean> {
+export default async function reconcileBlock(lambda: Lambda, sqs: SQS, sns: SNS, client: EthClient): Promise<boolean> {
   const state = await getBlockStreamState();
 
   // we have a configurable block delay which lets us reduce the frequency fo chain reorgs
