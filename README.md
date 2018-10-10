@@ -20,3 +20,7 @@ The unit tests for this project are executed simply by running `npm test`
 - Extract the Etherscan client into its own module with unit tests
 - Remove references to a global logger from these modules
 - Change dependency on Joi to something more user friendly, since Joi is too heavy
+
+## There are secrets in package.json
+
+Yes, I know. These are still valid secrets. But these APIs are free, so please do not abuse them using these secrets. If you wish to run your own service, replace them with your own secrets.
